@@ -5658,26 +5658,24 @@ iframe.minitigerInlineTrailer {
  * Minitiger's configured hover movement explicit for fine-pointer desktop
  * devices so glow, preview and physical card movement stay in sync.
  */
-@media (hover: hover) and (pointer: fine) {
-    :root[data-minitiger-hover-enabled='true']
-    .minitigerHome .minitigerMediaCard:hover .minitigerMediaCardBody,
-    :root[data-minitiger-hover-enabled='true']
-    .minitigerHome .minitigerMediaCard:focus-within .minitigerMediaCardBody,
-    :root[data-minitiger-hover-enabled='true']
-    .minitigerHome .minitigerLibraryCard:hover .minitigerLibraryCardBody,
-    :root[data-minitiger-hover-enabled='true']
-    .minitigerHome .minitigerLibraryCard:focus-visible .minitigerLibraryCardBody {
-        transform: translateY(-5px) scale(1.018) !important;
-        filter: brightness(1.045) !important;
-    }
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerHome .minitigerMediaCard:hover .minitigerMediaCardBody,
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerHome .minitigerMediaCard:focus-within .minitigerMediaCardBody,
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerHome .minitigerLibraryCard:hover .minitigerLibraryCardBody,
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerHome .minitigerLibraryCard:focus-visible .minitigerLibraryCardBody {
+    transform: translateY(-5px) scale(1.018) !important;
+    filter: brightness(1.045) !important;
+}
 
-    :root[data-minitiger-hover-enabled='true']
-    .minitigerHome .minitigerVirtualHomeCard:hover .minitigerVirtualHomeImage,
-    :root[data-minitiger-hover-enabled='true']
-    .minitigerHome .minitigerVirtualHomeCard:focus-visible .minitigerVirtualHomeImage {
-        transform: translateY(-5px) scale(1.018) !important;
-        filter: brightness(1.045) !important;
-    }
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerHome .minitigerVirtualHomeCard:hover .minitigerVirtualHomeImage,
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerHome .minitigerVirtualHomeCard:focus-visible .minitigerVirtualHomeImage {
+    transform: translateY(-5px) scale(1.018) !important;
+    filter: brightness(1.045) !important;
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_2_1_DESKTOP_STANDALONE_HOME_HOVER_PARITY */
