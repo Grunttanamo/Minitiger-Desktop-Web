@@ -2625,3 +2625,29 @@ a.minitigerDetailsParentTitle:focus-visible {
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_18_18_1_SEASON_WRAP_STYLE */
+
+
+/* =========================================================
+   PHASE 2.1 - NATIVE DESKTOP SEASON SWITCHER
+   ========================================================= */
+
+/*
+ * Qt WebEngine paints the native <select> popup differently from Chrome and
+ * can make every season option look selected. Give the popup explicit dark
+ * option colors while keeping only the real selected option accented.
+ */
+.minitigerEpisodeSeasonSwitcher {
+    color-scheme: dark;
+}
+
+.minitigerEpisodeSeasonSwitcher option {
+    background: #23262c;
+    color: #fff;
+}
+
+.minitigerEpisodeSeasonSwitcher option:checked {
+    background: var(--mt-accent, #7f4df3);
+    color: var(--mt-accent-text, #fff);
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_SEASON_SWITCHER */
