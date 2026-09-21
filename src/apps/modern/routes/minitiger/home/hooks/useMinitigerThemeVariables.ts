@@ -67,6 +67,10 @@ const useMinitigerThemeVariables = (
             settings.hoverEnabled ? 'true' : 'false'
         );
         root.setAttribute(
+            'data-minitiger-native-shell',
+            window.NativeShell ? 'true' : 'false'
+        );
+        root.setAttribute(
             'data-minitiger-glow-enabled',
             settings.glowEnabled ? 'true' : 'false'
         );
@@ -105,6 +109,22 @@ const useMinitigerThemeVariables = (
 };
 
 export default useMinitigerThemeVariables;
+
+// Native desktop diagnostics: Qt WebEngine can expose pointer/hover media
+// capabilities differently from a normal browser even when CSS :hover works.
+if (typeof window !== 'undefined' && window.NativeShell) {
+    console.info(
+        '[Minitiger Desktop Compat] pointer media '
+        + JSON.stringify({
+            hoverHover: window.matchMedia?.('(hover: hover)').matches ?? null,
+            hoverNone: window.matchMedia?.('(hover: none)').matches ?? null,
+            pointerFine: window.matchMedia?.('(pointer: fine)').matches ?? null,
+            pointerCoarse: window.matchMedia?.('(pointer: coarse)').matches ?? null,
+            anyHoverHover: window.matchMedia?.('(any-hover: hover)').matches ?? null,
+            anyPointerFine: window.matchMedia?.('(any-pointer: fine)').matches ?? null
+        })
+    );
+}
 
 // MINITIGER_PATCH_MARKER: PHASE_18_15_0_GLOBAL_HOVER_DETAIL_QUICKPLAY
 
