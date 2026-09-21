@@ -491,6 +491,13 @@ export const MinitigerMusicArtistDetails = ({
                         >
                             ▶ Abspielen
                         </button>
+
+                        <MinitigerItemMenuButton
+                            apiClient={apiClient}
+                            item={album}
+                            title='Mehr'
+                            placement='action'
+                        />
                     </div>
                 </div>
             </section>
@@ -819,6 +826,13 @@ export const MinitigerMusicAlbumDetails = ({
                         >
                             ▶ Abspielen
                         </button>
+
+                        <MinitigerItemMenuButton
+                            apiClient={apiClient}
+                            item={item}
+                            title='Mehr'
+                            placement='action'
+                        />
                     </div>
                 </div>
             </section>
@@ -1029,6 +1043,13 @@ export const MinitigerMusicVideoDetails = ({
                         >
                             ▶ Abspielen
                         </button>
+
+                        <MinitigerItemMenuButton
+                            apiClient={apiClient}
+                            item={item}
+                            title='Mehr'
+                            placement='action'
+                        />
                     </div>
                 </div>
             </section>
