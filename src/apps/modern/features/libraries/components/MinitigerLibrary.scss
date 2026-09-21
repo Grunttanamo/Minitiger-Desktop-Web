@@ -1288,3 +1288,36 @@
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_2_1_DESKTOP_STANDALONE_LIBRARY_HOVER_PARITY */
+
+
+/* NativeShell event-driven hover fallback. */
+:root[data-minitiger-native-shell='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard.minitigerDesktopHover
+.cardOverlayContainer {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard.minitigerDesktopHover
+.cardOverlayContainer *,
+:root[data-minitiger-native-shell='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard.minitigerDesktopHover
+.cardOverlayButton-hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto;
+}
+
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard.minitigerDesktopHover > .cardBox {
+    transform: translateY(-5px) scale(1.018) !important;
+    filter: brightness(1.045) !important;
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_EVENT_HOVER_LIBRARY */
