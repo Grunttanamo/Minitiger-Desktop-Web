@@ -134,41 +134,6 @@ const useMinitigerHomeSettings = () => {
             () => readSettings(storageKey)
         );
 
-    useEffect(() => {
-        console.info(
-            '[Minitiger Desktop Compat] home settings '
-            + JSON.stringify({
-                origin: window.location.origin,
-                storageKey,
-                hasLocalValue: Boolean(
-                    window.localStorage.getItem(storageKey)
-                ),
-                hoverEnabled: settings.hoverEnabled,
-                glowEnabled: settings.glowEnabled,
-                glowStrength: settings.glowStrength,
-                glowSize: settings.glowSize,
-                previewEnabled: settings.previewEnabled,
-                customHomeRowsEnabled: settings.customHomeRowsEnabled,
-                cardSize: settings.cardSize,
-                showAudioFlags: settings.showAudioFlags,
-                showFskBadges: settings.showFskBadges,
-                showPlayedIndicators: settings.showPlayedIndicators
-            })
-        );
-    }, [
-        storageKey,
-        settings.cardSize,
-        settings.customHomeRowsEnabled,
-        settings.glowEnabled,
-        settings.glowSize,
-        settings.glowStrength,
-        settings.hoverEnabled,
-        settings.previewEnabled,
-        settings.showAudioFlags,
-        settings.showFskBadges,
-        settings.showPlayedIndicators
-    ]);
-
     const serverSaveTimer = useRef<number | null>(null);
     const pendingServerValue = useRef<MinitigerHomeSettings | null>(null);
     const pendingServerBroadcast = useRef(false);
