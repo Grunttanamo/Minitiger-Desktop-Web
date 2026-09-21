@@ -1237,3 +1237,50 @@
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_18_18_3B_CUSTOM_LIBRARY_CENTERED_TEXT */
+
+
+/* =========================================================
+   PHASE 2.1 DESKTOP STANDALONE - LIBRARY HOVER PARITY
+   ========================================================= */
+
+/*
+ * The native Jellyfin CardHoverMenu is rendered correctly in the bundled
+ * client, but Qt WebEngine may leave the overlay at its hidden computed
+ * state. Make the intended desktop hover/focus state explicit inside
+ * Minitiger libraries. The overlay container itself stays pointer-transparent
+ * exactly like Jellyfin's native rule; its buttons remain interactive.
+ */
+@media (hover: hover) and (pointer: fine) {
+    .minitigerLibraryPage
+    .minitigerNativeLibraryCard:hover
+    .cardOverlayContainer,
+    .minitigerLibraryPage
+    .minitigerNativeLibraryCard:focus-within
+    .cardOverlayContainer {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: none !important;
+    }
+
+    .minitigerLibraryPage
+    .minitigerNativeLibraryCard:hover
+    .cardOverlayContainer *,
+    .minitigerLibraryPage
+    .minitigerNativeLibraryCard:focus-within
+    .cardOverlayContainer * {
+        visibility: visible !important;
+        pointer-events: auto;
+    }
+
+    .minitigerLibraryPage
+    .minitigerNativeLibraryCard:hover
+    .cardOverlayButton-hover,
+    .minitigerLibraryPage
+    .minitigerNativeLibraryCard:focus-within
+    .cardOverlayButton-hover {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_DESKTOP_STANDALONE_LIBRARY_HOVER_PARITY */
