@@ -1237,3 +1237,52 @@
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_18_18_3B_CUSTOM_LIBRARY_CENTERED_TEXT */
+
+
+/* =========================================================
+   PHASE 2.1 - NATIVE DESKTOP LIBRARY PARITY
+   ========================================================= */
+
+.minitigerLibraryPage
+.minitigerNativeLibraryCard.minitigerNativeHover
+.cardOverlayContainer {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+}
+
+.minitigerLibraryPage
+.minitigerNativeLibraryCard.minitigerNativeHover
+.cardOverlayContainer * {
+    visibility: visible !important;
+    pointer-events: auto;
+}
+
+.minitigerLibraryPage
+.minitigerNativeLibraryCard.minitigerNativeHover
+.cardOverlayButton-hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Keep the already-correct native lift, but attach the glow to the same box. */
+.minitigerLibraryPage
+.minitigerNativeLibraryCard.minitigerNativeHover::before {
+    opacity: 0 !important;
+    box-shadow: none !important;
+}
+
+.minitigerLibraryPage[data-glow-enabled='true']
+.minitigerNativeLibraryCard.minitigerNativeHover > .cardBox {
+    box-shadow:
+        0 0 var(--mt-glow-size, 20px)
+            var(--mt-glow-color, var(--mt-accent)),
+        0 0 calc(var(--mt-glow-size, 20px) * 1.38)
+            color-mix(
+                in srgb,
+                var(--mt-glow-color, var(--mt-accent)) 42%,
+                transparent
+            ) !important;
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_LIBRARY_PARITY */
