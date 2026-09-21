@@ -30,6 +30,14 @@ export async function serverAddress() {
         return Promise.resolve(apiClient.serverAddress());
     }
 
+    // Minitiger Desktop can host this frontend locally from a qrc:// resource
+    // while the actual Jellyfin API remains on a normal http(s) server.
+    // The native shell persists that server address in its local client settings.
+    const nativeServerUrl = window.jmpInfo?.settings?.main?.userWebClient;
+    if (window.NativeShell && nativeServerUrl) {
+        return nativeServerUrl.replace(/\/+$/, '');
+    }
+
     // Use servers specified in config.json
     const urls = await webSettings.getServers();
 
@@ -44,8 +52,8 @@ export async function serverAddress() {
             url = window.location.origin;
         }
 
-        // Don't use bundled app URL (file:) as server URL
-        if (url.startsWith('file:')) {
+        // Don't use local bundled-app URLs as Jellyfin server URLs.
+        if (url.startsWith('file:') || url.startsWith('qrc:')) {
             return Promise.resolve();
         }
 
