@@ -59,6 +59,14 @@ Deleting the Minitiger container does **not** delete or migrate your Jellyfin da
 
 The native Debian / Raspberry Pi setup keeps the same Jellyfin backend but points Jellyfin's web directory at a separately built Minitiger frontend. The packaged Jellyfin web files remain untouched for rollback.
 
+## 🖥️ Minitiger Desktop bundled frontend
+
+Minitiger Web is also the authoritative frontend source for the experimental **Minitiger Desktop** project. Desktop development builds can clone this `minitiger-v12.1` branch, create the normal production `dist/`, and embed that output directly into the Qt desktop executable.
+
+In bundled desktop mode, the frontend is loaded locally from a `qrc://` resource while API/media requests continue to use the normal Jellyfin Server address supplied by the native shell. A separate Minitiger Web sidecar is therefore not required for that desktop mode.
+
+The browser, Docker/sidecar and native Debian/Raspberry Pi deployment paths remain supported separately.
+
 ## 🚀 Docker quick start
 
 ```bash
