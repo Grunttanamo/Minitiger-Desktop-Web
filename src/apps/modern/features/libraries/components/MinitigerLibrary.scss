@@ -1250,37 +1250,41 @@
  * Minitiger libraries. The overlay container itself stays pointer-transparent
  * exactly like Jellyfin's native rule; its buttons remain interactive.
  */
-@media (hover: hover) and (pointer: fine) {
-    .minitigerLibraryPage
-    .minitigerNativeLibraryCard:hover
-    .cardOverlayContainer,
-    .minitigerLibraryPage
-    .minitigerNativeLibraryCard:focus-within
-    .cardOverlayContainer {
-        opacity: 1 !important;
-        visibility: visible !important;
-        pointer-events: none !important;
-    }
+:root[data-minitiger-native-shell='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard:hover
+.cardOverlayContainer,
+:root[data-minitiger-native-shell='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard:focus-within
+.cardOverlayContainer {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+}
 
-    .minitigerLibraryPage
-    .minitigerNativeLibraryCard:hover
-    .cardOverlayContainer *,
-    .minitigerLibraryPage
-    .minitigerNativeLibraryCard:focus-within
-    .cardOverlayContainer * {
-        visibility: visible !important;
-        pointer-events: auto;
-    }
+:root[data-minitiger-native-shell='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard:hover
+.cardOverlayContainer *,
+:root[data-minitiger-native-shell='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard:focus-within
+.cardOverlayContainer * {
+    visibility: visible !important;
+    pointer-events: auto;
+}
 
-    .minitigerLibraryPage
-    .minitigerNativeLibraryCard:hover
-    .cardOverlayButton-hover,
-    .minitigerLibraryPage
-    .minitigerNativeLibraryCard:focus-within
-    .cardOverlayButton-hover {
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
+:root[data-minitiger-native-shell='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard:hover
+.cardOverlayButton-hover,
+:root[data-minitiger-native-shell='true']
+.minitigerLibraryPage
+.minitigerNativeLibraryCard:focus-within
+.cardOverlayButton-hover {
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_2_1_DESKTOP_STANDALONE_LIBRARY_HOVER_PARITY */
