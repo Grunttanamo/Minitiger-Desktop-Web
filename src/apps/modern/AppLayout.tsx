@@ -1,4 +1,4 @@
-import React, { StrictMode, useCallback, useEffect, useState } from 'react';
+import React, { StrictMode, useCallback, useState } from 'react';
 import Box from '@mui/material/Box';
 import { type Theme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -6,7 +6,6 @@ import { Outlet, useLocation } from 'react-router-dom';
 
 import AppBody from 'components/AppBody';
 import CustomCss from 'components/CustomCss';
-import layoutManager from 'components/layoutManager';
 import OffsetAppBar from 'components/OffsetAppBar';
 import ThemeCss from 'components/ThemeCss';
 import { useApi } from 'hooks/useApi';
@@ -31,21 +30,6 @@ export const Component = () => {
     const isDrawerAvailable = isDrawerPath(location.pathname) && Boolean(user) && !isMediumScreen;
     const isDrawerOpen = isDrawerActive && isDrawerAvailable;
     const isCurrentLibraryPath = isLibraryPath(location.pathname);
-
-    useEffect(() => {
-        console.info(
-            '[Minitiger Desktop Compat] layout '
-            + JSON.stringify({
-                origin: window.location.origin,
-                pathname: window.location.pathname,
-                nativeShell: Boolean(window.NativeShell),
-                desktop: layoutManager.desktop,
-                mobile: layoutManager.mobile,
-                tv: layoutManager.tv,
-                modern: layoutManager.modern
-            })
-        );
-    }, []);
 
     const onToggleDrawer = useCallback(() => {
         setIsDrawerActive(!isDrawerActive);
