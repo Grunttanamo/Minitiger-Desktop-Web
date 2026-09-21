@@ -158,6 +158,19 @@ const MinitigerNativeLibraryOverlay = ({
 
         resizeObserver.observe(card);
 
+        const onMouseEnter = () => {
+            if (window.NativeShell) {
+                card.classList.add('minitigerNativeHover');
+            }
+        };
+
+        const onMouseLeave = () => {
+            card.classList.remove('minitigerNativeHover');
+        };
+
+        card.addEventListener('mouseenter', onMouseEnter);
+        card.addEventListener('mouseleave', onMouseLeave);
+
         return () => {
             if (animationFrame) {
                 cancelAnimationFrame(
@@ -168,6 +181,9 @@ const MinitigerNativeLibraryOverlay = ({
             rootObserver.disconnect();
             cardObserver.disconnect();
             resizeObserver.disconnect();
+            card.removeEventListener('mouseenter', onMouseEnter);
+            card.removeEventListener('mouseleave', onMouseLeave);
+            card.classList.remove('minitigerNativeHover');
 
             card.querySelectorAll<HTMLElement>(
                 '.minitigerNativeCardTextAutoCenter'
