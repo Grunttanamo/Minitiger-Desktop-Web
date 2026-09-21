@@ -542,6 +542,18 @@ const MinitigerHome = () => {
                                     aria-label={
                                         library.Name ?? 'Bibliothek'
                                     }
+                                    onMouseEnter={event => {
+                                        if (window.NativeShell) {
+                                            event.currentTarget.classList.add(
+                                                'minitigerNativeHover'
+                                            );
+                                        }
+                                    }}
+                                    onMouseLeave={event => {
+                                        event.currentTarget.classList.remove(
+                                            'minitigerNativeHover'
+                                        );
+                                    }}
                                 >
                                     <div className='minitigerLibraryCardBody'>
                                         <div className='minitigerLibraryImageWrap'>
@@ -716,6 +728,18 @@ const MinitigerHome = () => {
                                 library.showCaption
                             }
                             to={`/home?minitigerVirtualLibrary=${encodeURIComponent(library.id)}`}
+                            onMouseEnter={event => {
+                                if (window.NativeShell) {
+                                    event.currentTarget.classList.add(
+                                        'minitigerNativeHover'
+                                    );
+                                }
+                            }}
+                            onMouseLeave={event => {
+                                event.currentTarget.classList.remove(
+                                    'minitigerNativeHover'
+                                );
+                            }}
                         >
                             <MinitigerVirtualHomeMedia
                                 library={library}
