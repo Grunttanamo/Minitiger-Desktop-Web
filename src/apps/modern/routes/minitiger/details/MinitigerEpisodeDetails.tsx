@@ -24,6 +24,7 @@ import type { ItemDto } from 'types/base/models/item-dto';
 import MinitigerDetailAudioFlags from './MinitigerDetailAudioFlags';
 import MinitigerItemMenuButton from './MinitigerItemMenuButton';
 import MinitigerRail from './MinitigerRail';
+import MinitigerSeasonSwitcher from './MinitigerSeasonSwitcher';
 import {
     getMinitigerEpisodeCode,
     isMinitigerAvailableEpisode
@@ -800,36 +801,17 @@ const MinitigerEpisodeDetails = ({
                         </div>
 
                         {seasons.length > 0 && (
-                            <select
-                                className='minitigerEpisodeSeasonSwitcher'
+                            <MinitigerSeasonSwitcher
+                                seasons={seasons}
                                 value={
                                     selectedSeasonId
                                     || item.SeasonId
                                     || ''
                                 }
-                                onChange={event =>
-                                    setSelectedSeasonId(
-                                        event.currentTarget.value
-                                    )
-                                }
+                                onChange={setSelectedSeasonId}
                                 disabled={seasonsPending}
-                                aria-label='Staffel auswählen'
-                            >
-                                {seasons.map(season => (
-                                    <option
-                                        key={
-                                            season.Id
-                                            ?? season.Name
-                                        }
-                                        value={season.Id ?? ''}
-                                    >
-                                        {
-                                            season.Name
-                                            ?? `Staffel ${season.IndexNumber ?? ''}`
-                                        }
-                                    </option>
-                                ))}
-                            </select>
+                                ariaLabel='Staffel auswählen'
+                            />
                         )}
                     </div>
 
