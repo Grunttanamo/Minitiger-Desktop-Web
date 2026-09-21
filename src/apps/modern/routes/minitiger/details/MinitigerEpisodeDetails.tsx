@@ -25,6 +25,7 @@ import MinitigerDetailAudioFlags from './MinitigerDetailAudioFlags';
 import MinitigerItemMenuButton from './MinitigerItemMenuButton';
 import MinitigerRail from './MinitigerRail';
 import MinitigerSeasonSwitcher from './MinitigerSeasonSwitcher';
+import MinitigerSelectDropdown from './MinitigerSelectDropdown';
 import {
     getMinitigerEpisodeCode,
     isMinitigerAvailableEpisode
@@ -646,88 +647,83 @@ const MinitigerEpisodeDetails = ({
                         ) && (
                             <div className='minitigerEpisodeTrackSelectors'>
                                 {mediaSources.length > 1 && (
-                                    <label className='minitigerDetailsVersion'>
+                                    <div className='minitigerDetailsVersion'>
                                         <span>Version</span>
-                                        <select
+                                        <MinitigerSelectDropdown
                                             value={mediaSourceId}
-                                            onChange={event =>
-                                                setMediaSourceId(
-                                                    event.currentTarget.value
-                                                )
-                                            }
-                                        >
-                                            {mediaSources.map((source, index) => (
-                                                <option
-                                                    key={
-                                                        source.Id
-                                                        ?? `${source.Name}-${index}`
-                                                    }
-                                                    value={source.Id ?? ''}
-                                                >
-                                                    {
+                                            ariaLabel='Version auswählen'
+                                            onChange={setMediaSourceId}
+                                            options={mediaSources.map(
+                                                (source, index) => ({
+                                                    value: source.Id ?? '',
+                                                    label:
                                                         source.Name
                                                         || source.Path
                                                         || `Version ${index + 1}`
-                                                    }
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
+                                                })
+                                            )}
+                                        />
+                                    </div>
                                 )}
 
                                 {audioTracks.length > 1 && (
-                                    <label className='minitigerDetailsVersion'>
+                                    <div className='minitigerDetailsVersion'>
                                         <span>Audio</span>
-                                        <select
-                                            value={audioStreamIndex ?? ''}
-                                            onChange={event =>
+                                        <MinitigerSelectDropdown
+                                            value={String(audioStreamIndex ?? '')}
+                                            ariaLabel='Audio auswählen'
+                                            onChange={value =>
                                                 setAudioStreamIndex(
-                                                    event.currentTarget.value
-                                                        ? Number(event.currentTarget.value)
+                                                    value
+                                                        ? Number(value)
                                                         : undefined
                                                 )
                                             }
-                                        >
-                                            {audioTracks.map((stream, index) => (
-                                                <option
-                                                    key={stream.Index ?? index}
-                                                    value={stream.Index ?? ''}
-                                                >
-                                                    {getEpisodeStreamLabel(
+                                            options={audioTracks.map(
+                                                (stream, index) => ({
+                                                    value: String(
+                                                        stream.Index ?? ''
+                                                    ),
+                                                    label: getEpisodeStreamLabel(
                                                         stream,
                                                         `Audio ${index + 1}`
-                                                    )}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
+                                                    )
+                                                })
+                                            )}
+                                        />
+                                    </div>
                                 )}
 
                                 {subtitleTracks.length > 0 && (
-                                    <label className='minitigerDetailsVersion'>
+                                    <div className='minitigerDetailsVersion'>
                                         <span>Untertitel</span>
-                                        <select
-                                            value={subtitleStreamIndex}
-                                            onChange={event =>
+                                        <MinitigerSelectDropdown
+                                            value={String(subtitleStreamIndex)}
+                                            ariaLabel='Untertitel auswählen'
+                                            onChange={value =>
                                                 setSubtitleStreamIndex(
-                                                    Number(event.currentTarget.value)
+                                                    Number(value)
                                                 )
                                             }
-                                        >
-                                            <option value={-1}>Aus</option>
-                                            {subtitleTracks.map((stream, index) => (
-                                                <option
-                                                    key={stream.Index ?? index}
-                                                    value={stream.Index ?? -1}
-                                                >
-                                                    {getEpisodeStreamLabel(
-                                                        stream,
-                                                        `Untertitel ${index + 1}`
-                                                    )}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
+                                            options={[
+                                                {
+                                                    value: '-1',
+                                                    label: 'Aus'
+                                                },
+                                                ...subtitleTracks.map(
+                                                    (stream, index) => ({
+                                                        value: String(
+                                                            stream.Index ?? -1
+                                                        ),
+                                                        label: getEpisodeStreamLabel(
+                                                            stream,
+                                                            `Untertitel ${index + 1}`
+                                                        )
+                                                    })
+                                                )
+                                            ]}
+                                        />
+                                    </div>
                                 )}
                             </div>
                         )}
