@@ -5723,3 +5723,73 @@ iframe.minitigerInlineTrailer {
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_HOME_PARITY */
+
+
+/* =========================================================
+   PHASE 2.1 - NATIVE GLOW EXIT / VIRTUAL LIBRARY PARITY
+   ========================================================= */
+
+/*
+ * Keep the legacy pseudo-element aura disabled for the whole time Minitiger is
+ * running inside NativeShell. Otherwise mouseleave briefly exposes the old,
+ * oversized ::before glow between the explicit native hover class and :hover.
+ */
+:root[data-minitiger-native-shell='true']
+.minitigerHome .minitigerMediaCard::before,
+:root[data-minitiger-native-shell='true']
+.minitigerHome .minitigerLibraryCard::before,
+:root[data-minitiger-native-shell='true']
+.minitigerHome .minitigerVirtualHomeCard::before,
+:root[data-minitiger-native-shell='true']
+.minitigerHome .minitigerVirtualItemCard::before {
+    opacity: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Virtual-library page cards use the same explicit NativeShell hover state. */
+:root[data-minitiger-native-shell='true']
+.minitigerHome[data-hover-enabled='true']
+.minitigerVirtualItemCard.minitigerNativeHover
+.minitigerMediaCardBody {
+    transform: translateY(-5px) scale(1.018) !important;
+    filter: brightness(1.045) !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerVirtualItemCard.minitigerNativeHover
+.minitigerMediaOverlay {
+    opacity: 1 !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerVirtualItemCard.minitigerNativeHover
+.minitigerQuickPlay {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerVirtualItemCard.minitigerNativeHover
+.minitigerCardActions {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerHome[data-glow-enabled='true']
+.minitigerVirtualItemCard.minitigerNativeHover
+.minitigerMediaCardBody {
+    box-shadow:
+        0 0 var(--mt-glow-size, 20px)
+            var(--mt-glow-color, var(--mt-accent)),
+        0 0 calc(var(--mt-glow-size, 20px) * 1.45)
+            color-mix(
+                in srgb,
+                var(--mt-glow-color, var(--mt-accent)) 48%,
+                transparent
+            ) !important;
+    border-radius: 10px;
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_GLOW_EXIT_VIRTUAL_PARITY */
