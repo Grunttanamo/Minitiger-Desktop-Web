@@ -25,6 +25,7 @@ import MinitigerDetailAudioFlags from './MinitigerDetailAudioFlags';
 import MinitigerItemMenuButton from './MinitigerItemMenuButton';
 import MinitigerRail from './MinitigerRail';
 import MinitigerSeasonSwitcher from './MinitigerSeasonSwitcher';
+import MinitigerSelectDropdown from './MinitigerSelectDropdown';
 import {
     getMinitigerEpisodeCode,
     isMinitigerAvailableEpisode
@@ -755,41 +756,23 @@ const MinitigerVideoDetails = () => {
                         {isMovie
                             && mediaSources.length > 1
                             && (
-                                <label className='minitigerDetailsVersion'>
+                                <div className='minitigerDetailsVersion'>
                                     <span>Version</span>
-                                    <select
+                                    <MinitigerSelectDropdown
                                         value={mediaSourceId}
-                                        onChange={event =>
-                                            setMediaSourceId(
-                                                event.currentTarget.value
-                                            )
-                                        }
-                                    >
-                                        {mediaSources.map(
-                                            (
-                                                source,
-                                                index
-                                            ) => (
-                                                <option
-                                                    key={
-                                                        source.Id
-                                                        ?? `${source.Name}-${index}`
-                                                    }
-                                                    value={
-                                                        source.Id
-                                                        ?? ''
-                                                    }
-                                                >
-                                                    {
-                                                        source.Name
-                                                        || source.Path
-                                                        || `Version ${index + 1}`
-                                                    }
-                                                </option>
-                                            )
+                                        ariaLabel='Version auswählen'
+                                        onChange={setMediaSourceId}
+                                        options={mediaSources.map(
+                                            (source, index) => ({
+                                                value: source.Id ?? '',
+                                                label:
+                                                    source.Name
+                                                    || source.Path
+                                                    || `Version ${index + 1}`
+                                            })
                                         )}
-                                    </select>
-                                </label>
+                                    />
+                                </div>
                             )}
 
                         <div className='minitigerDetailsActions'>
