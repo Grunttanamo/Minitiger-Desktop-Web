@@ -5646,3 +5646,80 @@ iframe.minitigerInlineTrailer {
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_18_18_3_CENTERED_HOME_CARD_TEXT */
+
+
+/* =========================================================
+   PHASE 2.1 - NATIVE DESKTOP HOME PARITY
+   ========================================================= */
+
+/*
+ * Qt WebEngine can report a mouse as hover-capable without a fine pointer.
+ * React mirrors real mouse enter/leave into .minitigerNativeHover only inside
+ * NativeShell. Use that explicit state for the desktop client.
+ */
+.minitigerHome[data-hover-enabled='true']
+.minitigerMediaCard.minitigerNativeHover
+.minitigerMediaCardBody,
+.minitigerHome[data-hover-enabled='true']
+.minitigerLibraryCard.minitigerNativeHover
+.minitigerLibraryCardBody {
+    transform: translateY(-5px) scale(1.018) !important;
+    filter: brightness(1.045) !important;
+}
+
+.minitigerHome[data-hover-enabled='true']
+.minitigerVirtualHomeCard.minitigerNativeHover
+.minitigerVirtualHomeImage {
+    transform: translateY(-4px) !important;
+    filter: brightness(1.06) !important;
+}
+
+/* Native desktop: drive mini controls from the explicit hover class. */
+.minitigerMediaCard.minitigerNativeHover .minitigerMediaOverlay {
+    opacity: 1 !important;
+}
+
+.minitigerMediaCard.minitigerNativeHover .minitigerQuickPlay {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.minitigerMediaCard.minitigerNativeHover .minitigerCardActions {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+}
+
+/*
+ * On the desktop client the old outer pseudo glow makes the aura look detached
+ * from the visible card. Hide it while the explicit native hover is active and
+ * paint the glow on the exact wrapper that moves.
+ */
+.minitigerMediaCard.minitigerNativeHover::before,
+.minitigerLibraryCard.minitigerNativeHover::before,
+.minitigerVirtualHomeCard.minitigerNativeHover::before {
+    opacity: 0 !important;
+    box-shadow: none !important;
+}
+
+.minitigerHome[data-glow-enabled='true']
+.minitigerMediaCard.minitigerNativeHover
+.minitigerMediaCardBody,
+.minitigerHome[data-glow-enabled='true']
+.minitigerLibraryCard.minitigerNativeHover
+.minitigerLibraryCardBody,
+.minitigerHome[data-glow-enabled='true']
+.minitigerVirtualHomeCard.minitigerNativeHover {
+    box-shadow:
+        0 0 var(--mt-glow-size, 20px)
+            var(--mt-glow-color, var(--mt-accent)),
+        0 0 calc(var(--mt-glow-size, 20px) * 1.45)
+            color-mix(
+                in srgb,
+                var(--mt-glow-color, var(--mt-accent)) 48%,
+                transparent
+            ) !important;
+    border-radius: 10px;
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_HOME_PARITY */
