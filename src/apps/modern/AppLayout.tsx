@@ -33,15 +33,18 @@ export const Component = () => {
     const isCurrentLibraryPath = isLibraryPath(location.pathname);
 
     useEffect(() => {
-        console.info('[Minitiger Desktop Compat] layout', {
-            origin: window.location.origin,
-            pathname: window.location.pathname,
-            nativeShell: Boolean(window.NativeShell),
-            desktop: layoutManager.desktop,
-            mobile: layoutManager.mobile,
-            tv: layoutManager.tv,
-            modern: layoutManager.modern
-        });
+        console.info(
+            '[Minitiger Desktop Compat] layout '
+            + JSON.stringify({
+                origin: window.location.origin,
+                pathname: window.location.pathname,
+                nativeShell: Boolean(window.NativeShell),
+                desktop: layoutManager.desktop,
+                mobile: layoutManager.mobile,
+                tv: layoutManager.tv,
+                modern: layoutManager.modern
+            })
+        );
     }, []);
 
     const onToggleDrawer = useCallback(() => {
