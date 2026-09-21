@@ -134,6 +134,18 @@ const useMinitigerHomeSettings = () => {
             () => readSettings(storageKey)
         );
 
+    useEffect(() => {
+        console.info('[Minitiger Desktop Compat] home settings', {
+            origin: window.location.origin,
+            storageKey,
+            hoverEnabled: settings.hoverEnabled,
+            glowEnabled: settings.glowEnabled,
+            previewEnabled: settings.previewEnabled,
+            customHomeRowsEnabled: settings.customHomeRowsEnabled,
+            cardSize: settings.cardSize
+        });
+    }, [ storageKey ]);
+
     const serverSaveTimer = useRef<number | null>(null);
     const pendingServerValue = useRef<MinitigerHomeSettings | null>(null);
     const pendingServerBroadcast = useRef(false);
