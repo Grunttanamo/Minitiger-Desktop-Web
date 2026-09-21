@@ -48,20 +48,6 @@ const useMinitigerLibrarySettings = () => {
     );
 
     useEffect(() => {
-        console.info(
-            '[Minitiger Desktop Compat] library settings '
-            + JSON.stringify({
-                origin: window.location.origin,
-                storageKey,
-                hasLocalValue: Boolean(
-                    window.localStorage.getItem(storageKey)
-                ),
-                settings
-            })
-        );
-    }, [ storageKey, settings ]);
-
-    useEffect(() => {
         if (activeStorageKey.current === storageKey) {
             return;
         }
