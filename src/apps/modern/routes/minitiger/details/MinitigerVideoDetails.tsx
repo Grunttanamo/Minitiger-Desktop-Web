@@ -24,6 +24,7 @@ import type { ItemDto } from 'types/base/models/item-dto';
 import MinitigerDetailAudioFlags from './MinitigerDetailAudioFlags';
 import MinitigerItemMenuButton from './MinitigerItemMenuButton';
 import MinitigerRail from './MinitigerRail';
+import MinitigerSeasonSwitcher from './MinitigerSeasonSwitcher';
 import {
     getMinitigerEpisodeCode,
     isMinitigerAvailableEpisode
@@ -932,38 +933,11 @@ const MinitigerVideoDetails = () => {
                                 </div>
 
                                 {seasons.length > 0 && (
-                                    <select
-                                        className='minitigerEpisodeSeasonSwitcher'
-                                        value={
-                                            selectedSeasonId
-                                        }
-                                        onChange={event =>
-                                            setSelectedSeasonId(
-                                                event.currentTarget.value
-                                            )
-                                        }
-                                    >
-                                        {seasons.map(season => (
-                                            <option
-                                                key={
-                                                    season.Id
-                                                    ?? season.Name
-                                                }
-                                                value={
-                                                    season.Id
-                                                    ?? ''
-                                                }
-                                            >
-                                                {
-                                                    season.Name
-                                                    ?? `Staffel ${
-                                                        season.IndexNumber
-                                                        ?? ''
-                                                    }`
-                                                }
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <MinitigerSeasonSwitcher
+                                        seasons={seasons}
+                                        value={selectedSeasonId}
+                                        onChange={setSelectedSeasonId}
+                                    />
                                 )}
                             </div>
 
