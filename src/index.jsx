@@ -72,14 +72,23 @@ build: ${__JF_BUILD_VERSION__}`);
     // Initialize app host
     await appHost.init();
 
-    // Find the correct server URL
+    // Find the correct server URL.
+    // In Minitiger Desktop the native client setting is authoritative because
+    // the frontend itself is loaded from qrc:// rather than from the server.
+    const nativeServerUrl = window.NativeShell
+        ? window.jmpInfo?.settings?.main?.userWebClient
+        : null;
     const lastServer = ServerConnections.getLastUsedServer();
+
     let serverUrl;
-    if (lastServer) {
+    if (nativeServerUrl) {
+        serverUrl = nativeServerUrl.replace(/\/+$/, '');
+    } else if (lastServer) {
         serverUrl = getServerAddress(lastServer);
     } else {
         serverUrl = await serverAddress();
     }
+
     // Initialize the api client
     if (serverUrl) ServerConnections.initApiClient(serverUrl);
 
