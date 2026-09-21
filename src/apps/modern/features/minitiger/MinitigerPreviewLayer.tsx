@@ -38,6 +38,7 @@ import {
     isMinitigerAvailableEpisode
 } from 'apps/modern/routes/minitiger/details/episodeUtils';
 import MinitigerInlineTrailer from 'apps/modern/routes/minitiger/home/components/MinitigerInlineTrailer';
+import MinitigerSeasonSwitcher from 'apps/modern/routes/minitiger/details/MinitigerSeasonSwitcher';
 
 import './MinitigerPreview.scss';
 
@@ -1270,29 +1271,12 @@ const SeriesPreviewSection = ({
             <div className='minitigerSeriesPreviewHeader'>
                 <h3>Folgen</h3>
 
-                <select
+                <MinitigerSeasonSwitcher
+                    seasons={seasons}
                     value={selectedSeasonId}
-                    onChange={event =>
-                        setSelectedSeasonId(
-                            event.currentTarget.value
-                        )
-                    }
-                    aria-label='Staffel auswählen'
-                >
-                    {seasons.map(season => (
-                        <option
-                            key={season.Id ?? season.Name}
-                            value={season.Id ?? ''}
-                        >
-                            {season.Name
-                                ?? (
-                                    season.IndexNumber != null
-                                        ? `Staffel ${season.IndexNumber}`
-                                        : 'Staffel'
-                                )}
-                        </option>
-                    ))}
-                </select>
+                    onChange={setSelectedSeasonId}
+                    ariaLabel='Staffel auswählen'
+                />
             </div>
 
             {episodesPending ? (
