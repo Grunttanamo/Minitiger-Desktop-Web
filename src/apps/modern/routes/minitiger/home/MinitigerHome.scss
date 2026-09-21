@@ -5793,3 +5793,60 @@ iframe.minitigerInlineTrailer {
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_GLOW_EXIT_VIRTUAL_PARITY */
+
+
+/* =========================================================
+   PHASE 2.1 - VIRTUAL HOME CARD FINAL PARITY
+   ========================================================= */
+
+/*
+ * Virtual home cards used to carry the NativeShell glow on the whole <a>,
+ * which includes invisible/caption space below the artwork. That produced the
+ * dark lower shadow seen in Desktop. Keep the card itself shadow-free and put
+ * movement + glow on the exact visible image wrapper, matching normal cards.
+ */
+:root[data-minitiger-native-shell='true']
+.minitigerHome .minitigerVirtualHomeCard {
+    box-shadow: none !important;
+    filter: none !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerHome .minitigerVirtualHomeCard .minitigerVirtualHomeImage {
+    box-shadow: none !important;
+    transition:
+        transform 180ms ease,
+        filter 180ms ease,
+        box-shadow 180ms ease !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerHome[data-hover-enabled='true']
+.minitigerVirtualHomeCard.minitigerNativeHover
+.minitigerVirtualHomeImage {
+    transform: translateY(-5px) scale(1.018) !important;
+    filter: brightness(1.045) !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerHome[data-glow-enabled='true']
+.minitigerVirtualHomeCard.minitigerNativeHover {
+    box-shadow: none !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerHome[data-glow-enabled='true']
+.minitigerVirtualHomeCard.minitigerNativeHover
+.minitigerVirtualHomeImage {
+    box-shadow:
+        0 0 var(--mt-glow-size, 20px)
+            var(--mt-glow-color, var(--mt-accent)),
+        0 0 calc(var(--mt-glow-size, 20px) * 1.45)
+            color-mix(
+                in srgb,
+                var(--mt-glow-color, var(--mt-accent)) 48%,
+                transparent
+            ) !important;
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_VIRTUAL_HOME_FINAL_PARITY */
