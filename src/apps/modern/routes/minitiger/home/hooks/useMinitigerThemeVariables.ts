@@ -67,6 +67,10 @@ const useMinitigerThemeVariables = (
             settings.hoverEnabled ? 'true' : 'false'
         );
         root.setAttribute(
+            'data-minitiger-native-shell',
+            window.NativeShell ? 'true' : 'false'
+        );
+        root.setAttribute(
             'data-minitiger-glow-enabled',
             settings.glowEnabled ? 'true' : 'false'
         );
