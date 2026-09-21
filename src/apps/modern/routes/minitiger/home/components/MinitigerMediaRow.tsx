@@ -608,6 +608,18 @@ const MinitigerMediaRow = ({
                                             ? 'minitigerMediaCardSquare'
                                             : ''
                                 ].filter(Boolean).join(' ')}
+                                onMouseEnter={event => {
+                                    if (window.NativeShell) {
+                                        event.currentTarget.classList.add(
+                                            'minitigerNativeHover'
+                                        );
+                                    }
+                                }}
+                                onMouseLeave={event => {
+                                    event.currentTarget.classList.remove(
+                                        'minitigerNativeHover'
+                                    );
+                                }}
                             >
                                 <div className='minitigerMediaCardBody'>
                                     <div
