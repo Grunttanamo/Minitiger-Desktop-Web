@@ -1041,3 +1041,93 @@
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_18_15_1_PREVIEW_MINIMAL_DETAILS */
+
+
+/* =========================================================
+   PHASE 2.1 - PREVIEW SEASON DROPDOWN PARITY
+   ========================================================= */
+
+.minitigerSeriesPreviewHeader .minitigerSeasonDropdown {
+    position: relative;
+    min-width: 150px;
+    overflow: visible !important;
+}
+
+.minitigerSeriesPreviewHeader .minitigerSeasonDropdownButton {
+    width: 100%;
+    min-height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid #555;
+    border-radius: 5px;
+    background: #2d2f34;
+    color: #f8f9fb;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.minitigerSeriesPreviewHeader
+.minitigerSeasonDropdownButton:hover,
+.minitigerSeriesPreviewHeader
+.minitigerSeasonDropdownButton:focus-visible,
+.minitigerSeriesPreviewHeader
+.minitigerSeasonDropdown.isOpen
+.minitigerSeasonDropdownButton {
+    border-color: var(--mt-accent, #7f4df3);
+    outline: none;
+}
+
+.minitigerSeriesPreviewHeader .minitigerSeasonDropdownMenu {
+    position: absolute;
+    z-index: 240;
+    top: calc(100% + 0.25rem);
+    right: 0;
+    min-width: 100%;
+    padding: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 6px;
+    background: #1f2228;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+.minitigerSeriesPreviewHeader .minitigerSeasonDropdownOption {
+    width: 100%;
+    padding: 0.48rem 0.65rem;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #f8f9fb;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.minitigerSeriesPreviewHeader
+.minitigerSeasonDropdownOption:hover,
+.minitigerSeriesPreviewHeader
+.minitigerSeasonDropdownOption:focus-visible {
+    background: rgba(255, 255, 255, 0.095);
+    outline: none;
+}
+
+.minitigerSeriesPreviewHeader
+.minitigerSeasonDropdownOption.isSelected {
+    background: var(--mt-accent, #7f4df3);
+    color: var(--mt-accent-text, #fff);
+}
+
+@media (max-width: 620px) {
+    .minitigerSeriesPreviewHeader .minitigerSeasonDropdown {
+        width: 100%;
+    }
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_PREVIEW_SEASON_DROPDOWN_PARITY */
