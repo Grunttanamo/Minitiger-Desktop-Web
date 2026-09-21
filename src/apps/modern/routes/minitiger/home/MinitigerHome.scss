@@ -5679,3 +5679,36 @@ iframe.minitigerInlineTrailer {
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_2_1_DESKTOP_STANDALONE_HOME_HOVER_PARITY */
+
+
+/* NativeShell fallback: Qt may report no fine pointer even with a mouse.
+   The global host mirrors actual mouse enter/leave into this class. */
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerHome .minitigerMediaCard.minitigerDesktopHover .minitigerMediaCardBody,
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerHome .minitigerLibraryCard.minitigerDesktopHover .minitigerLibraryCardBody {
+    transform: translateY(-5px) scale(1.018) !important;
+    filter: brightness(1.045) !important;
+}
+
+:root[data-minitiger-native-shell='true'][data-minitiger-hover-enabled='true']
+.minitigerHome .minitigerVirtualHomeCard.minitigerDesktopHover .minitigerVirtualHomeImage {
+    transform: translateY(-5px) scale(1.018) !important;
+    filter: brightness(1.045) !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerHome .minitigerMediaCard.minitigerDesktopHover .minitigerQuickPlay {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+}
+
+:root[data-minitiger-native-shell='true']
+.minitigerHome .minitigerMediaCard.minitigerDesktopHover .minitigerCardActions,
+:root[data-minitiger-native-shell='true']
+.minitigerHome .minitigerMediaCard.minitigerDesktopHover .minitigerMediaOverlay {
+    opacity: 1 !important;
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_EVENT_HOVER_HOME */
