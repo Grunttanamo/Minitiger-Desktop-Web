@@ -135,16 +135,35 @@ const useMinitigerHomeSettings = () => {
         );
 
     useEffect(() => {
-        console.info('[Minitiger Desktop Compat] home settings', {
-            origin: window.location.origin,
-            storageKey,
-            hoverEnabled: settings.hoverEnabled,
-            glowEnabled: settings.glowEnabled,
-            previewEnabled: settings.previewEnabled,
-            customHomeRowsEnabled: settings.customHomeRowsEnabled,
-            cardSize: settings.cardSize
-        });
-    }, [ storageKey ]);
+        console.info(
+            '[Minitiger Desktop Compat] home settings '
+            + JSON.stringify({
+                origin: window.location.origin,
+                storageKey,
+                hasLocalValue: Boolean(
+                    window.localStorage.getItem(storageKey)
+                ),
+                hoverEnabled: settings.hoverEnabled,
+                glowEnabled: settings.glowEnabled,
+                previewEnabled: settings.previewEnabled,
+                customHomeRowsEnabled: settings.customHomeRowsEnabled,
+                cardSize: settings.cardSize,
+                showAudioFlags: settings.showAudioFlags,
+                showFskBadges: settings.showFskBadges,
+                showPlayedIndicators: settings.showPlayedIndicators
+            })
+        );
+    }, [
+        storageKey,
+        settings.cardSize,
+        settings.customHomeRowsEnabled,
+        settings.glowEnabled,
+        settings.hoverEnabled,
+        settings.previewEnabled,
+        settings.showAudioFlags,
+        settings.showFskBadges,
+        settings.showPlayedIndicators
+    ]);
 
     const serverSaveTimer = useRef<number | null>(null);
     const pendingServerValue = useRef<MinitigerHomeSettings | null>(null);
