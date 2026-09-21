@@ -811,6 +811,62 @@ const ItemsView: FC = () => {
 
     const sortCode = getSortCode(libraryViewSettings);
 
+    useEffect(() => {
+        if (!itemsResult?.data?.Items?.length) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            const card = document.querySelector<HTMLElement>(
+                '.minitigerLibraryPage .minitigerNativeLibraryCard'
+            );
+            const hoverMenu = card?.querySelector<HTMLElement>(
+                '.cardOverlayContainer'
+            );
+            const buttons = card?.querySelectorAll<HTMLElement>(
+                '.cardOverlayButton, .btnCardOptions'
+            ) ?? [];
+
+            const hoverStyle = hoverMenu
+                ? window.getComputedStyle(hoverMenu)
+                : null;
+
+            console.info(
+                '[Minitiger Desktop Compat] library DOM '
+                + JSON.stringify({
+                    collectionType,
+                    viewType,
+                    itemCount: itemsResult.data?.Items?.length ?? 0,
+                    cardFound: Boolean(card),
+                    cardClass: card?.className ?? null,
+                    cardHoverable:
+                        card?.classList.contains('card-hoverable')
+                        ?? false,
+                    hoverMenuFound: Boolean(hoverMenu),
+                    overlayButtonCount: buttons.length,
+                    hoverMenuDisplay: hoverStyle?.display ?? null,
+                    hoverMenuVisibility: hoverStyle?.visibility ?? null,
+                    hoverMenuOpacity: hoverStyle?.opacity ?? null,
+                    customNavigationEnabled:
+                        minitigerLibrarySettings.customNavigationEnabled,
+                    hoverEnabled:
+                        minitigerHomeSettings.hoverEnabled,
+                    glowEnabled:
+                        minitigerHomeSettings.glowEnabled
+                })
+            );
+        }, 300);
+
+        return () => window.clearTimeout(timer);
+    }, [
+        collectionType,
+        itemsResult?.data?.Items?.length,
+        minitigerHomeSettings.glowEnabled,
+        minitigerHomeSettings.hoverEnabled,
+        minitigerLibrarySettings.customNavigationEnabled,
+        viewType
+    ]);
+
     return (
         <>
         <Box className='padded-bottom-page'>
