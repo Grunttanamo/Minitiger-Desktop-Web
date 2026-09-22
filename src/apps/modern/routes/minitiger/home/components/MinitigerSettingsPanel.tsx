@@ -576,17 +576,6 @@ const MinitigerSettingsPanel = ({
     const [ importMessage, setImportMessage ] = useState('');
     const [ virtualMediaMessage, setVirtualMediaMessage ] = useState('');
 
-    const desktopWindow = window as Window & {
-        NativeShell?: boolean;
-        jmpInfo?: {
-            bundledMinitigerWeb?: boolean;
-        };
-    };
-
-    const isBundledMinitigerDesktop = Boolean(
-        desktopWindow.NativeShell
-        && desktopWindow.jmpInfo?.bundledMinitigerWeb
-    );
     const activeColorTheme =
         COLOR_THEME_PRESETS.find(preset =>
             COLOR_THEME_KEYS.every(key =>
@@ -625,8 +614,7 @@ const onUpdate = (
             'hoverEnabled',
             'glowEnabled',
             'previewEnabled',
-            'cardTextCentered',
-            'preferredPlayer'
+            'cardTextCentered'
         ]);
 
         const filtered = Object.fromEntries(
@@ -942,61 +930,6 @@ const onUpdate = (
                                         ? 'Globale Standard-Einstellungen für die komplette Minitiger-Oberfläche.'
                                         : 'Persönliche kosmetische Einstellungen für deinen Minitiger-Account.'}
                                 </p>
-
-                                {!isBundledMinitigerDesktop && (
-                                <section className='minitigerSettingsCard'>
-                                    <h4>Wiedergabe</h4>
-                                    <p className='minitigerSettingsHint'>
-                                        Diese Auswahl ist persönlich und wird nur für deinen Jellyfin-Nutzer gespeichert. In diesem ersten Test wird noch nichts an VLC übergeben; wir prüfen zunächst Einstellung und Desktop-Bridge.
-                                    </p>
-
-                                    <label className='minitigerSettingsToggle'>
-                                        <input
-                                            type='radio'
-                                            name='minitigerPreferredPlayer'
-                                            checked={
-                                                settings.preferredPlayer
-                                                === 'native'
-                                            }
-                                            onChange={() =>
-                                                onUpdate({
-                                                    preferredPlayer: 'native'
-                                                })
-                                            }
-                                        />
-                                        <span>
-                                            <strong>Nativer Jellyfin Player</strong>
-                                            <small>Verwendet weiterhin Jellyfin Desktop / MPV bzw. den normalen Browser-Player.</small>
-                                        </span>
-                                    </label>
-
-                                    <label className='minitigerSettingsToggle'>
-                                        <input
-                                            type='radio'
-                                            name='minitigerPreferredPlayer'
-                                            checked={
-                                                settings.preferredPlayer
-                                                === 'vlc'
-                                            }
-                                            onChange={() =>
-                                                onUpdate({
-                                                    preferredPlayer: 'vlc'
-                                                })
-                                            }
-                                        />
-                                        <span>
-                                            <strong>VLC Player · Experimentell</strong>
-                                            <small>Startet Filme, Episoden und Musikvideos über die lokale Minitiger VLC Bridge im installierten VLC Media Player.</small>
-                                        </span>
-                                    </label>
-
-                                    <p className='minitigerSettingsHint'>
-                                        <strong>Wichtig:</strong>{' '}
-                                        Der VLC Player funktioniert aktuell nur unter Windows mit installiertem VLC Media Player und eingerichteter Minitiger VLC Bridge. Ohne diese Windows-Komponenten kann Minitiger VLC nicht starten. Der native Jellyfin Player benötigt diese Zusatzinstallation nicht.
-                                    </p>
-
-                                </section>
-                                )}
 
                                 {isAdmin && (
                                 <section
