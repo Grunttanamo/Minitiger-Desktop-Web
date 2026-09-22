@@ -3,7 +3,12 @@ import React, { useEffect, useRef, useState } from 'react';
 export interface MinitigerSelectOption {
     value: string;
     label: string;
+    key?: string;
 }
+
+type MinitigerSelectDropdownVariant =
+    | 'default'
+    | 'season';
 
 interface Props {
     value: string;
@@ -12,6 +17,9 @@ interface Props {
     disabled?: boolean;
     ariaLabel?: string;
     className?: string;
+    variant?: MinitigerSelectDropdownVariant;
+    fallbackLabel?: string;
+    fallbackToFirstOption?: boolean;
 }
 
 const MinitigerSelectDropdown = ({
@@ -20,14 +28,36 @@ const MinitigerSelectDropdown = ({
     onChange,
     disabled = false,
     ariaLabel = 'Auswahl',
-    className
+    className,
+    variant = 'default',
+    fallbackLabel = 'Auswahl',
+    fallbackToFirstOption = true
 }: Props) => {
     const [ open, setOpen ] = useState(false);
     const rootRef = useRef<HTMLDivElement>(null);
 
     const selected =
         options.find(option => option.value === value)
-        ?? options[0];
+        ?? (fallbackToFirstOption ? options[0] : undefined);
+
+    const isSeason = variant === 'season';
+    const classNames = isSeason
+        ? {
+            root: 'minitigerSeasonDropdown',
+            button: 'minitigerSeasonDropdownButton',
+            value: '',
+            chevron: 'minitigerSeasonDropdownChevron',
+            menu: 'minitigerSeasonDropdownMenu',
+            option: 'minitigerSeasonDropdownOption'
+        }
+        : {
+            root: 'minitigerSelectDropdown',
+            button: 'minitigerSelectDropdownButton',
+            value: 'minitigerSelectDropdownValue',
+            chevron: 'minitigerSelectDropdownChevron',
+            menu: 'minitigerSelectDropdownMenu',
+            option: 'minitigerSelectDropdownOption'
+        };
 
     useEffect(() => {
         if (!open) {
@@ -71,25 +101,25 @@ const MinitigerSelectDropdown = ({
         <div
             ref={rootRef}
             className={[
-                'minitigerSelectDropdown',
+                classNames.root,
                 open ? 'isOpen' : '',
                 className ?? ''
             ].filter(Boolean).join(' ')}
         >
             <button
                 type='button'
-                className='minitigerSelectDropdownButton'
+                className={classNames.button}
                 aria-label={ariaLabel}
                 aria-haspopup='listbox'
                 aria-expanded={open}
                 disabled={disabled}
                 onClick={() => setOpen(current => !current)}
             >
-                <span className='minitigerSelectDropdownValue'>
-                    {selected?.label ?? 'Auswahl'}
+                <span className={classNames.value || undefined}>
+                    {selected?.label ?? fallbackLabel}
                 </span>
                 <span
-                    className='minitigerSelectDropdownChevron'
+                    className={classNames.chevron}
                     aria-hidden='true'
                 >
                     ▾
@@ -98,7 +128,7 @@ const MinitigerSelectDropdown = ({
 
             {open && (
                 <div
-                    className='minitigerSelectDropdownMenu'
+                    className={classNames.menu}
                     role='listbox'
                     aria-label={ariaLabel}
                 >
@@ -108,12 +138,12 @@ const MinitigerSelectDropdown = ({
 
                         return (
                             <button
-                                key={option.value}
+                                key={option.key ?? option.value}
                                 type='button'
                                 role='option'
                                 aria-selected={isSelected}
                                 className={[
-                                    'minitigerSelectDropdownOption',
+                                    classNames.option,
                                     isSelected ? 'isSelected' : ''
                                 ].filter(Boolean).join(' ')}
                                 onClick={() => {
