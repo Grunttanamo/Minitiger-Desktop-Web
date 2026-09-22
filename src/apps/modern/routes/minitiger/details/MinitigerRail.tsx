@@ -6,6 +6,8 @@ import React, {
     useState
 } from 'react';
 
+import { animateMinitigerHorizontalScroll } from '../animateHorizontalScroll';
+
 interface Props extends PropsWithChildren {
     className?: string;
     ariaLabel?: string;
@@ -187,12 +189,10 @@ const MinitigerRail = ({
                 )
             );
 
-        track.scrollBy({
-            left:
-                direction
-                * distance,
-            behavior: 'smooth'
-        });
+        animateMinitigerHorizontalScroll(
+            track,
+            direction * distance
+        );
 
         window.setTimeout(
             updateScrollState,
