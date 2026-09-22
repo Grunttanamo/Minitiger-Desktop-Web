@@ -541,14 +541,16 @@ export const normalizeHomeSettings = (
         ? source.visibleSections
         : {};
 
-    const incomingSystemRowCardScale = (
+    const incomingSystemRowCardScale:
+        Partial<SystemHomeRowLayoutMap> = (
         source.systemRowCardScale
         && typeof source.systemRowCardScale === 'object'
     )
         ? source.systemRowCardScale
         : {};
 
-    const incomingSystemRowGap = (
+    const incomingSystemRowGap:
+        Partial<SystemHomeRowLayoutMap> = (
         source.systemRowGap
         && typeof source.systemRowGap === 'object'
     )
