@@ -587,6 +587,18 @@ const MinitigerSettingsPanel = ({
     const [ activeTab, setActiveTab ] = useState<SettingsTab>('general');
     const [ importMessage, setImportMessage ] = useState('');
     const [ virtualMediaMessage, setVirtualMediaMessage ] = useState('');
+
+    const desktopWindow = window as Window & {
+        NativeShell?: boolean;
+        jmpInfo?: {
+            bundledMinitigerWeb?: boolean;
+        };
+    };
+
+    const isBundledMinitigerDesktop = Boolean(
+        desktopWindow.NativeShell
+        && desktopWindow.jmpInfo?.bundledMinitigerWeb
+    );
     const activeColorTheme =
         COLOR_THEME_PRESETS.find(preset =>
             COLOR_THEME_KEYS.every(key =>
@@ -943,6 +955,7 @@ const onUpdate = (
                                         : 'Persönliche kosmetische Einstellungen für deinen Minitiger-Account.'}
                                 </p>
 
+                                {!isBundledMinitigerDesktop && (
                                 <section className='minitigerSettingsCard'>
                                     <h4>Wiedergabe</h4>
                                     <p className='minitigerSettingsHint'>
@@ -995,6 +1008,7 @@ const onUpdate = (
                                     </p>
 
                                 </section>
+                                )}
 
                                 {isAdmin && (
                                 <section
