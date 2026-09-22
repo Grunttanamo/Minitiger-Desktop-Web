@@ -51,6 +51,9 @@ interface MinitigerMediaRowProps {
     onVirtualAssign?: (item: ItemDto) => void;
     emptyText?: string;
     previewContext?: string;
+    cardScale?: number;
+    cardGap?: number;
+    showTitle?: boolean;
     subtitleOverride?: (
         item: ItemDto
     ) => string | null | undefined;
@@ -102,6 +105,9 @@ const MinitigerMediaRow = ({
     onVirtualAssign,
     emptyText,
     previewContext,
+    cardScale,
+    cardGap,
+    showTitle = true,
     subtitleOverride
 }: MinitigerMediaRowProps) => {
     const rowRef = useRef<HTMLDivElement>(null);
@@ -289,7 +295,9 @@ const MinitigerMediaRow = ({
     }, [
         displayItems.length,
         updateScrollAvailability,
-        variant
+        variant,
+        cardScale,
+        cardGap
     ]);
 
     const scrollRow = (direction: -1 | 1) => {
@@ -434,12 +442,47 @@ const MinitigerMediaRow = ({
         return null;
     }
 
+    const customLayout = cardScale != null || cardGap != null;
+    const baseCardWidth =
+        variant === 'landscape'
+            ? 300
+            : variant === 'square'
+                ? 220
+                : 180;
+    const rowStyle = customLayout
+        ? {
+            '--mt-custom-row-card-width':
+                `${Math.round(
+                    baseCardWidth
+                    * ((cardScale ?? 100) / 100)
+                )}px`,
+            '--mt-custom-row-gap':
+                `${cardGap ?? 16}px`
+        } as React.CSSProperties
+        : undefined;
+
     return (
         <section
-            className='minitigerSection minitigerMediaSection'
+            className={[
+                'minitigerSection',
+                'minitigerMediaSection',
+                customLayout
+                    ? 'minitigerMediaSectionCustomLayout'
+                    : ''
+            ].filter(Boolean).join(' ')}
             data-has-scroll-controls={canScroll}
+            style={rowStyle}
         >
-            <div className='minitigerSectionHeader'>
+            {(showTitle || (!pending && !error && canScroll)) && (
+            <div
+                className={[
+                    'minitigerSectionHeader',
+                    !showTitle
+                        ? 'minitigerSectionHeaderTitleHidden'
+                        : ''
+                ].filter(Boolean).join(' ')}
+            >
+                {showTitle && (
                 <h2
                     style={{
                         '--mt-side-title-size':
@@ -454,6 +497,7 @@ const MinitigerMediaRow = ({
                 >
                     {title}
                 </h2>
+                )}
 
                 {!pending && !error && canScroll && (
                     <div className='minitigerRowArrows'>
@@ -479,6 +523,7 @@ const MinitigerMediaRow = ({
                     </div>
                 )}
             </div>
+            )}
 
             {pending && (
                 <div className='minitigerStatusCard'>
