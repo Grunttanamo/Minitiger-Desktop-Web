@@ -1,59 +1,55 @@
-# Minitiger Virtual Sync – Plugin Repository
+# Minitiger Virtual Sync
 
-Minitiger Web itself stays in the separate sidecar container. **Minitiger Virtual Sync** is a server-side companion plugin used by Minitiger server-synced features. It is optional for the basic frontend, but **required for VLC Player · Experimentell**, because the external VLC bridge uses the companion playback-job and playback-sync endpoints.
+**Minitiger Virtual Sync** is the server-side companion plugin used by Minitiger features that need data or behavior beyond the normal Jellyfin Web frontend.
 
-The plugin does not replace Jellyfin, does not replace the Jellyfin database and is not bundled into the Minitiger sidecar.
+Current plugin responsibilities include Minitiger profile synchronization, virtual-library support, background translation services, admin messages and the existing season repair/removal helpers.
 
-## Repository URL
+The plugin does **not** replace Jellyfin or its database.
 
-Add this URL in Jellyfin:
+## Native VLC note
+
+The current Minitiger Desktop VLC backend is implemented directly in the native client with libVLC.
+
+The old external Windows VLC bridge, `minitiger-vlc://` protocol handler and `Minitiger/Vlc` playback-job API have been removed from the Desktop-Web source. Native VLC playback therefore does not require those old bridge components.
+
+## Source
+
+Plugin source:
+
+```text
+tools/MinitigerVirtualSync/
+```
+
+Project:
+
+```text
+tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csproj
+```
+
+Compatibility:
+
+- Jellyfin Server: 12.x
+- tested Minitiger target: Jellyfin 12.1
+- .NET target: net10.0
+- Jellyfin plugin ABI line: 12.0.0.0
+
+## Public plugin repository
+
+Existing public plugin releases are still referenced through the original Minitiger plugin repository:
 
 ```text
 https://raw.githubusercontent.com/Grunttanamo/Minitiger/minitiger-v12.1/plugin-repository/manifest.json
 ```
 
-## Install in Jellyfin
+Install it through **Jellyfin Dashboard → Plugins → Repositories**, then install **Minitiger Virtual Sync** from the catalog and restart Jellyfin.
 
-1. Open **Dashboard → Plugins → Repositories**.
-2. Add a repository named **Minitiger**.
-3. Paste the repository URL above and save.
-4. Open **Plugins → Catalog**.
-5. Install **Minitiger Virtual Sync**.
-6. Restart Jellyfin.
+## Development build
 
-After the first public plugin release has been created, new plugin versions are delivered through the same repository URL.
+From the repository root:
 
-For the experimental external VLC player on Windows, also see **[VLC_EXPERIMENTAL_SETUP.md](VLC_EXPERIMENTAL_SETUP.md)**.
+```bash
+dotnet restore tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csproj
+dotnet build tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csproj --configuration Release --no-restore
+```
 
-## Compatibility
-
-- Jellyfin Server: **12.x**, tested target server: **12.1**.
-- .NET target: **net10.0**.
-- Jellyfin plugin ABI: **12.0.0.0**.
-
-Jellyfin 12.1 still uses the Jellyfin 12 plugin ABI line, so the catalog entry intentionally targets `12.0.0.0` while Minitiger itself is tested on Jellyfin 12.1.
-
-## Data location
-
-The plugin stores only its own Minitiger data below Jellyfin's plugin data directory, including the virtual-library configuration and optional uploaded image/logo/video files. It does not need direct access to the Minitiger sidecar filesystem.
-
-## Maintainer release flow
-
-Plugin releases are intentionally separate from the long Minitiger Docker build.
-
-1. Push plugin/workflow changes to `minitiger-v12.1`.
-2. Wait for **Build Minitiger Virtual Sync Plugin** to turn green.
-3. Open **Actions → Release Minitiger Virtual Sync Plugin**.
-4. Choose branch `minitiger-v12.1` and click **Run workflow**.
-5. Enter a four-part version, for example `1.3.1.0`, plus a short changelog.
-
-The workflow then:
-
-- builds the plugin with .NET 10,
-- packages the plugin DLL into a ZIP,
-- calculates the Jellyfin catalog MD5 checksum,
-- creates a GitHub Release,
-- updates `plugin-repository/manifest.json`,
-- commits the updated manifest back to `minitiger-v12.1`.
-
-No Minitiger Web / Docker image rebuild is required for a plugin-only release.
+The Desktop client build itself does not compile this plugin; it is a separate Jellyfin server component.
