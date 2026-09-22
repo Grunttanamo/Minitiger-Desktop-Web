@@ -4143,7 +4143,6 @@ iframe.minitigerInlineTrailer {
     cursor: not-allowed;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_3_1_2_FORCE_APPLY */
 
 
 /* =========================================================
@@ -4280,7 +4279,6 @@ iframe.minitigerInlineTrailer {
     z-index: 3 !important;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_3_2_1_ROW_CENTER_VIDEO */
 
 /* =========================================================
    PHASE 18.3.2.2 - SIDE ROW GLOW / ARROW LANE HOTFIX
@@ -4330,7 +4328,6 @@ iframe.minitigerInlineTrailer {
     min-height: 0 !important;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_3_2_2_SIDE_GLOW_ARROWS */
 
 /* =========================================================
    PHASE 18.3.3 - SMART ROW ARROWS / VIRTUAL NAV / FLAG FLOW
@@ -4471,7 +4468,6 @@ iframe.minitigerInlineTrailer {
     }
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_3_3_SMART_ROWS_VIRTUAL_NAV */
 
 /* =========================================================
    PHASE 18.3.4 - VIRTUAL ROW GAP PARITY
@@ -4486,7 +4482,6 @@ iframe.minitigerInlineTrailer {
     padding-top: 0 !important;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_3_4_VIRTUAL_ROW_GAP */
 
 /* =========================================================
    PHASE 18.3.5 - VIRTUAL ROW VISUAL GAP PARITY
@@ -4512,7 +4507,6 @@ iframe.minitigerInlineTrailer {
         ) !important;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_3_5_VIRTUAL_VISUAL_GAP */
 
 /* =========================================================
    PHASE 18.3.6 - UNIFIED HOME ROW GAP GEOMETRY
@@ -4549,7 +4543,6 @@ iframe.minitigerInlineTrailer {
         calc(-30px - var(--mt-glow-size, 20px) * 1.8) !important;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_3_6_UNIFIED_ROW_GAP */
 
 
 /* =========================================================
@@ -5174,7 +5167,6 @@ iframe.minitigerInlineTrailer {
     }
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_8_0_TEST_COLOR_TEMPLATES */
 
 /* =========================================================
    PHASE 18.8.1 TEST - COMPACT SETTINGS UI
@@ -5451,7 +5443,6 @@ iframe.minitigerInlineTrailer {
     }
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_8_1_TEST_COMPACT_SETTINGS_UI */
 
 
 
@@ -5492,7 +5483,6 @@ iframe.minitigerInlineTrailer {
     pointer-events: auto !important;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_12_3_TEST_HOME_USER_POLISH */
 
 
 /* =========================================================
@@ -5522,7 +5512,6 @@ iframe.minitigerInlineTrailer {
     pointer-events: auto !important;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_12_4_TEST_BANNER_AVATAR_GLOBAL */
 
 /* =========================================================
    PHASE 18.15.0 TEST - GLOBAL HOVER / STABLE GLOW LAYOUT
@@ -5607,7 +5596,6 @@ iframe.minitigerInlineTrailer {
     transform: none !important;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_15_0_HOME_HOVER_LAYOUT */
 
 /* =========================================================
    PHASE 18.18.3 TEST - OPTIONAL CENTERED CARD TEXT
@@ -5645,7 +5633,6 @@ iframe.minitigerInlineTrailer {
     text-align: left;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_18_18_3_CENTERED_HOME_CARD_TEXT */
 
 
 /* =========================================================
@@ -5722,7 +5709,6 @@ iframe.minitigerInlineTrailer {
     border-radius: 10px;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_HOME_PARITY */
 
 
 /* =========================================================
@@ -5792,7 +5778,6 @@ iframe.minitigerInlineTrailer {
     border-radius: 10px;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_GLOW_EXIT_VIRTUAL_PARITY */
 
 
 /* =========================================================
@@ -5849,4 +5834,3 @@ iframe.minitigerInlineTrailer {
             ) !important;
 }
 
-/* MINITIGER_PATCH_MARKER: PHASE_2_1_VIRTUAL_HOME_FINAL_PARITY */
