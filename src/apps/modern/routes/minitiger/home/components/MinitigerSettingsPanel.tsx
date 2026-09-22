@@ -1988,6 +1988,28 @@ const onUpdate = (
                                         </div>
                                     </label>
 
+                                    <label className='minitigerRangeField'>
+                                        <span>Abstand der normalen Inhalte</span>
+                                        <div>
+                                            <input
+                                                type='range'
+                                                min='4'
+                                                max='32'
+                                                step='1'
+                                                value={librarySettings.contentGap}
+                                                onChange={event =>
+                                                    onUpdateLibrarySettings({
+                                                        contentGap: Number(
+                                                            event.currentTarget.value
+                                                        )
+                                                    })
+                                                }
+                                            />
+                                            <output>{librarySettings.contentGap}</output>
+                                        </div>
+                                        <small>Regelt den Abstand zwischen Karten auf normalen Bibliotheksseiten. Virtuelle Bibliotheken behalten ihre eigene Einstellung.</small>
+                                    </label>
+
                                     <label className='minitigerSettingsToggle'>
                                         <input
                                             type='checkbox'
