@@ -545,6 +545,8 @@ const MinitigerHomeBuilderSettings = ({
                                                         ? 'Landscape'
                                                         : 'Poster'
                                             } · {row.count}
+                                            · {row.cardScale}%
+                                            · {row.gap}px
                                         </span>
 
                                         <div className='minitigerHomeBuilderMove'>
@@ -599,6 +601,75 @@ const MinitigerHomeBuilderSettings = ({
                                                         )
                                                     }
                                                 />
+                                            </label>
+
+                                            <label className='minitigerSettingsToggle isWide'>
+                                                <input
+                                                    type='checkbox'
+                                                    checked={row.showTitle}
+                                                    onChange={event =>
+                                                        onUpdateCustomRow(
+                                                            row.key,
+                                                            {
+                                                                showTitle:
+                                                                    event.currentTarget.checked
+                                                            }
+                                                        )
+                                                    }
+                                                />
+                                                <span>
+                                                    <strong>Titel der Reihe anzeigen</strong>
+                                                </span>
+                                            </label>
+
+                                            <label className='minitigerRangeField'>
+                                                <span>Kartengröße</span>
+                                                <div>
+                                                    <input
+                                                        type='range'
+                                                        min='60'
+                                                        max='160'
+                                                        step='5'
+                                                        value={row.cardScale}
+                                                        onChange={event =>
+                                                            onUpdateCustomRow(
+                                                                row.key,
+                                                                {
+                                                                    cardScale:
+                                                                        Number(
+                                                                            event.currentTarget.value
+                                                                        )
+                                                                }
+                                                            )
+                                                        }
+                                                    />
+                                                    <output>{row.cardScale}%</output>
+                                                </div>
+                                            </label>
+
+                                            <label className='minitigerRangeField'>
+                                                <span>Kartenabstand</span>
+                                                <div>
+                                                    <input
+                                                        type='range'
+                                                        min='4'
+                                                        max='48'
+                                                        step='1'
+                                                        value={row.gap}
+                                                        onChange={event =>
+                                                            onUpdateCustomRow(
+                                                                row.key,
+                                                                {
+                                                                    gap:
+                                                                        Number(
+                                                                            event.currentTarget.value
+                                                                        )
+                                                                }
+                                                            )
+                                                        }
+                                                    />
+                                                    <output>{row.gap}px</output>
+                                                </div>
                                             </label>
 
                                             <label className='minitigerSettingsField'>
