@@ -5834,3 +5834,25 @@ iframe.minitigerInlineTrailer {
             ) !important;
 }
 
+/* Virtual-library pages use the same visual page gutters as normal Minitiger
+   libraries. The home content wrapper intentionally has no global padding, so
+   the virtual page owns its title, toolbar and grid inset itself. */
+.minitigerVirtualPage {
+    box-sizing: border-box;
+    padding: 0.7rem 3.25% 0;
+}
+
+@media (max-width: 900px) {
+    .minitigerVirtualPage {
+        padding-left: 4%;
+        padding-right: 4%;
+    }
+}
+
+@media (max-width: 600px) {
+    .minitigerVirtualPage {
+        padding-left: 2.5%;
+        padding-right: 2.5%;
+    }
+}
+
