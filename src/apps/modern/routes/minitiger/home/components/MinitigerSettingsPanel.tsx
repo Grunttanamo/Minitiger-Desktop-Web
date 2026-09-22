@@ -532,18 +532,6 @@ const ColorField = ({
 };
 
 
-interface MinitigerVlcSystemBridge {
-    runUserScript?: (script: string) => void;
-    'runUserScript(QString)'?: (script: string) => void;
-    openExternalUrl?: (url: string) => void;
-    'openExternalUrl(QString)'?: (url: string) => void;
-    [key: string]: unknown;
-}
-
-interface MinitigerVlcApiBridge {
-    system?: MinitigerVlcSystemBridge;
-}
-
 const MinitigerSettingsPanel = ({
     settings,
     librarySettings,
