@@ -31,6 +31,7 @@ import {
 } from '../mediaUtils';
 import useMinitigerRowMediaStreams from '../hooks/useMinitigerRowMediaStreams';
 import { getItemRoute } from '../routingUtils';
+import { animateMinitigerHorizontalScroll } from '../../animateHorizontalScroll';
 import MinitigerPoster from './MinitigerPoster';
 
 interface MinitigerMediaRowProps {
@@ -298,13 +299,13 @@ const MinitigerMediaRow = ({
             return;
         }
 
-        row.scrollBy({
-            left: direction * Math.max(
+        animateMinitigerHorizontalScroll(
+            row,
+            direction * Math.max(
                 320,
                 row.clientWidth * 0.78
-            ),
-            behavior: 'smooth'
-        });
+            )
+        );
     };
 
     const quickPlay = (
