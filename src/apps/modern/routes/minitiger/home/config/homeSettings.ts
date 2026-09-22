@@ -45,8 +45,6 @@ export const DEFAULT_HOME_ROW_ORDER: HomeRowId[] = [
 
 export type MinitigerCardSize = 'compact' | 'normal' | 'large';
 
-export type MinitigerPlayerPreference = 'native' | 'vlc';
-
 export type BannerRotationSeconds = 0 | 8 | 12 | 20 | 30 | 45 | 60;
 
 export type BannerItemLimit = 0 | 5 | 10 | 15 | 20 | 30 | 50 | 100;
@@ -104,7 +102,6 @@ export interface MinitigerHomeSettings {
     glowEnabled: boolean;
     previewEnabled: boolean;
     cardTextCentered: boolean;
-    preferredPlayer: MinitigerPlayerPreference;
 
     /**
      * Legacy Phase-1..11 ordering for the five original sections.
@@ -349,7 +346,6 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     glowEnabled: true,
     previewEnabled: true,
     cardTextCentered: false,
-    preferredPlayer: 'native',
     sectionOrder: [ ...HOME_SECTION_IDS ],
     homeRowOrder: [ ...DEFAULT_HOME_ROW_ORDER ],
     visibleSections: {
@@ -694,10 +690,6 @@ export const normalizeHomeSettings = (
         previewEnabled: source.previewEnabled !== false,
         cardTextCentered:
             source.cardTextCentered === true,
-        preferredPlayer:
-            source.preferredPlayer === 'vlc'
-                ? 'vlc'
-                : 'native',
         sectionOrder: derivedLegacyOrder,
         homeRowOrder,
         visibleSections: HOME_SECTION_IDS.reduce(
