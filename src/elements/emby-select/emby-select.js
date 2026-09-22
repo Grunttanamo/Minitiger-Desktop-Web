@@ -32,8 +32,8 @@ function enableNativeMenu() {
     return !layoutManager.tv;
 }
 
-function triggerChange(select) {
-    const evt = new Event('change', { bubbles: false, cancelable: true });
+function triggerChange(select, bubbles = false) {
+    const evt = new Event('change', { bubbles, cancelable: true });
     select.dispatchEvent(evt);
 }
 
@@ -41,9 +41,11 @@ function setValue(select, value) {
     select.value = value;
 }
 
-function showActionSheet(select) {
+function showActionSheet(select, bubbleChange = false) {
     const labelElem = getLabel(select);
-    const title = labelElem ? (labelElem.textContent || labelElem.innerText) : null;
+    const title = labelElem
+        ? (labelElem.textContent || labelElem.innerText)
+        : select.getAttribute('aria-label');
 
     actionsheet.show({
         items: select.options,
@@ -52,7 +54,7 @@ function showActionSheet(select) {
 
     }).then(function (value) {
         setValue(select, value);
-        triggerChange(select);
+        triggerChange(select, bubbleChange);
     });
 }
 
@@ -93,6 +95,62 @@ function onKeyDown(e) {
         showActionSheet(this);
     }
 }
+
+function getSelectFromEventTarget(target) {
+    if (target instanceof HTMLSelectElement) {
+        return target;
+    }
+
+    if (target instanceof Element) {
+        return target.closest('select');
+    }
+
+    return null;
+}
+
+/*
+ * Minitiger Desktop / Qt WebEngine:
+ * Native select popups can render many unrelated options with the Windows
+ * selection highlight. Intercept every real <select> in NativeShell and use
+ * Jellyfin's own action sheet instead. This also covers plain React selects
+ * and the Desktop client settings modal, which only apply emby-select classes
+ * without using the customized built-in element.
+ */
+function onNativeShellSelectMouseDown(e) {
+    if (!window.NativeShell || e.button !== 0) {
+        return;
+    }
+
+    const select = getSelectFromEventTarget(e.target);
+    if (!select || select.disabled) {
+        return;
+    }
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    showActionSheet(select, true);
+}
+
+function onNativeShellSelectKeyDown(e) {
+    if (
+        !window.NativeShell
+        || (e.key !== 'Enter' && e.key !== ' ' && e.keyCode !== 195)
+    ) {
+        return;
+    }
+
+    const select = getSelectFromEventTarget(e.target);
+    if (!select || select.disabled) {
+        return;
+    }
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    showActionSheet(select, true);
+}
+
+document.addEventListener('mousedown', onNativeShellSelectMouseDown, true);
+document.addEventListener('keydown', onNativeShellSelectKeyDown, true);
 
 let inputId = 0;
 
