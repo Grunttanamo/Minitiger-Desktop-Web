@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import type { ItemDto } from 'types/base/models/item-dto';
+
+import MinitigerSelectDropdown from './MinitigerSelectDropdown';
 
 interface Props {
     seasons: ItemDto[];
@@ -21,117 +23,30 @@ const MinitigerSeasonSwitcher = ({
     disabled = false,
     ariaLabel = 'Staffel auswählen'
 }: Props) => {
-    const [ open, setOpen ] = useState(false);
-    const rootRef = useRef<HTMLDivElement>(null);
-
-    const selectedSeason = useMemo(
-        () => seasons.find(season => (season.Id ?? '') === value),
-        [ seasons, value ]
+    const options = useMemo(
+        () => seasons.map((season, index) => ({
+            value: season.Id ?? '',
+            label: getSeasonLabel(season),
+            key:
+                season.Id
+                ?? season.Name
+                ?? `season-${index}`
+        })),
+        [ seasons ]
     );
 
-    useEffect(() => {
-        if (!open) {
-            return;
-        }
-
-        const onPointerDown = (event: MouseEvent) => {
-            const root = rootRef.current;
-
-            if (
-                root
-                && event.target instanceof Node
-                && !root.contains(event.target)
-            ) {
-                setOpen(false);
-            }
-        };
-
-        const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                setOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', onPointerDown);
-        document.addEventListener('keydown', onKeyDown);
-
-        return () => {
-            document.removeEventListener('mousedown', onPointerDown);
-            document.removeEventListener('keydown', onKeyDown);
-        };
-    }, [ open ]);
-
-    useEffect(() => {
-        if (disabled) {
-            setOpen(false);
-        }
-    }, [ disabled ]);
-
     return (
-        <div
-            ref={rootRef}
-            className={[
-                'minitigerEpisodeSeasonSwitcher',
-                'minitigerSeasonDropdown',
-                open ? 'isOpen' : ''
-            ].filter(Boolean).join(' ')}
-        >
-            <button
-                type='button'
-                className='minitigerSeasonDropdownButton'
-                aria-label={ariaLabel}
-                aria-haspopup='listbox'
-                aria-expanded={open}
-                disabled={disabled}
-                onClick={() => setOpen(current => !current)}
-            >
-                <span>
-                    {
-                        selectedSeason
-                            ? getSeasonLabel(selectedSeason)
-                            : 'Staffel'
-                    }
-                </span>
-                <span
-                    className='minitigerSeasonDropdownChevron'
-                    aria-hidden='true'
-                >
-                    ▾
-                </span>
-            </button>
-
-            {open && (
-                <div
-                    className='minitigerSeasonDropdownMenu'
-                    role='listbox'
-                    aria-label={ariaLabel}
-                >
-                    {seasons.map(season => {
-                        const seasonId = season.Id ?? '';
-                        const selected = seasonId === value;
-
-                        return (
-                            <button
-                                key={season.Id ?? season.Name}
-                                type='button'
-                                role='option'
-                                aria-selected={selected}
-                                className={[
-                                    'minitigerSeasonDropdownOption',
-                                    selected ? 'isSelected' : ''
-                                ].filter(Boolean).join(' ')}
-                                onClick={() => {
-                                    onChange(seasonId);
-                                    setOpen(false);
-                                }}
-                            >
-                                {getSeasonLabel(season)}
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
-        </div>
+        <MinitigerSelectDropdown
+            value={value}
+            options={options}
+            onChange={onChange}
+            disabled={disabled}
+            ariaLabel={ariaLabel}
+            className='minitigerEpisodeSeasonSwitcher'
+            variant='season'
+            fallbackLabel='Staffel'
+            fallbackToFirstOption={false}
+        />
     );
 };
 
