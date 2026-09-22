@@ -2881,3 +2881,33 @@ a.minitigerDetailsParentTitle:focus-visible {
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_2_1_CUSTOM_DETAIL_SELECT_DROPDOWNS */
+
+
+/* =========================================================
+   PHASE 2.1 - SEASON DROPDOWN LABEL CONTRAST
+   ========================================================= */
+
+/*
+ * Detail section headers globally dim their direct/descendant <span> labels.
+ * The selected season text lives inside a span too, so override that legacy
+ * metadata rule specifically for the custom Minitiger dropdown button.
+ */
+.minitigerVideoDetailsPage
+.minitigerDetailsSectionHead
+.minitigerSeasonDropdownButton
+> span:first-child {
+    color: #f8f9fb !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+.minitigerVideoDetailsPage
+.minitigerDetailsSectionHead
+.minitigerSeasonDropdownChevron {
+    color: #fff !important;
+    font-size: 0.9rem !important;
+    opacity: 1 !important;
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_SEASON_DROPDOWN_LABEL_CONTRAST */
