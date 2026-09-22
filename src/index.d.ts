@@ -4,6 +4,12 @@ declare module '*.png' {
     export = value;
 }
 
+declare module '*.webp' {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const value: any;
+    export = value;
+}
+
 declare module '*.scss' {
     // style imports are handled by the bundler
     const value: string;
