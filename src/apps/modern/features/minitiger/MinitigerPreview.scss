@@ -463,18 +463,6 @@
     font-weight: 850;
 }
 
-.minitigerSeriesPreviewHeader select {
-    min-width: 150px;
-    min-height: 2.25rem;
-    padding: 0.35rem 2rem 0.35rem 0.65rem;
-    border: 1px solid #555;
-    border-radius: 5px;
-    background: #2d2f34;
-    color: #fff;
-    font: inherit;
-    font-size: 0.9rem;
-}
-
 .minitigerSeriesPreviewLoading {
     padding: 0.8rem 0;
     color: #8f8f8f;
@@ -582,9 +570,6 @@
         flex-direction: column;
     }
 
-    .minitigerSeriesPreviewHeader select {
-        width: 100%;
-    }
 }
 
 /* =========================================================
