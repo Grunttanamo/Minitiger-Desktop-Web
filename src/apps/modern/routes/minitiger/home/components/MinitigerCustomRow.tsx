@@ -738,6 +738,9 @@ const MinitigerCustomRow = ({
                 )
             }
             variant={effectiveDisplay}
+            cardScale={row.cardScale}
+            cardGap={row.gap}
+            showTitle={row.showTitle}
             preferParentLandscape={
                 effectiveDisplay === 'landscape'
             }
