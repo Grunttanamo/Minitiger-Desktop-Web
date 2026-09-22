@@ -1292,6 +1292,18 @@
    existing cardBox geometry stays untouched. */
 .minitigerLibraryPage .itemsContainer.vertical-wrap {
     column-gap: var(--mt-library-content-gap, 20px);
-    row-gap: var(--mt-library-row-gap, 6px);
+    row-gap: var(--mt-library-content-gap, 20px);
+}
+
+/* Match virtual-library vertical spacing: Jellyfin's default cardBox margins
+   and bottom-padding margin otherwise keep extra row space even at the
+   minimum Minitiger gap. Keep horizontal card geometry unchanged. */
+.minitigerLibraryPage .minitigerNativeLibraryCard > .cardBox {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.minitigerLibraryPage .minitigerNativeLibraryCard > .cardBox-bottompadded {
+    margin-bottom: 0 !important;
 }
 
