@@ -594,6 +594,8 @@ const MinitigerHome = () => {
                 pending={resumePending}
                 error={resumeError}
                 variant='landscape'
+                cardScale={settings.systemRowCardScale.resume}
+                cardGap={settings.systemRowGap.resume}
                 preferParentLandscape
                 showProgress
                 loadAudioFlags={settings.showAudioFlags}
@@ -612,6 +614,8 @@ const MinitigerHome = () => {
                 pending={nextUpPending}
                 error={nextUpError}
                 variant='landscape'
+                cardScale={settings.systemRowCardScale.nextUp}
+                cardGap={settings.systemRowGap.nextUp}
                 preferParentLandscape
                 loadAudioFlags={settings.showAudioFlags}
                 showFskBadges={settings.showFskBadges}
@@ -629,6 +633,8 @@ const MinitigerHome = () => {
                 pending={watchlistPending}
                 error={watchlistError}
                 variant='poster'
+                cardScale={settings.systemRowCardScale.watchlist}
+                cardGap={settings.systemRowGap.watchlist}
                 loadAudioFlags={settings.showAudioFlags}
                 showFskBadges={settings.showFskBadges}
                 showPlayedIndicators={settings.showPlayedIndicators}
@@ -645,6 +651,8 @@ const MinitigerHome = () => {
                 pending={rewatchPending}
                 error={rewatchError}
                 variant='poster'
+                cardScale={settings.systemRowCardScale.recent}
+                cardGap={settings.systemRowGap.recent}
                 loadAudioFlags={settings.showAudioFlags}
                 showFskBadges={settings.showFskBadges}
                 showPlayedIndicators={settings.showPlayedIndicators}
@@ -674,6 +682,8 @@ const MinitigerHome = () => {
         settings.showAudioFlags,
         settings.showFskBadges,
         settings.showPlayedIndicators,
+        settings.systemRowCardScale,
+        settings.systemRowGap,
         virtualConfig.libraries
     ]);
 
