@@ -23,6 +23,9 @@ export const SYSTEM_HOME_ROW_IDS = [
 export type SystemHomeRowId =
     typeof SYSTEM_HOME_ROW_IDS[number];
 
+export type SystemHomeRowLayoutMap =
+    Record<SystemHomeRowId, number>;
+
 export const VIRTUAL_HOME_ROW_IDS = [
     'virtual1',
     'virtual2',
@@ -85,6 +88,8 @@ export interface MinitigerHomeSettings {
     bannerItemLimit: BannerItemLimit;
     cardSize: MinitigerCardSize;
     rowGap: number;
+    systemRowCardScale: SystemHomeRowLayoutMap;
+    systemRowGap: SystemHomeRowLayoutMap;
     libraryCardWidth: number;
     libraryCardGap: number;
     libraryVirtualGap: number;
@@ -329,6 +334,18 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     bannerItemLimit: 10,
     cardSize: 'normal',
     rowGap: 40,
+    systemRowCardScale: {
+        resume: 100,
+        nextUp: 100,
+        watchlist: 100,
+        recent: 100
+    },
+    systemRowGap: {
+        resume: 16,
+        nextUp: 16,
+        watchlist: 16,
+        recent: 16
+    },
     libraryCardWidth: 280,
     libraryCardGap: 16,
     libraryVirtualGap: 64,
@@ -477,6 +494,12 @@ export const normalizeHomeSettings = (
             ],
             visibleSections: {
                 ...DEFAULT_HOME_SETTINGS.visibleSections
+            },
+            systemRowCardScale: {
+                ...DEFAULT_HOME_SETTINGS.systemRowCardScale
+            },
+            systemRowGap: {
+                ...DEFAULT_HOME_SETTINGS.systemRowGap
             }
         };
     }
@@ -517,6 +540,50 @@ export const normalizeHomeSettings = (
     )
         ? source.visibleSections
         : {};
+
+    const incomingSystemRowCardScale = (
+        source.systemRowCardScale
+        && typeof source.systemRowCardScale === 'object'
+    )
+        ? source.systemRowCardScale
+        : {};
+
+    const incomingSystemRowGap = (
+        source.systemRowGap
+        && typeof source.systemRowGap === 'object'
+    )
+        ? source.systemRowGap
+        : {};
+
+    const systemRowCardScale =
+        SYSTEM_HOME_ROW_IDS.reduce(
+            (result, id) => ({
+                ...result,
+                [id]: clampNumber(
+                    incomingSystemRowCardScale[id],
+                    DEFAULT_HOME_SETTINGS
+                        .systemRowCardScale[id],
+                    60,
+                    160
+                )
+            }),
+            {} as SystemHomeRowLayoutMap
+        );
+
+    const systemRowGap =
+        SYSTEM_HOME_ROW_IDS.reduce(
+            (result, id) => ({
+                ...result,
+                [id]: clampNumber(
+                    incomingSystemRowGap[id],
+                    DEFAULT_HOME_SETTINGS
+                        .systemRowGap[id],
+                    4,
+                    48
+                )
+            }),
+            {} as SystemHomeRowLayoutMap
+        );
 
     const normalizedAccent = isHexColor(source.accentColor)
         ? (
@@ -644,6 +711,8 @@ export const normalizeHomeSettings = (
             12,
             90
         ),
+        systemRowCardScale,
+        systemRowGap,
         libraryCardWidth: clampNumber(
             source.libraryCardWidth,
             DEFAULT_HOME_SETTINGS.libraryCardWidth,
