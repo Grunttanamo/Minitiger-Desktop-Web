@@ -1019,7 +1019,7 @@ const onUpdate = (
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            Logo entfernen
+                                            Eigenes Logo entfernen · Minitiger-Standard
                                         </button>
                                     )}
 
