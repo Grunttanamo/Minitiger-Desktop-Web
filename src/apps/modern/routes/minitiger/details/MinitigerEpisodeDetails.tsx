@@ -843,6 +843,18 @@ const MinitigerEpisodeDetails = ({
                                                 )
                                             }
                                             className='minitigerDetailsEpisodeCard'
+                                            onMouseEnter={event => {
+                                                if (window.NativeShell) {
+                                                    event.currentTarget.classList.add(
+                                                        'minitigerNativeHover'
+                                                    );
+                                                }
+                                            }}
+                                            onMouseLeave={event => {
+                                                event.currentTarget.classList.remove(
+                                                    'minitigerNativeHover'
+                                                );
+                                            }}
                                         >
                                             <div>
                                                 {image ? (
