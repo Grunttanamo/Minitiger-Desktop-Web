@@ -7,6 +7,13 @@ import 'webcomponents.js/webcomponents-lite';
 const EmbySelectPrototype = Object.create(HTMLSelectElement.prototype);
 
 function enableNativeMenu() {
+    // Qt WebEngine's native <select> popup can paint multiple options as
+    // selected in the Minitiger Desktop shell. Use Jellyfin's own action
+    // sheet there instead of the platform-native popup.
+    if (window.NativeShell) {
+        return false;
+    }
+
     // WebView 2 creates dropdown that doesn't work with controller.
     if (browser.edgeUwp || browser.xboxOne) {
         return false;
