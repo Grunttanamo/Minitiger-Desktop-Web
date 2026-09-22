@@ -5,12 +5,12 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { appRouter, PUBLIC_PATHS } from 'components/router/appRouter';
 import BaseToolbar from 'components/toolbar/AppToolbar';
-import ServerButton from 'components/toolbar/ServerButton';
 
 import RemotePlayButton from './RemotePlayButton';
 import SyncPlayButton from './SyncPlayButton';
 import SearchButton from './SearchButton';
 import useMinitigerToolbarBranding from '../../routes/minitiger/home/hooks/useMinitigerToolbarBranding';
+import minitigerDefaultLogo from '../../../../assets/img/minitiger-logo.webp';
 
 interface AppToolbarProps {
     isDrawerAvailable: boolean
@@ -31,12 +31,21 @@ const AppToolbar: FC<AppToolbarProps> = ({
 
     const isBackButtonAvailable = window.NativeShell && appRouter.canGoBack(location.pathname);
     const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
-    const toolbarBrandLogoSource =
+    const customToolbarBrandLogoSource =
         toolbarBranding.image.trim();
-    const replacesServerBranding =
-        !isPublicPath
-        && toolbarBranding.enabled
-        && Boolean(toolbarBrandLogoSource);
+    const usesCustomToolbarBranding =
+        toolbarBranding.enabled
+        && Boolean(customToolbarBrandLogoSource);
+    const toolbarBrandLogoSource =
+        usesCustomToolbarBranding
+            ? customToolbarBrandLogoSource
+            : minitigerDefaultLogo;
+    const toolbarBrandLogoSize =
+        usesCustomToolbarBranding
+            ? toolbarBranding.size
+            : 44;
+    const showsMinitigerBranding =
+        !isPublicPath;
 
     return (
         <BaseToolbar
@@ -100,11 +109,7 @@ const AppToolbar: FC<AppToolbarProps> = ({
                 alignItems='center'
                 sx={{ minWidth: 0 }}
             >
-                {!isDrawerAvailable && !replacesServerBranding && (
-                    <ServerButton />
-                )}
-
-                {replacesServerBranding && (
+                {!isDrawerAvailable && showsMinitigerBranding && (
                     <Button
                         data-minitiger-toolbar-brand
                         variant='text'
@@ -129,7 +134,7 @@ const AppToolbar: FC<AppToolbarProps> = ({
                             aria-hidden='true'
                             style={{
                                 width: 'auto',
-                                height: `${toolbarBranding.size}px`,
+                                height: `${toolbarBrandLogoSize}px`,
                                 maxWidth: '15rem',
                                 flex: '0 1 auto',
                                 objectFit: 'contain'
