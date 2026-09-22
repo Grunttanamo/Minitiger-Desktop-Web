@@ -99,7 +99,12 @@ const LibraryPage: FC<LibraryPageProps> = ({
         '--mt-glow-size': `${settings.glowSize}px`,
         '--mt-library-poster-width': `${librarySettings.posterSize}px`,
         '--mt-library-landscape-width': `${librarySettings.landscapeSize}px`,
-        '--mt-library-content-gap': `${librarySettings.contentGap}px`
+        '--mt-library-content-gap': `${librarySettings.contentGap}px`,
+        '--mt-library-row-gap':
+            `${Math.max(
+                1,
+                Math.round(librarySettings.contentGap * 0.3)
+            )}px`
     } as React.CSSProperties;
 
     return (
