@@ -122,7 +122,12 @@ function onNativeShellSelectMouseDown(e) {
     }
 
     const select = getSelectFromEventTarget(e.target);
-    if (!select || select.disabled) {
+    if (
+        !select
+        || select.disabled
+        || select.multiple
+        || select.size > 1
+    ) {
         return;
     }
 
@@ -140,7 +145,12 @@ function onNativeShellSelectKeyDown(e) {
     }
 
     const select = getSelectFromEventTarget(e.target);
-    if (!select || select.disabled) {
+    if (
+        !select
+        || select.disabled
+        || select.multiple
+        || select.size > 1
+    ) {
         return;
     }
 
