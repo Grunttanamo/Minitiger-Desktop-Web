@@ -1292,6 +1292,6 @@
    existing cardBox geometry stays untouched. */
 .minitigerLibraryPage .itemsContainer.vertical-wrap {
     column-gap: var(--mt-library-content-gap, 20px);
-    row-gap: var(--mt-library-content-gap, 20px);
+    row-gap: var(--mt-library-row-gap, 6px);
 }
 
