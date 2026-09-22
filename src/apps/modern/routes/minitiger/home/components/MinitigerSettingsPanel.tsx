@@ -1862,6 +1862,7 @@ const onUpdate = (
                                             libraries={libraries}
                                             customConfig={customConfig}
                                             virtualConfig={virtualConfig}
+                                            onUpdateSettings={onUpdate}
                                             onToggleSection={onToggleSection}
                                             onMoveHomeRow={onMoveHomeRow}
                                             onReorderHomeRows={onReorderHomeRows}
