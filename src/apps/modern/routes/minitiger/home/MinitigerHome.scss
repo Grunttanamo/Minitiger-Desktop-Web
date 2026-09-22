@@ -5856,3 +5856,41 @@ iframe.minitigerInlineTrailer {
     }
 }
 
+/* =========================================================
+   CUSTOM HOME ROW - PER-ROW LAYOUT CONTROLS
+   ========================================================= */
+
+/* Only custom rows opt into these variables; regular system rows keep the
+   existing responsive Minitiger sizing and spacing. */
+.minitigerHome
+.minitigerMediaSectionCustomLayout
+.minitigerMediaRow {
+    gap: var(--mt-custom-row-gap, 16px) !important;
+}
+
+.minitigerHome
+.minitigerMediaSectionCustomLayout
+.minitigerMediaCard,
+.minitigerHome
+.minitigerMediaSectionCustomLayout
+.minitigerMediaCardLandscape,
+.minitigerHome
+.minitigerMediaSectionCustomLayout
+.minitigerMediaCardSquare {
+    flex: 0 0 min(
+        var(--mt-custom-row-card-width, 180px),
+        calc(100vw - 2rem)
+    ) !important;
+}
+
+.minitigerMediaSectionCustomLayout
+.minitigerSectionHeaderTitleHidden {
+    justify-content: flex-end;
+}
+
+.minitigerMediaSectionCustomLayout
+.minitigerSectionHeaderTitleHidden
+.minitigerRowArrows {
+    margin-left: auto;
+}
+
