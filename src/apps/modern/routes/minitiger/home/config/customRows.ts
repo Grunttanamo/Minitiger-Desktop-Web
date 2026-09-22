@@ -10,6 +10,9 @@ export interface MinitigerCustomRow {
     sortMode: MinitigerCustomSortMode;
     display: MinitigerCustomDisplay;
     count: number;
+    cardScale: number;
+    gap: number;
+    showTitle: boolean;
     enabled: boolean;
 }
 
@@ -32,6 +35,9 @@ export const DEFAULT_CUSTOM_ROWS: MinitigerCustomRowsConfig = {
         sortMode: 'latestItems',
         display: 'poster',
         count: 10,
+        cardScale: 100,
+        gap: 16,
+        showTitle: true,
         enabled: false
     }))
 };
@@ -113,6 +119,19 @@ export const normalizeCustomRows = (
                     3,
                     50
                 ),
+                cardScale: clamp(
+                    candidate.cardScale,
+                    defaultRow.cardScale,
+                    60,
+                    160
+                ),
+                gap: clamp(
+                    candidate.gap,
+                    defaultRow.gap,
+                    4,
+                    48
+                ),
+                showTitle: candidate.showTitle !== false,
                 enabled: candidate.enabled === true
             };
         })
