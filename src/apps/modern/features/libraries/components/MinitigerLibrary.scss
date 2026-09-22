@@ -1287,10 +1287,11 @@
 
 /* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_LIBRARY_PARITY */
 
-/* Normal library page spacing is user-configurable.
-   Jellyfin creates the visible spacing through cardBox margins, so keep that
-   layout model and drive the margin from the Minitiger setting. */
-.minitigerLibraryPage .minitigerNativeLibraryCard > .cardBox {
-    margin: var(--mt-library-card-margin, 10px) !important;
+/* Normal library page spacing is user-configurable without changing card
+   dimensions. The outer flex container owns the spacing while Jellyfin's
+   existing cardBox geometry stays untouched. */
+.minitigerLibraryPage .itemsContainer.vertical-wrap {
+    column-gap: var(--mt-library-content-gap, 20px);
+    row-gap: var(--mt-library-content-gap, 20px);
 }
 
