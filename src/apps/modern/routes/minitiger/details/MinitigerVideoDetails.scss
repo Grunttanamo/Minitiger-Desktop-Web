@@ -182,16 +182,6 @@
     font-size: 0.8rem;
 }
 
-.minitigerDetailsVersion select,
-.minitigerDetailsSectionHead select {
-    min-height: 2.45rem;
-    padding: 0.45rem 0.7rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 5px;
-    background: #23262c;
-    color: #fff;
-}
-
 .minitigerDetailsExtraMeta {
     max-width: 850px;
     margin-top: 0.9rem;
@@ -1398,8 +1388,6 @@ a.minitigerDetailsParentTitle:focus-visible {
 
 /*
  * Controls live visually in the section header.
- * On rows with a season <select>, the select reserves room for them,
- * so the arrows sit immediately to its right.
  */
 .minitigerRailControls {
     position: absolute;
@@ -1409,10 +1397,6 @@ a.minitigerDetailsParentTitle:focus-visible {
     display: flex;
     align-items: center;
     gap: 0.42rem;
-}
-
-.minitigerDetailsSectionHead select {
-    margin-right: 5.8rem;
 }
 
 .minitigerRailArrow {
@@ -1518,11 +1502,6 @@ a.minitigerDetailsParentTitle:focus-visible {
 @media (max-width: 680px) {
     .minitigerRailControls {
         top: -1.95rem;
-    }
-
-    .minitigerDetailsSectionHead select {
-        margin-right: 5.15rem;
-        max-width: min(48vw, 210px);
     }
 
     .minitigerRailArrow {
@@ -2240,23 +2219,10 @@ a.minitigerDetailsParentTitle:focus-visible {
 /* MINITIGER_PATCH_MARKER: PHASE_18_3_4_DETAIL_AUDIO_MENUS */
 
 
-/* PHASE 18.7.0 PUBLIC - season switcher / rail navigation alignment */
-.minitigerVideoDetailsPage .minitigerDetailsSectionHead select {
-    transform: translateY(-0.65rem);
-}
-
-@media (max-width: 680px) {
-    .minitigerVideoDetailsPage .minitigerDetailsSectionHead select {
-        transform: translateY(-0.55rem);
-    }
-}
-
-
 /* =========================================================
    PHASE 18.7.0 PUBLIC - EPISODE SWITCHER CENTERING
    ========================================================= */
-/* 18.6.0 moved every season select too far upward. On episode pages the
-   selector now sits vertically centered against the rail arrow buttons. */
+/* Keep the episode season switcher vertically centered against the rail arrows. */
 .minitigerVideoDetailsPage
 .minitigerEpisodeSiblingSection
 .minitigerEpisodeSeasonSwitcher {
@@ -2275,8 +2241,7 @@ a.minitigerDetailsParentTitle:focus-visible {
 /* =========================================================
    PHASE 18.7.1 TEST - SERIES SWITCHER / USER PERMISSIONS
    ========================================================= */
-/* Series and episode season selectors now share the same final visual offset.
-   This overrides the older generic select transform from 18.7.0. */
+/* Series and episode season selectors share the same final visual offset. */
 .minitigerVideoDetailsPage
 .minitigerDetailsSectionHead
 .minitigerEpisodeSeasonSwitcher {
@@ -2625,32 +2590,6 @@ a.minitigerDetailsParentTitle:focus-visible {
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_18_18_1_SEASON_WRAP_STYLE */
-
-
-/* =========================================================
-   PHASE 2.1 - NATIVE DESKTOP SEASON SWITCHER
-   ========================================================= */
-
-/*
- * Qt WebEngine paints the native <select> popup differently from Chrome and
- * can make every season option look selected. Give the popup explicit dark
- * option colors while keeping only the real selected option accented.
- */
-.minitigerEpisodeSeasonSwitcher {
-    color-scheme: dark;
-}
-
-.minitigerEpisodeSeasonSwitcher option {
-    background: #23262c;
-    color: #fff;
-}
-
-.minitigerEpisodeSeasonSwitcher option:checked {
-    background: var(--mt-accent, #7f4df3);
-    color: var(--mt-accent-text, #fff);
-}
-
-/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_SEASON_SWITCHER */
 
 
 /* =========================================================
