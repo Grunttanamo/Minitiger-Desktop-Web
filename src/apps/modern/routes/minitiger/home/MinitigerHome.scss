@@ -3166,11 +3166,11 @@
         background 140ms ease;
 }
 
-.minitigerHomeBuilderRow[draggable='true'] {
+.minitigerDragHandle[draggable='true'] {
     cursor: grab;
 }
 
-.minitigerHomeBuilderRow[draggable='true']:active {
+.minitigerDragHandle[draggable='true']:active {
     cursor: grabbing;
 }
 
@@ -3194,6 +3194,7 @@
 .minitigerDragHandle {
     user-select: none;
     cursor: grab;
+    touch-action: none;
 }
 
 /* =========================================================
