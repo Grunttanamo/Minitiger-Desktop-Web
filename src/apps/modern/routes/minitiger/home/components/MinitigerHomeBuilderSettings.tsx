@@ -30,6 +30,9 @@ interface MinitigerHomeBuilderSettingsProps {
     libraries: ItemDto[];
     customConfig: MinitigerCustomRowsConfig;
     virtualConfig: MinitigerVirtualLibrariesConfig;
+    onUpdateSettings: (
+        patch: Partial<MinitigerHomeSettings>
+    ) => void;
     onToggleSection: (sectionId: HomeSectionId) => void;
     onMoveHomeRow: (
         rowId: HomeRowId,
@@ -128,6 +131,7 @@ const MinitigerHomeBuilderSettings = ({
     libraries,
     customConfig,
     virtualConfig,
+    onUpdateSettings,
     onToggleSection,
     onMoveHomeRow,
     onReorderHomeRows,
@@ -153,10 +157,10 @@ const MinitigerHomeBuilderSettings = ({
     const [ dragTarget, setDragTarget ] =
         useState<HomeRowId | null>(null);
 
-    const dragProps = (rowId: HomeRowId) => ({
+    const dragHandleProps = (rowId: HomeRowId) => ({
         draggable: true,
         onDragStart: (
-            event: React.DragEvent<HTMLDivElement>
+            event: React.DragEvent<HTMLSpanElement>
         ) => {
             setDraggedRow(rowId);
             setDragTarget(null);
@@ -166,6 +170,13 @@ const MinitigerHomeBuilderSettings = ({
                 rowId
             );
         },
+        onDragEnd: () => {
+            setDraggedRow(null);
+            setDragTarget(null);
+        }
+    });
+
+    const dropTargetProps = (rowId: HomeRowId) => ({
         onDragOver: (
             event: React.DragEvent<HTMLDivElement>
         ) => {
@@ -177,6 +188,18 @@ const MinitigerHomeBuilderSettings = ({
             ) {
                 setDragTarget(rowId);
                 event.dataTransfer.dropEffect = 'move';
+            }
+        },
+        onDragLeave: (
+            event: React.DragEvent<HTMLDivElement>
+        ) => {
+            if (
+                !event.currentTarget.contains(
+                    event.relatedTarget as Node | null
+                )
+                && dragTarget === rowId
+            ) {
+                setDragTarget(null);
             }
         },
         onDrop: (
@@ -201,10 +224,6 @@ const MinitigerHomeBuilderSettings = ({
                 );
             }
 
-            setDraggedRow(null);
-            setDragTarget(null);
-        },
-        onDragEnd: () => {
             setDraggedRow(null);
             setDragTarget(null);
         }
@@ -292,14 +311,19 @@ const MinitigerHomeBuilderSettings = ({
                             return (
                                 <div
                                     key={rowId}
-                                    {...dragProps(rowId)}
+                                    {...dropTargetProps(rowId)}
                                     className={[
                                         'minitigerHomeBuilderRow',
                                         getDragClass(rowId)
                                     ].filter(Boolean).join(' ')}
                                 >
                                     <div className='minitigerHomeBuilderHead'>
-                                        <span className='minitigerDragHandle'>
+                                        <span
+                                            className='minitigerDragHandle'
+                                            title='Reihe verschieben'
+                                            aria-label='Reihe verschieben'
+                                            {...dragHandleProps(rowId)}
+                                        >
                                             ☰
                                         </span>
 
@@ -327,7 +351,15 @@ const MinitigerHomeBuilderSettings = ({
                                         </label>
 
                                         <span className='minitigerHomeBuilderMeta'>
-                                            System-Reihe
+                                            System-Reihe · {
+                                                settings.systemRowCardScale[
+                                                    rowId
+                                                ]
+                                            }% · {
+                                                settings.systemRowGap[
+                                                    rowId
+                                                ]
+                                            }px
                                         </span>
 
                                         <div className='minitigerHomeBuilderMove'>
@@ -360,6 +392,88 @@ const MinitigerHomeBuilderSettings = ({
                                             </button>
                                         </div>
                                     </div>
+
+                                    <details className='minitigerHomeBuilderDetails'>
+                                        <summary>
+                                            Reihe konfigurieren
+                                        </summary>
+
+                                        <div className='minitigerHomeBuilderGrid'>
+                                            <label className='minitigerRangeField'>
+                                                <span>Kartengröße</span>
+                                                <div>
+                                                    <input
+                                                        type='range'
+                                                        min='60'
+                                                        max='160'
+                                                        step='5'
+                                                        value={
+                                                            settings
+                                                                .systemRowCardScale[
+                                                                    rowId
+                                                                ]
+                                                        }
+                                                        onChange={event =>
+                                                            onUpdateSettings({
+                                                                systemRowCardScale: {
+                                                                    ...settings.systemRowCardScale,
+                                                                    [rowId]:
+                                                                        Number(
+                                                                            event.currentTarget.value
+                                                                        )
+                                                                }
+                                                            })
+                                                        }
+                                                    />
+                                                    <output>
+                                                        {
+                                                            settings
+                                                                .systemRowCardScale[
+                                                                    rowId
+                                                                ]
+                                                        }%
+                                                    </output>
+                                                </div>
+                                            </label>
+
+                                            <label className='minitigerRangeField'>
+                                                <span>Kartenabstand</span>
+                                                <div>
+                                                    <input
+                                                        type='range'
+                                                        min='4'
+                                                        max='48'
+                                                        step='1'
+                                                        value={
+                                                            settings
+                                                                .systemRowGap[
+                                                                    rowId
+                                                                ]
+                                                        }
+                                                        onChange={event =>
+                                                            onUpdateSettings({
+                                                                systemRowGap: {
+                                                                    ...settings.systemRowGap,
+                                                                    [rowId]:
+                                                                        Number(
+                                                                            event.currentTarget.value
+                                                                        )
+                                                                }
+                                                            })
+                                                        }
+                                                    />
+                                                    <output>
+                                                        {
+                                                            settings
+                                                                .systemRowGap[
+                                                                    rowId
+                                                                ]
+                                                        }px
+                                                    </output>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </details>
                                 </div>
                             );
                         }
@@ -371,7 +485,7 @@ const MinitigerHomeBuilderSettings = ({
                             return (
                                 <div
                                     key={rowId}
-                                    {...dragProps(rowId)}
+                                    {...dropTargetProps(rowId)}
                                     className={[
                                         'minitigerHomeBuilderRow',
                                         'isVirtual',
@@ -379,7 +493,12 @@ const MinitigerHomeBuilderSettings = ({
                                     ].filter(Boolean).join(' ')}
                                 >
                                     <div className='minitigerHomeBuilderHead'>
-                                        <span className='minitigerDragHandle'>
+                                        <span
+                                            className='minitigerDragHandle'
+                                            title='Reihe verschieben'
+                                            aria-label='Reihe verschieben'
+                                            {...dragHandleProps(rowId)}
+                                        >
                                             ☰
                                         </span>
 
@@ -506,7 +625,7 @@ const MinitigerHomeBuilderSettings = ({
                             return (
                                 <div
                                     key={rowId}
-                                    {...dragProps(rowId)}
+                                    {...dropTargetProps(rowId)}
                                     className={[
                                         'minitigerHomeBuilderRow',
                                         'isCustom',
@@ -514,7 +633,12 @@ const MinitigerHomeBuilderSettings = ({
                                     ].filter(Boolean).join(' ')}
                                 >
                                     <div className='minitigerHomeBuilderHead'>
-                                        <span className='minitigerDragHandle'>
+                                        <span
+                                            className='minitigerDragHandle'
+                                            title='Reihe verschieben'
+                                            aria-label='Reihe verschieben'
+                                            {...dragHandleProps(rowId)}
+                                        >
                                             ☰
                                         </span>
 
