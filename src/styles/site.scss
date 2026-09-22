@@ -16,9 +16,9 @@
 
 .splashLogo {
     animation: fadein 0.5s;
-    width: 30%;
-    height: 30%;
-    background-image: url(@jellyfin/ux-web/icon-transparent.png);
+    width: min(42vw, 26rem);
+    height: min(30vh, 12rem);
+    background-image: url('../assets/img/minitiger-logo.webp');
     background-position: center center;
     background-repeat: no-repeat;
     background-size: contain;
@@ -28,12 +28,6 @@
     transform: translate(-50%, -50%);
 }
 
-@media screen
-    and (min-device-width: 992px) {
-    .splashLogo {
-        background-image: url(@jellyfin/ux-web/banner-light.png);
-    }
-}
 
 html {
     @include fullpage;
