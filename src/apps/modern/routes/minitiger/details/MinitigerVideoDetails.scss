@@ -2911,3 +2911,18 @@ a.minitigerDetailsParentTitle:focus-visible {
 }
 
 /* MINITIGER_PATCH_MARKER: PHASE_2_1_SEASON_DROPDOWN_LABEL_CONTRAST */
+
+
+/* =========================================================
+   PHASE 2.1 - NATIVE DETAIL EPISODE QUICK PLAY
+   ========================================================= */
+
+:root[data-minitiger-native-shell='true']
+.minitigerDetailsEpisodeCard.minitigerNativeHover
+.minitigerDetailsEpisodePlay {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+}
+
+/* MINITIGER_PATCH_MARKER: PHASE_2_1_NATIVE_DETAIL_EPISODE_QUICK_PLAY */
