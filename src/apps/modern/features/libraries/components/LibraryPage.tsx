@@ -98,7 +98,8 @@ const LibraryPage: FC<LibraryPageProps> = ({
         '--mt-glow-opacity': settings.glowStrength / 100,
         '--mt-glow-size': `${settings.glowSize}px`,
         '--mt-library-poster-width': `${librarySettings.posterSize}px`,
-        '--mt-library-landscape-width': `${librarySettings.landscapeSize}px`
+        '--mt-library-landscape-width': `${librarySettings.landscapeSize}px`,
+        '--mt-library-card-margin': `${librarySettings.contentGap / 2}px`
     } as React.CSSProperties;
 
     return (
