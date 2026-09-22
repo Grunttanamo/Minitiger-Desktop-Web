@@ -938,7 +938,7 @@ const onUpdate = (
                                 >
                                     <h4>Branding oben links</h4>
                                     <p className='minitigerSettingsHint'>
-                                        Dein persönliches Logo ersetzt oben links das normale Jellyfin-Logo samt Servernamen. Der Klick führt weiterhin wie bisher zur Startseite.
+                                        Das eingebaute Minitiger-Logo ist oben links der Standard. Ein hier hochgeladenes eigenes Logo ersetzt es global; der Klick führt weiterhin zur Startseite.
                                     </p>
 
                                     <label className='minitigerSettingsToggle'>
@@ -953,8 +953,8 @@ const onUpdate = (
                                             }
                                         />
                                         <span>
-                                            <strong>Eigenes Logo anzeigen</strong>
-                                            <small>Aktiviert den optischen Ersatz für Jellyfin-Logo und Servernamen. Ohne hochgeladenes Bild bleibt vorsichtshalber das originale Server-Branding sichtbar.</small>
+                                            <strong>Eigenes Logo statt Minitiger-Standard anzeigen</strong>
+                                            <small>Aktiviert dein hochgeladenes Logo. Ohne eigenes Bild wird automatisch wieder das eingebaute Minitiger-Logo verwendet.</small>
                                         </span>
                                     </label>
 
