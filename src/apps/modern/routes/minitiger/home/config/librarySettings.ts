@@ -14,6 +14,7 @@ export interface MinitigerLibrarySettings {
     otherDisplay: MinitigerLibraryDisplay;
     posterSize: number;
     landscapeSize: number;
+    contentGap: number;
     customNavigationEnabled: boolean;
     azMode: MinitigerAZMode;
 }
@@ -24,6 +25,7 @@ export const DEFAULT_LIBRARY_SETTINGS: MinitigerLibrarySettings = {
     otherDisplay: 'poster',
     posterSize: 320,
     landscapeSize: 520,
+    contentGap: 20,
     customNavigationEnabled: true,
     azMode: 'auto'
 };
@@ -101,6 +103,12 @@ export const normalizeLibrarySettings = (
             DEFAULT_LIBRARY_SETTINGS.landscapeSize,
             260,
             760
+        ),
+        contentGap: clamp(
+            source.contentGap,
+            DEFAULT_LIBRARY_SETTINGS.contentGap,
+            4,
+            32
         ),
         customNavigationEnabled:
             source.customNavigationEnabled !== false,
