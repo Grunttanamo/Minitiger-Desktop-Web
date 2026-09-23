@@ -49,6 +49,9 @@ public sealed record MinitigerImageFixStatus(
     bool Running,
     bool Completed,
     bool Cancelled,
+    bool CancelRequested,
+    bool NeedsServerRestart,
+    bool TimedOut,
     bool DeleteOriginals,
     int Total,
     int Processed,
@@ -60,6 +63,11 @@ public sealed record MinitigerImageFixStatus(
     int Skipped,
     string CurrentItem,
     string CurrentCategory,
+    string CurrentStep,
+    string CurrentPath,
+    DateTimeOffset? CurrentStartedAtUtc,
+    DateTimeOffset LastProgressAtUtc,
+    int BackgroundEncodes,
     long SourceBytes,
     long OutputBytes,
     long SavedBytes,
@@ -82,8 +90,23 @@ internal sealed record MinitigerImageFixConversionResult(
     bool OriginalProtected,
     string? DeleteError);
 
+internal sealed class MinitigerImageFixEncodingTimeoutException
+    : TimeoutException
+{
+    public MinitigerImageFixEncodingTimeoutException(
+        string message)
+        : base(message)
+    {
+    }
+}
+
 public sealed class MinitigerImageFixService
 {
+    private static readonly TimeSpan EncodeTimeout =
+        TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan BetweenItemsDelay =
+        TimeSpan.FromMilliseconds(75);
+
     private readonly object _gate = new();
     private readonly ILibraryManager _libraryManager;
     private readonly IImageEncoder _imageEncoder;
@@ -94,6 +117,9 @@ public sealed class MinitigerImageFixService
     private bool _running;
     private bool _completed;
     private bool _cancelled;
+    private bool _cancelRequested;
+    private bool _needsServerRestart;
+    private bool _timedOut;
     private bool _deleteOriginals;
     private int _processed;
     private int _converted;
@@ -104,6 +130,12 @@ public sealed class MinitigerImageFixService
     private int _skipped;
     private string _currentItem = string.Empty;
     private string _currentCategory = string.Empty;
+    private string _currentStep = string.Empty;
+    private string _currentPath = string.Empty;
+    private DateTimeOffset? _currentStartedAtUtc;
+    private DateTimeOffset _lastProgressAtUtc =
+        DateTimeOffset.UtcNow;
+    private int _backgroundEncodes;
     private long _sourceBytes;
     private long _outputBytes;
     private readonly List<string> _errors = [];
@@ -134,6 +166,15 @@ public sealed class MinitigerImageFixService
             {
                 throw new InvalidOperationException(
                     "Während einer laufenden Konvertierung kann nicht neu gescannt werden.");
+            }
+
+            if (
+                _needsServerRestart
+                || _backgroundEncodes > 0
+            )
+            {
+                throw new InvalidOperationException(
+                    "Ein Bild-Encoder hängt noch im Hintergrund. Bitte Jellyfin einmal neu starten, bevor erneut gescannt oder konvertiert wird.");
             }
         }
 
@@ -373,6 +414,15 @@ public sealed class MinitigerImageFixService
                 return GetStatusUnsafe();
             }
 
+            if (
+                _needsServerRestart
+                || _backgroundEncodes > 0
+            )
+            {
+                throw new InvalidOperationException(
+                    "Ein Bild-Encoder hängt noch im Hintergrund. Bitte Jellyfin einmal neu starten, bevor eine neue Konvertierung gestartet wird.");
+            }
+
             if (_candidates.Count == 0)
             {
                 throw new InvalidOperationException(
@@ -407,6 +457,11 @@ public sealed class MinitigerImageFixService
                 return;
             }
 
+            _cancelRequested = true;
+            _currentStep =
+                "Abbruch angefordert";
+            _lastProgressAtUtc =
+                DateTimeOffset.UtcNow;
             _runCancellation?.Cancel();
         }
     }
@@ -437,6 +492,14 @@ public sealed class MinitigerImageFixService
                         candidate.ItemName;
                     _currentCategory =
                         candidate.Category;
+                    _currentPath =
+                        candidate.SourcePath;
+                    _currentStep =
+                        "Vorbereitung";
+                    _currentStartedAtUtc =
+                        DateTimeOffset.UtcNow;
+                    _lastProgressAtUtc =
+                        DateTimeOffset.UtcNow;
                 }
 
                 try
@@ -451,6 +514,8 @@ public sealed class MinitigerImageFixService
                     lock (_gate)
                     {
                         _processed++;
+                        _lastProgressAtUtc =
+                            DateTimeOffset.UtcNow;
 
                         if (result.Converted)
                         {
@@ -489,6 +554,37 @@ public sealed class MinitigerImageFixService
                     }
                 }
                 catch (
+                    MinitigerImageFixEncodingTimeoutException ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "Minitiger Image Fix encoder timeout for {ItemName} / {ImageType} / {SourcePath}.",
+                        candidate.ItemName,
+                        candidate.ImageType,
+                        candidate.SourcePath);
+
+                    lock (_gate)
+                    {
+                        _processed++;
+                        _failed++;
+                        _timedOut = true;
+                        _needsServerRestart = true;
+                        _cancelled = true;
+                        _currentStep =
+                            "Encoder-Timeout · Jellyfin-Neustart erforderlich";
+                        _lastProgressAtUtc =
+                            DateTimeOffset.UtcNow;
+
+                        if (_errors.Count < 30)
+                        {
+                            _errors.Add(
+                                $"{candidate.ItemName} · {candidate.Category}: {ex.Message}");
+                        }
+                    }
+
+                    return;
+                }
+                catch (
                     OperationCanceledException)
                 {
                     throw;
@@ -506,6 +602,8 @@ public sealed class MinitigerImageFixService
                     {
                         _processed++;
                         _failed++;
+                        _lastProgressAtUtc =
+                            DateTimeOffset.UtcNow;
 
                         if (_errors.Count < 30)
                         {
@@ -514,11 +612,28 @@ public sealed class MinitigerImageFixService
                         }
                     }
                 }
+
+                lock (_gate)
+                {
+                    _lastProgressAtUtc =
+                        DateTimeOffset.UtcNow;
+                }
+
+                await Task.Delay(
+                    BetweenItemsDelay,
+                    cancellationToken)
+                    .ConfigureAwait(false);
             }
 
             lock (_gate)
             {
-                _completed = true;
+                if (
+                    !_cancelRequested
+                    && !_timedOut
+                )
+                {
+                    _completed = true;
+                }
             }
         }
         catch (OperationCanceledException)
@@ -526,6 +641,12 @@ public sealed class MinitigerImageFixService
             lock (_gate)
             {
                 _cancelled = true;
+                _currentStep =
+                    _needsServerRestart
+                        ? "Abgebrochen · Jellyfin-Neustart erforderlich"
+                        : "Abgebrochen";
+                _lastProgressAtUtc =
+                    DateTimeOffset.UtcNow;
             }
         }
         finally
@@ -533,8 +654,20 @@ public sealed class MinitigerImageFixService
             lock (_gate)
             {
                 _running = false;
-                _currentItem = string.Empty;
-                _currentCategory = string.Empty;
+
+                if (
+                    !_needsServerRestart
+                    && !_timedOut
+                )
+                {
+                    _currentStep =
+                        _cancelled
+                            ? "Abgebrochen"
+                            : "Fertig";
+                }
+
+                _lastProgressAtUtc =
+                    DateTimeOffset.UtcNow;
                 _runCancellation?.Dispose();
                 _runCancellation = null;
             }
@@ -557,6 +690,9 @@ public sealed class MinitigerImageFixService
                 "Jellyfins aktiver Bild-Encoder unterstützt keine WebP-Ausgabe.");
         }
 
+        SetCurrentStep(
+            "Quelldatei prüfen");
+
         if (!File.Exists(candidate.SourcePath))
         {
             return new MinitigerImageFixConversionResult(
@@ -566,6 +702,40 @@ public sealed class MinitigerImageFixService
                 false,
                 null);
         }
+
+        var sourceInfo =
+            new FileInfo(
+                candidate.SourcePath);
+
+        if (sourceInfo.Length <= 0)
+        {
+            throw new InvalidDataException(
+                "Die Quelldatei ist leer.");
+        }
+
+        using (
+            var sourceStream =
+                new FileStream(
+                    candidate.SourcePath,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.ReadWrite | FileShare.Delete))
+        {
+            Span<byte> header =
+                stackalloc byte[16];
+
+            if (
+                sourceStream.Read(header)
+                <= 0
+            )
+            {
+                throw new InvalidDataException(
+                    "Die Quelldatei konnte nicht gelesen werden.");
+            }
+        }
+
+        SetCurrentStep(
+            "Jellyfin-Bildreferenz prüfen");
 
         var item =
             _libraryManager.GetItemById(
@@ -650,6 +820,7 @@ public sealed class MinitigerImageFixService
             currentImage.BlurHash;
 
         var targetCreated = false;
+        var cleanupDeferred = false;
 
         try
         {
@@ -670,17 +841,74 @@ public sealed class MinitigerImageFixService
                     RequiresAutoOrientation = true
                 };
 
-            var encodedPath =
-                _imageEncoder.EncodeImage(
-                    candidate.SourcePath,
-                    File.GetLastWriteTimeUtc(
-                        candidate.SourcePath),
+            SetCurrentStep(
+                "WebP kodieren");
+
+            var encodeTask =
+                Task.Run(
+                    () =>
+                        _imageEncoder.EncodeImage(
+                            candidate.SourcePath,
+                            File.GetLastWriteTimeUtc(
+                                candidate.SourcePath),
+                            tempPath,
+                            true,
+                            null,
+                            quality,
+                            options,
+                            ImageFormat.Webp),
+                    CancellationToken.None);
+
+            RegisterEncodeStarted();
+
+            string encodedPath;
+
+            try
+            {
+                encodedPath =
+                    await encodeTask
+                        .WaitAsync(
+                            EncodeTimeout,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+
+                RegisterEncodeFinished();
+            }
+            catch (TimeoutException)
+            {
+                cleanupDeferred = true;
+
+                RegisterBackgroundEncode(
+                    encodeTask,
                     tempPath,
-                    true,
-                    null,
-                    quality,
-                    options,
-                    ImageFormat.Webp);
+                    timedOut: true);
+
+                throw new MinitigerImageFixEncodingTimeoutException(
+                    $"Die WebP-Kodierung hat nach {EncodeTimeout.TotalSeconds:0} Sekunden nicht reagiert. Problemdatei: {candidate.SourcePath}");
+            }
+            catch (OperationCanceledException)
+            {
+                if (!encodeTask.IsCompleted)
+                {
+                    cleanupDeferred = true;
+
+                    RegisterBackgroundEncode(
+                        encodeTask,
+                        tempPath,
+                        timedOut: false);
+                }
+                else
+                {
+                    RegisterEncodeFinished();
+                }
+
+                throw;
+            }
+            catch
+            {
+                RegisterEncodeFinished();
+                throw;
+            }
 
             if (
                 !string.Equals(
@@ -694,6 +922,9 @@ public sealed class MinitigerImageFixService
                 throw new InvalidDataException(
                     "WebP-Ausgabe wurde nicht korrekt erzeugt.");
             }
+
+            SetCurrentStep(
+                "WebP validieren");
 
             var dimensions =
                 _imageEncoder.GetImageSize(
@@ -710,6 +941,9 @@ public sealed class MinitigerImageFixService
 
             cancellationToken
                 .ThrowIfCancellationRequested();
+
+            SetCurrentStep(
+                "WebP übernehmen");
 
             File.Move(
                 tempPath,
@@ -735,6 +969,9 @@ public sealed class MinitigerImageFixService
                 },
                 candidate.ImageIndex);
 
+            SetCurrentStep(
+                "Jellyfin aktualisieren");
+
             await item
                 .UpdateToRepositoryAsync(
                     ItemUpdateType.ImageUpdate,
@@ -758,6 +995,9 @@ public sealed class MinitigerImageFixService
             }
             else if (deleteOriginals)
             {
+                SetCurrentStep(
+                    "Originaldatei löschen");
+
                 try
                 {
                     var persistedImage =
@@ -856,7 +1096,10 @@ public sealed class MinitigerImageFixService
         }
         finally
         {
-            if (File.Exists(tempPath))
+            if (
+                !cleanupDeferred
+                && File.Exists(tempPath)
+            )
             {
                 try
                 {
@@ -868,6 +1111,86 @@ public sealed class MinitigerImageFixService
                 }
             }
         }
+    }
+
+    private void SetCurrentStep(
+        string step)
+    {
+        lock (_gate)
+        {
+            _currentStep = step;
+            _lastProgressAtUtc =
+                DateTimeOffset.UtcNow;
+        }
+    }
+
+    private void RegisterEncodeStarted()
+    {
+        lock (_gate)
+        {
+            _backgroundEncodes++;
+            _lastProgressAtUtc =
+                DateTimeOffset.UtcNow;
+        }
+    }
+
+    private void RegisterEncodeFinished()
+    {
+        lock (_gate)
+        {
+            if (_backgroundEncodes > 0)
+            {
+                _backgroundEncodes--;
+            }
+
+            _lastProgressAtUtc =
+                DateTimeOffset.UtcNow;
+        }
+    }
+
+    private void RegisterBackgroundEncode(
+        Task<string> encodeTask,
+        string tempPath,
+        bool timedOut)
+    {
+        lock (_gate)
+        {
+            _needsServerRestart = true;
+
+            if (timedOut)
+            {
+                _timedOut = true;
+            }
+
+            _lastProgressAtUtc =
+                DateTimeOffset.UtcNow;
+        }
+
+        _ = encodeTask.ContinueWith(
+            _ =>
+            {
+                try
+                {
+                    if (File.Exists(tempPath))
+                    {
+                        File.Delete(tempPath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(
+                        ex,
+                        "Minitiger Image Fix could not clean abandoned temp file {TempPath}.",
+                        tempPath);
+                }
+                finally
+                {
+                    RegisterEncodeFinished();
+                }
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
     }
 
     private static string? ResolveCategory(
@@ -930,6 +1253,8 @@ public sealed class MinitigerImageFixService
     {
         _completed = false;
         _cancelled = false;
+        _cancelRequested = false;
+        _timedOut = false;
         _deleteOriginals = false;
         _processed = 0;
         _converted = 0;
@@ -940,6 +1265,11 @@ public sealed class MinitigerImageFixService
         _skipped = 0;
         _currentItem = string.Empty;
         _currentCategory = string.Empty;
+        _currentStep = string.Empty;
+        _currentPath = string.Empty;
+        _currentStartedAtUtc = null;
+        _lastProgressAtUtc =
+            DateTimeOffset.UtcNow;
         _sourceBytes = 0;
         _outputBytes = 0;
         _errors.Clear();
@@ -951,6 +1281,9 @@ public sealed class MinitigerImageFixService
             _running,
             _completed,
             _cancelled,
+            _cancelRequested,
+            _needsServerRestart,
+            _timedOut,
             _deleteOriginals,
             _candidates.Count,
             _processed,
@@ -962,6 +1295,11 @@ public sealed class MinitigerImageFixService
             _skipped,
             _currentItem,
             _currentCategory,
+            _currentStep,
+            _currentPath,
+            _currentStartedAtUtc,
+            _lastProgressAtUtc,
+            _backgroundEncodes,
             _sourceBytes,
             _outputBytes,
             _sourceBytes - _outputBytes,
