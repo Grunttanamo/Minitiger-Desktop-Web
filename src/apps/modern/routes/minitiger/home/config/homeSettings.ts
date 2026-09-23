@@ -74,6 +74,8 @@ export interface MinitigerHomeSettings {
     toolbarBrandLogoEnabled: boolean;
     toolbarBrandLogoUrl: string;
     toolbarBrandLogoSize: number;
+    toolbarTransparency: number;
+    toolbarGlassBlur: number;
     toolbarBrandTextEnabled: boolean;
     toolbarBrandText: string;
     customHomeRowsEnabled: boolean;
@@ -320,6 +322,8 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     toolbarBrandLogoEnabled: false,
     toolbarBrandLogoUrl: '',
     toolbarBrandLogoSize: 44,
+    toolbarTransparency: 0,
+    toolbarGlassBlur: 0,
     toolbarBrandTextEnabled: false,
     toolbarBrandText: 'Minitiger',
     customHomeRowsEnabled: true,
@@ -661,6 +665,18 @@ export const normalizeHomeSettings = (
             DEFAULT_HOME_SETTINGS.toolbarBrandLogoSize,
             24,
             72
+        ),
+        toolbarTransparency: clampNumber(
+            source.toolbarTransparency,
+            DEFAULT_HOME_SETTINGS.toolbarTransparency,
+            0,
+            100
+        ),
+        toolbarGlassBlur: clampNumber(
+            source.toolbarGlassBlur,
+            DEFAULT_HOME_SETTINGS.toolbarGlassBlur,
+            0,
+            40
         ),
         toolbarBrandTextEnabled:
             source.toolbarBrandTextEnabled === true,
