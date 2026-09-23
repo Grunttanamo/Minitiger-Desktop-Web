@@ -1089,6 +1089,55 @@ const onUpdate = (
                                 )}
 
                                 <section className='minitigerSettingsCard'>
+                                    <h4>Obere Navigationsleiste</h4>
+                                    <p className='minitigerSettingsHint'>
+                                        Regelt die Transparenz und den Glas-/Blur-Effekt der oberen Leiste mit Logo, Suche und Einstellungen. Die Änderung wird direkt auf allen Seiten übernommen.
+                                    </p>
+
+                                    <label className='minitigerRangeField'>
+                                        <span>Transparenz-Stärke</span>
+                                        <div>
+                                            <input
+                                                type='range'
+                                                min='0'
+                                                max='100'
+                                                step='1'
+                                                value={settings.toolbarTransparency}
+                                                onChange={event =>
+                                                    onUpdate({
+                                                        toolbarTransparency:
+                                                            Number(event.currentTarget.value)
+                                                    })
+                                                }
+                                            />
+                                            <output>{settings.toolbarTransparency}%</output>
+                                        </div>
+                                        <small>0% = vollständig dunkel · 100% = vollständig transparent.</small>
+                                    </label>
+
+                                    <label className='minitigerRangeField'>
+                                        <span>Glas-Effekt / Blur</span>
+                                        <div>
+                                            <input
+                                                type='range'
+                                                min='0'
+                                                max='40'
+                                                step='1'
+                                                value={settings.toolbarGlassBlur}
+                                                onChange={event =>
+                                                    onUpdate({
+                                                        toolbarGlassBlur:
+                                                            Number(event.currentTarget.value)
+                                                    })
+                                                }
+                                            />
+                                            <output>{settings.toolbarGlassBlur}px</output>
+                                        </div>
+                                        <small>0px = kein Glas-Effekt. Höhere Werte verwischen den Inhalt hinter der Leiste stärker.</small>
+                                    </label>
+                                </section>
+
+                                <section className='minitigerSettingsCard'>
                                     <h4>Standard Einstellungen</h4>
 
                                     {[
