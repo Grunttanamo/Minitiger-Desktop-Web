@@ -1210,12 +1210,116 @@ const MangaPreviewSection = ({
     );
 };
 
+interface EpisodePreviewListProps {
+    episodes: ItemDto[];
+    apiClient?: ApiClient;
+    onPlay: (item: ItemDto) => void;
+    onClose: () => void;
+}
+
+const EpisodePreviewList = ({
+    episodes,
+    apiClient,
+    onPlay,
+    onClose
+}: EpisodePreviewListProps) => (
+    <div className='minitigerSeriesEpisodeList'>
+        {episodes.map((episode, index) => {
+            const imageUrl = getLandscapeImageUrl(
+                apiClient,
+                episode
+            );
+
+            const episodeLabel =
+                getMinitigerEpisodeCode(episode);
+
+            const runtime = getRuntimeLabel(
+                episode.RunTimeTicks
+            );
+
+            return (
+                <article
+                    key={episode.Id ?? episode.Name}
+                    className='minitigerSeriesEpisodeCard'
+                >
+                    <Link
+                        className='minitigerSeriesEpisodeLink'
+                        to={getItemRoute(episode)}
+                        onClick={onClose}
+                    >
+                        <div className='minitigerSeriesEpisodeNumber'>
+                            {index + 1}.
+                        </div>
+
+                        <div className='minitigerSeriesEpisodeImage'>
+                            {imageUrl ? (
+                                <img
+                                    src={imageUrl}
+                                    alt=''
+                                />
+                            ) : (
+                                <div className='minitigerSeriesEpisodeFallback' />
+                            )}
+
+                            <button
+                                type='button'
+                                className='minitigerSeriesEpisodePlay'
+                                onClick={event => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    onPlay(episode);
+                                }}
+                                aria-label={
+                                    `${episode.Name ?? 'Episode'} abspielen`
+                                }
+                                title='Abspielen'
+                            >
+                                ▶
+                            </button>
+                        </div>
+
+                        <div className='minitigerSeriesEpisodeText'>
+                            <div className='minitigerSeriesEpisodeTitleLine'>
+                                <strong>
+                                    {episode.Name ?? 'Episode'}
+                                </strong>
+
+                                {runtime && (
+                                    <span className='minitigerSeriesEpisodeRuntime'>
+                                        {runtime}
+                                    </span>
+                                )}
+                            </div>
+
+                            {episodeLabel && (
+                                <span className='minitigerSeriesEpisodeMeta'>
+                                    {episodeLabel}
+                                </span>
+                            )}
+
+                            <p>
+                                {shortOverview(
+                                    episode.Overview,
+                                    220
+                                ) || 'Keine Beschreibung hinterlegt.'}
+                            </p>
+                        </div>
+                    </Link>
+                </article>
+            );
+        })}
+    </div>
+);
+
 interface SeriesPreviewSectionProps {
     series: ItemDto;
     apiClient?: ApiClient;
     onPlay: (item: ItemDto) => void;
     onClose: () => void;
 }
+
+const ALL_EPISODES_ID = '__minitiger_all_episodes__';
+const ALL_EPISODES_PAGE_SIZE = 25;
 
 const SeriesPreviewSection = ({
     series,
@@ -1245,10 +1349,27 @@ const SeriesPreviewSection = ({
         [seasonsData?.Items]
     );
 
+    const seasonOptions = useMemo<ItemDto[]>(
+        () => [
+            {
+                Id: ALL_EPISODES_ID,
+                Name: 'Alle Folgen',
+                Type: BaseItemKind.Season
+            } as ItemDto,
+            ...seasons
+        ],
+        [seasons]
+    );
+
     const [
         selectedSeasonId,
         setSelectedSeasonId
     ] = useState<string>('');
+
+    const [
+        allEpisodesLimit,
+        setAllEpisodesLimit
+    ] = useState(ALL_EPISODES_PAGE_SIZE);
 
     useEffect(() => {
         if (
@@ -1270,11 +1391,143 @@ const SeriesPreviewSection = ({
         selectedSeasonId
     ]);
 
+    const allEpisodesSelected =
+        selectedSeasonId === ALL_EPISODES_ID;
+
+    useEffect(() => {
+        setAllEpisodesLimit(ALL_EPISODES_PAGE_SIZE);
+    }, [selectedSeasonId]);
+
     const {
         data: episodesData,
         isPending: episodesPending
     } = useGetItems({
-        parentId: selectedSeasonId || undefined,
+        parentId: allEpisodesSelected
+            ? series.Id ?? undefined
+            : selectedSeasonId || undefined,
+        recursive: allEpisodesSelected,
+        limit: allEpisodesSelected
+            ? allEpisodesLimit
+            : 100,
+        includeItemTypes: [
+            BaseItemKind.Episode
+        ],
+        fields: [
+            ItemFields.Overview,
+            ItemFields.PrimaryImageAspectRatio
+        ],
+        enableImageTypes: [
+            ImageType.Primary,
+            ImageType.Thumb,
+            ImageType.Backdrop
+        ],
+        imageTypeLimit: 1,
+        enableTotalRecordCount: allEpisodesSelected
+    });
+
+    const episodes = useMemo(
+        () => [ ...(episodesData?.Items ?? []) ]
+            .filter(isMinitigerAvailableEpisode)
+            .sort((left, right) => {
+                const seasonDifference =
+                    (left.ParentIndexNumber ?? 9999)
+                    - (right.ParentIndexNumber ?? 9999);
+
+                if (seasonDifference !== 0) {
+                    return seasonDifference;
+                }
+
+                return (
+                    (left.IndexNumber ?? 9999)
+                    - (right.IndexNumber ?? 9999)
+                );
+            }),
+        [episodesData?.Items]
+    );
+
+    const hasMoreAllEpisodes = Boolean(
+        allEpisodesSelected
+        && (episodesData?.TotalRecordCount ?? 0)
+            > (episodesData?.Items?.length ?? 0)
+    );
+
+    if (seasonsPending) {
+        return (
+            <div className='minitigerSeriesPreviewLoading'>
+                Staffeln werden geladen …
+            </div>
+        );
+    }
+
+    if (seasons.length === 0) {
+        return null;
+    }
+
+    return (
+        <section className='minitigerSeriesPreview'>
+            <div className='minitigerSeriesPreviewHeader'>
+                <h3>Folgen</h3>
+
+                <MinitigerSeasonSwitcher
+                    seasons={seasonOptions}
+                    value={selectedSeasonId}
+                    onChange={setSelectedSeasonId}
+                    ariaLabel='Staffel oder alle Folgen auswählen'
+                />
+            </div>
+
+            {episodesPending ? (
+                <div className='minitigerSeriesPreviewLoading'>
+                    Folgen werden geladen …
+                </div>
+            ) : (
+                <>
+                    <EpisodePreviewList
+                        episodes={episodes}
+                        apiClient={apiClient}
+                        onPlay={onPlay}
+                        onClose={onClose}
+                    />
+
+                    {hasMoreAllEpisodes && (
+                        <div className='minitigerSeriesLoadMoreWrap'>
+                            <button
+                                type='button'
+                                className='minitigerSeriesLoadMore'
+                                onClick={() =>
+                                    setAllEpisodesLimit(current =>
+                                        current + ALL_EPISODES_PAGE_SIZE
+                                    )
+                                }
+                            >
+                                Mehr laden
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
+        </section>
+    );
+};
+
+interface SeasonPreviewSectionProps {
+    season: ItemDto;
+    apiClient?: ApiClient;
+    onPlay: (item: ItemDto) => void;
+    onClose: () => void;
+}
+
+const SeasonPreviewSection = ({
+    season,
+    apiClient,
+    onPlay,
+    onClose
+}: SeasonPreviewSectionProps) => {
+    const {
+        data: episodesData,
+        isPending
+    } = useGetItems({
+        parentId: season.Id ?? undefined,
         recursive: false,
         limit: 100,
         includeItemTypes: [
@@ -1303,128 +1556,36 @@ const SeriesPreviewSection = ({
         [episodesData?.Items]
     );
 
-    if (seasonsPending) {
-        return (
-            <div className='minitigerSeriesPreviewLoading'>
-                Staffeln werden geladen …
-            </div>
-        );
-    }
-
-    if (seasons.length === 0) {
+    if (!season.Id) {
         return null;
     }
 
     return (
         <section className='minitigerSeriesPreview'>
             <div className='minitigerSeriesPreviewHeader'>
-                <h3>Folgen</h3>
-
-                <MinitigerSeasonSwitcher
-                    seasons={seasons}
-                    value={selectedSeasonId}
-                    onChange={setSelectedSeasonId}
-                    ariaLabel='Staffel auswählen'
-                />
+                <h3>
+                    Folgen
+                    {season.IndexNumber != null
+                        ? ` · Staffel ${season.IndexNumber}`
+                        : ''}
+                </h3>
             </div>
 
-            {episodesPending ? (
+            {isPending ? (
                 <div className='minitigerSeriesPreviewLoading'>
                     Folgen werden geladen …
                 </div>
-            ) : (
-                <div className='minitigerSeriesEpisodeList'>
-                    {episodes.map((episode, index) => {
-                        const imageUrl =
-                            getLandscapeImageUrl(
-                                apiClient,
-                                episode
-                            );
-
-                        const episodeLabel =
-                            getMinitigerEpisodeCode(episode);
-
-                        const runtime =
-                            getRuntimeLabel(
-                                episode.RunTimeTicks
-                            );
-
-                        return (
-                            <article
-                                key={
-                                    episode.Id
-                                    ?? episode.Name
-                                }
-                                className='minitigerSeriesEpisodeCard'
-                            >
-                                <Link
-                                    className='minitigerSeriesEpisodeLink'
-                                    to={getItemRoute(episode)}
-                                    onClick={onClose}
-                                >
-                                    <div className='minitigerSeriesEpisodeNumber'>
-                                        {index + 1}.
-                                    </div>
-
-                                    <div className='minitigerSeriesEpisodeImage'>
-                                        {imageUrl ? (
-                                            <img
-                                                src={imageUrl}
-                                                alt=''
-                                            />
-                                        ) : (
-                                            <div className='minitigerSeriesEpisodeFallback' />
-                                        )}
-
-                                        <button
-                                            type='button'
-                                            className='minitigerSeriesEpisodePlay'
-                                            onClick={event => {
-                                                event.preventDefault();
-                                                event.stopPropagation();
-                                                onPlay(episode);
-                                            }}
-                                            aria-label={
-                                                `${episode.Name ?? 'Episode'} abspielen`
-                                            }
-                                            title='Abspielen'
-                                        >
-                                            ▶
-                                        </button>
-                                    </div>
-
-                                    <div className='minitigerSeriesEpisodeText'>
-                                        <div className='minitigerSeriesEpisodeTitleLine'>
-                                            <strong>
-                                                {episode.Name
-                                                    ?? 'Episode'}
-                                            </strong>
-
-                                            {runtime && (
-                                                <span className='minitigerSeriesEpisodeRuntime'>
-                                                    {runtime}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {episodeLabel && (
-                                            <span className='minitigerSeriesEpisodeMeta'>
-                                                {episodeLabel}
-                                            </span>
-                                        )}
-
-                                        <p>
-                                            {shortOverview(
-                                                episode.Overview,
-                                                220
-                                            ) || 'Keine Beschreibung hinterlegt.'}
-                                        </p>
-                                    </div>
-                                </Link>
-                            </article>
-                        );
-                    })}
+            ) : episodes.length === 0 ? (
+                <div className='minitigerLargePreviewHint'>
+                    Keine Folgen gefunden.
                 </div>
+            ) : (
+                <EpisodePreviewList
+                    episodes={episodes}
+                    apiClient={apiClient}
+                    onPlay={onPlay}
+                    onClose={onClose}
+                />
             )}
         </section>
     );
