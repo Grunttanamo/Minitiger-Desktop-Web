@@ -1,0 +1,218 @@
+.minitigerConfirmOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    background:
+        rgb(0 0 0 / 66%);
+    backdrop-filter:
+        blur(8px);
+    -webkit-backdrop-filter:
+        blur(8px);
+}
+
+.minitigerConfirmDialog {
+    --minitiger-confirm-accent:
+        var(--mt-accent, #35d0a0);
+
+    position: relative;
+    width: min(34rem, 100%);
+    overflow: hidden;
+    border: 1px solid
+        color-mix(
+            in srgb,
+            var(--minitiger-confirm-accent) 38%,
+            rgb(255 255 255 / 13%)
+        );
+    border-radius: 12px;
+    background:
+        linear-gradient(
+            155deg,
+            rgb(27 30 34 / 96%),
+            rgb(11 13 16 / 98%)
+        );
+    box-shadow:
+        0 28px 80px
+        rgb(0 0 0 / 58%),
+        0 0 34px
+        color-mix(
+            in srgb,
+            var(--minitiger-confirm-accent) 12%,
+            transparent
+        );
+    color: #fff;
+}
+
+.minitigerConfirmDialog.isDanger {
+    --minitiger-confirm-accent:
+        #e96a6a;
+}
+
+.minitigerConfirmGlow {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            var(--minitiger-confirm-accent),
+            transparent
+        );
+}
+
+.minitigerConfirmHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding:
+        1.15rem
+        1.2rem
+        0.7rem;
+}
+
+.minitigerConfirmIcon {
+    display: grid;
+    place-items: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    flex: 0 0 auto;
+    border: 1px solid
+        color-mix(
+            in srgb,
+            var(--minitiger-confirm-accent) 52%,
+            transparent
+        );
+    border-radius: 50%;
+    background:
+        color-mix(
+            in srgb,
+            var(--minitiger-confirm-accent) 14%,
+            transparent
+        );
+    color:
+        var(--minitiger-confirm-accent);
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.minitigerConfirmEyebrow {
+    display: block;
+    margin-bottom: 0.16rem;
+    color:
+        color-mix(
+            in srgb,
+            var(--minitiger-confirm-accent) 82%,
+            white
+        );
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.minitigerConfirmHeader h3 {
+    margin: 0;
+    font-size: 1.22rem;
+}
+
+.minitigerConfirmBody {
+    display: grid;
+    gap: 0.7rem;
+    padding:
+        0.35rem
+        1.2rem
+        1rem;
+    color:
+        rgb(255 255 255 / 78%);
+    line-height: 1.5;
+}
+
+.minitigerConfirmBody p {
+    margin: 0;
+}
+
+.minitigerConfirmNotice {
+    padding: 0.7rem 0.8rem;
+    border: 1px solid
+        color-mix(
+            in srgb,
+            var(--minitiger-confirm-accent) 30%,
+            transparent
+        );
+    border-radius: 7px;
+    background:
+        color-mix(
+            in srgb,
+            var(--minitiger-confirm-accent) 7%,
+            transparent
+        );
+    color:
+        rgb(255 255 255 / 86%);
+}
+
+.minitigerConfirmNotice strong {
+    color: #fff;
+}
+
+.minitigerConfirmActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    padding:
+        0.85rem
+        1.2rem
+        1.15rem;
+    border-top:
+        1px solid
+        rgb(255 255 255 / 7%);
+    background:
+        rgb(255 255 255 / 2%);
+}
+
+.minitigerConfirmActions button {
+    min-width: 7.2rem;
+    padding: 0.58rem 0.85rem;
+    border: 1px solid
+        rgb(255 255 255 / 14%);
+    border-radius: 6px;
+    background:
+        rgb(255 255 255 / 6%);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.minitigerConfirmActions button:hover:not(:disabled) {
+    background:
+        rgb(255 255 255 / 10%);
+}
+
+.minitigerConfirmActions button.isPrimary {
+    border-color:
+        color-mix(
+            in srgb,
+            var(--mt-accent, #35d0a0) 58%,
+            transparent
+        );
+    background:
+        var(--mt-accent, #35d0a0);
+    color: #07110e;
+}
+
+.minitigerConfirmActions button.isDanger {
+    border-color:
+        rgb(233 106 106 / 62%);
+    background:
+        #b94545;
+    color: #fff;
+}
+
+.minitigerConfirmActions button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
