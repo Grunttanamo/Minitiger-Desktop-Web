@@ -45,7 +45,8 @@
     z-index: 2;
     min-height: 100vh;
     padding:
-        3.2rem max(3rem, 6vw)
+        calc(3.2rem + 64px)
+        max(3rem, 6vw)
         4.5rem;
     box-sizing: border-box;
     background:
