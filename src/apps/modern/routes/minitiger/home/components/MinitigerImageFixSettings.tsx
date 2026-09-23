@@ -604,36 +604,58 @@ const MinitigerImageFixSettings = () => {
             )
             : 0;
 
-    const candidateGroups = useMemo(() => (
-        scan
-            ? [
-                [
-                    'Poster',
-                    scan.posterCandidates
-                ],
-                [
-                    'Backdrops',
-                    scan.backdropCandidates
-                ],
-                [
-                    'Staffelposter',
-                    scan.seasonPosterCandidates
-                ],
-                [
-                    'Landscape',
-                    scan.landscapeCandidates
-                ],
-                [
-                    'Banner',
-                    scan.bannerCandidates
-                ],
-                [
-                    'Cast / Personen',
-                    scan.peopleCandidates
-                ]
-            ] as Array<[string, number]>
-            : []
-    ), [scan]);
+    const candidateGroups = useMemo(() => {
+        if (!scan) {
+            return [];
+        }
+
+        const groups: Array<[
+            keyof ImageFixSelection,
+            string,
+            number
+        ]> = [
+            [
+                'posters',
+                'Poster',
+                scan.posterCandidates
+            ],
+            [
+                'backdrops',
+                'Backdrops',
+                scan.backdropCandidates
+            ],
+            [
+                'seasonPosters',
+                'Staffelposter',
+                scan.seasonPosterCandidates
+            ],
+            [
+                'landscape',
+                'Landscape',
+                scan.landscapeCandidates
+            ],
+            [
+                'banners',
+                'Banner',
+                scan.bannerCandidates
+            ],
+            [
+                'people',
+                'Cast / Personen',
+                scan.peopleCandidates
+            ]
+        ];
+
+        return groups
+            .filter(([ key ]) => selection[key])
+            .map(([, label, count ]) => [
+                label,
+                count
+            ] as [string, number]);
+    }, [
+        scan,
+        selection
+    ]);
 
     return (
         <>
@@ -821,7 +843,7 @@ const MinitigerImageFixSettings = () => {
                     <div className='minitigerImageFixSummary'>
                         <span>
                             <strong>{scan.scannedItems.toLocaleString('de-DE')}</strong>
-                            geprüfte Jellyfin-Items
+                            geprüfte relevante Jellyfin-Items
                         </span>
                         <span>
                             <strong>{scan.selectedImages.toLocaleString('de-DE')}</strong>
