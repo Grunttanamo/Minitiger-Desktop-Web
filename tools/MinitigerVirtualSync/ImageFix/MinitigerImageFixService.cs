@@ -178,20 +178,10 @@ public sealed class MinitigerImageFixService
             }
         }
 
-        var items = _libraryManager.GetItemList(
-            new InternalItemsQuery
-            {
-                Recursive = true,
-                IsVirtualItem = false,
-                GroupByPresentationUniqueKey = false,
-                EnableTotalRecordCount = false
-            });
+        var items = GetScanItems(selection);
 
         var candidates =
             new List<MinitigerImageFixCandidate>();
-        var sourceReferenceCounts =
-            new Dictionary<string, int>(
-                StringComparer.OrdinalIgnoreCase);
 
         var scannedItems = 0;
         var selectedImages = 0;
@@ -219,22 +209,6 @@ public sealed class MinitigerImageFixService
 
             foreach (var image in item.ImageInfos)
             {
-                if (
-                    image.IsLocalFile
-                    && !string.IsNullOrWhiteSpace(
-                        image.Path)
-                )
-                {
-                    sourceReferenceCounts[
-                        image.Path] =
-                        sourceReferenceCounts
-                            .TryGetValue(
-                                image.Path,
-                                out var referenceCount)
-                            ? referenceCount + 1
-                            : 1;
-                }
-
                 var imageIndex =
                     indices.TryGetValue(
                         image.Type,
@@ -363,19 +337,6 @@ public sealed class MinitigerImageFixService
             }
         }
 
-        candidates = candidates
-            .Select(candidate =>
-                candidate with
-                {
-                    SharedSource =
-                        sourceReferenceCounts
-                            .TryGetValue(
-                                candidate.SourcePath,
-                                out var references)
-                        && references > 1
-                })
-            .ToList();
-
         lock (_gate)
         {
             _candidates = candidates;
@@ -481,7 +442,11 @@ public sealed class MinitigerImageFixService
     {
         try
         {
-            foreach (var candidate in candidates)
+            var runCandidates = deleteOriginals
+                ? MarkSharedSources(candidates)
+                : candidates;
+
+            foreach (var candidate in runCandidates)
             {
                 cancellationToken
                     .ThrowIfCancellationRequested();
@@ -1202,6 +1167,113 @@ public sealed class MinitigerImageFixService
             CancellationToken.None,
             TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);
+    }
+
+    private IReadOnlyList<BaseItem> GetScanItems(
+        MinitigerImageFixSelection selection)
+    {
+        var query = new InternalItemsQuery
+        {
+            Recursive = true,
+            IsVirtualItem = false,
+            GroupByPresentationUniqueKey = false,
+            EnableTotalRecordCount = false
+        };
+
+        var needsBroadItemScan =
+            selection.Posters
+            || selection.Backdrops
+            || selection.Landscape
+            || selection.Banners;
+
+        if (!needsBroadItemScan)
+        {
+            var includeTypes =
+                new List<BaseItemKind>();
+
+            if (selection.SeasonPosters)
+            {
+                includeTypes.Add(
+                    BaseItemKind.Season);
+            }
+
+            if (selection.People)
+            {
+                includeTypes.Add(
+                    BaseItemKind.Person);
+            }
+
+            if (includeTypes.Count > 0)
+            {
+                query.IncludeItemTypes =
+                    [.. includeTypes];
+            }
+        }
+
+        return _libraryManager.GetItemList(query);
+    }
+
+    private IReadOnlyList<MinitigerImageFixCandidate>
+        MarkSharedSources(
+            IReadOnlyList<MinitigerImageFixCandidate> candidates)
+    {
+        if (candidates.Count == 0)
+        {
+            return candidates;
+        }
+
+        var candidatePaths =
+            candidates
+                .Select(candidate =>
+                    candidate.SourcePath)
+                .ToHashSet(
+                    StringComparer.OrdinalIgnoreCase);
+
+        var referenceCounts =
+            candidatePaths.ToDictionary(
+                path => path,
+                _ => 0,
+                StringComparer.OrdinalIgnoreCase);
+
+        var items = _libraryManager.GetItemList(
+            new InternalItemsQuery
+            {
+                Recursive = true,
+                IsVirtualItem = false,
+                GroupByPresentationUniqueKey = false,
+                EnableTotalRecordCount = false
+            });
+
+        foreach (var item in items)
+        {
+            foreach (var image in item.ImageInfos)
+            {
+                if (
+                    !image.IsLocalFile
+                    || string.IsNullOrWhiteSpace(
+                        image.Path)
+                    || !referenceCounts.ContainsKey(
+                        image.Path)
+                )
+                {
+                    continue;
+                }
+
+                referenceCounts[image.Path]++;
+            }
+        }
+
+        return candidates
+            .Select(candidate =>
+                candidate with
+                {
+                    SharedSource =
+                        referenceCounts.TryGetValue(
+                            candidate.SourcePath,
+                            out var references)
+                        && references > 1
+                })
+            .ToList();
     }
 
     private static string? ResolveCategory(
