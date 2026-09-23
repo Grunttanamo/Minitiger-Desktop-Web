@@ -5916,18 +5916,32 @@ iframe.minitigerInlineTrailer {
     font-size: 1.45rem;
     line-height: 1;
     cursor: pointer;
-    opacity: 0.82;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(0) scale(1);
     backdrop-filter: blur(8px);
     transition:
         opacity 0.16s ease,
-        transform 0.16s ease,
+        visibility 0.16s ease,
+        transform 0.18s ease,
         background 0.16s ease;
 }
 
-.minitigerLibraryMenuButton:hover,
-.minitigerLibraryMenuButton:focus-visible {
+.minitigerLibraryCard:hover .minitigerLibraryMenuButton,
+.minitigerLibraryCard:focus-within .minitigerLibraryMenuButton,
+.minitigerLibraryCard.minitigerNativeHover .minitigerLibraryMenuButton {
+    opacity: 0.9;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(-5px) scale(1.018);
+}
+
+.minitigerLibraryCard:hover .minitigerLibraryMenuButton:hover,
+.minitigerLibraryCard:focus-within .minitigerLibraryMenuButton:focus-visible,
+.minitigerLibraryCard.minitigerNativeHover .minitigerLibraryMenuButton:hover {
     opacity: 1;
-    transform: scale(1.06);
+    transform: translateY(-5px) scale(1.08);
     background: rgba(8, 10, 12, 0.92);
     outline: none;
 }
