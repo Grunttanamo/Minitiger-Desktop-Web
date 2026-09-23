@@ -19,9 +19,11 @@
     width: min(42vw, 26rem);
     height: min(30vh, 12rem);
     background-image: url('../assets/img/minitiger-logo.png') !important;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-size: contain;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    box-sizing: border-box;
+    overflow: visible;
     position: fixed;
     top: 50%;
     left: 50%;
