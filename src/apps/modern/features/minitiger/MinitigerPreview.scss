@@ -1114,3 +1114,43 @@
     }
 }
 
+
+
+/* Minitiger Desktop: paged "Alle Folgen" preview */
+.minitigerSeriesLoadMoreWrap {
+    display: flex;
+    justify-content: center;
+    padding: 0.9rem 0 0.25rem;
+}
+
+.minitigerSeriesLoadMore {
+    min-width: 150px;
+    padding: 0.68rem 1.25rem;
+    border: 1px solid color-mix(
+        in srgb,
+        var(--mt-preview-accent) 60%,
+        rgba(255, 255, 255, 0.22)
+    );
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.075);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform 0.16s ease,
+        background 0.16s ease,
+        border-color 0.16s ease;
+}
+
+.minitigerSeriesLoadMore:hover,
+.minitigerSeriesLoadMore:focus-visible {
+    transform: translateY(-1px);
+    background: color-mix(
+        in srgb,
+        var(--mt-preview-accent) 24%,
+        rgba(255, 255, 255, 0.08)
+    );
+    border-color: var(--mt-preview-accent);
+    outline: none;
+}
