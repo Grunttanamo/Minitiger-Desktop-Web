@@ -7,6 +7,7 @@ import React, {
 import { useApi } from 'hooks/useApi';
 
 import { getMinitigerAccessToken } from '../apiAuth';
+import MinitigerConfirmDialog from './MinitigerConfirmDialog';
 
 import './MinitigerImageFixSettings.scss';
 
@@ -16,6 +17,7 @@ interface ImageFixSelection {
     seasonPosters: boolean;
     landscape: boolean;
     banners: boolean;
+    people: boolean;
 }
 
 interface ImageFixScanResult {
@@ -35,15 +37,19 @@ interface ImageFixScanResult {
     seasonPosterCandidates: number;
     landscapeCandidates: number;
     bannerCandidates: number;
+    peopleCandidates: number;
 }
 
 interface ImageFixStatus {
     running: boolean;
     completed: boolean;
     cancelled: boolean;
+    deleteOriginals: boolean;
     total: number;
     processed: number;
     converted: number;
+    deletedOriginals: number;
+    deleteFailures: number;
     failed: number;
     skipped: number;
     currentItem: string;
@@ -98,7 +104,8 @@ const normalizeScan = (
         backdropCandidates: numberValue(pick(source, 'backdropCandidates', 'BackdropCandidates')),
         seasonPosterCandidates: numberValue(pick(source, 'seasonPosterCandidates', 'SeasonPosterCandidates')),
         landscapeCandidates: numberValue(pick(source, 'landscapeCandidates', 'LandscapeCandidates')),
-        bannerCandidates: numberValue(pick(source, 'bannerCandidates', 'BannerCandidates'))
+        bannerCandidates: numberValue(pick(source, 'bannerCandidates', 'BannerCandidates')),
+        peopleCandidates: numberValue(pick(source, 'peopleCandidates', 'PeopleCandidates'))
     };
 };
 
@@ -114,9 +121,12 @@ const normalizeStatus = (
         running: pick(source, 'running', 'Running') === true,
         completed: pick(source, 'completed', 'Completed') === true,
         cancelled: pick(source, 'cancelled', 'Cancelled') === true,
+        deleteOriginals: pick(source, 'deleteOriginals', 'DeleteOriginals') === true,
         total: numberValue(pick(source, 'total', 'Total')),
         processed: numberValue(pick(source, 'processed', 'Processed')),
         converted: numberValue(pick(source, 'converted', 'Converted')),
+        deletedOriginals: numberValue(pick(source, 'deletedOriginals', 'DeletedOriginals')),
+        deleteFailures: numberValue(pick(source, 'deleteFailures', 'DeleteFailures')),
         failed: numberValue(pick(source, 'failed', 'Failed')),
         skipped: numberValue(pick(source, 'skipped', 'Skipped')),
         currentItem:
@@ -189,7 +199,8 @@ const MinitigerImageFixSettings = () => {
             backdrops: false,
             seasonPosters: false,
             landscape: false,
-            banners: false
+            banners: false,
+            people: false
         });
     const [ scan, setScan ] =
         useState<ImageFixScanResult | null>(null);
@@ -199,6 +210,10 @@ const MinitigerImageFixSettings = () => {
         useState<'scan' | 'start' | 'cancel' | ''>('');
     const [ message, setMessage ] =
         useState('');
+    const [ deleteOriginals, setDeleteOriginals ] =
+        useState(false);
+    const [ confirmOpen, setConfirmOpen ] =
+        useState(false);
 
     const selectedCount =
         Object.values(selection)
@@ -347,14 +362,7 @@ const MinitigerImageFixSettings = () => {
             return;
         }
 
-        const confirmed = window.confirm(
-            `${scan.convertible.toLocaleString('de-DE')} Bild${scan.convertible === 1 ? '' : 'er'} jetzt nacheinander zu WebP konvertieren? Die Auflösung bleibt erhalten und die Originaldateien werden vorerst nicht gelöscht.`
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
+        setConfirmOpen(false);
         setBusy('start');
         setMessage(
             'WebP-Konvertierung wird gestartet …'
@@ -365,7 +373,10 @@ const MinitigerImageFixSettings = () => {
                 normalizeStatus(
                     await request(
                         'Start',
-                        'POST'
+                        'POST',
+                        {
+                            deleteOriginals
+                        }
                     )
                 );
 
@@ -447,7 +458,9 @@ const MinitigerImageFixSettings = () => {
                         setMessage(
                             next.failed > 0
                                 ? `Fertig · ${next.converted} konvertiert · ${next.failed} fehlgeschlagen.`
-                                : `Fertig ♥ ${next.converted} Bilder wurden erfolgreich zu WebP konvertiert.`
+                                : next.deleteOriginals
+                                    ? `Fertig ♥ ${next.converted} konvertiert · ${next.deletedOriginals} Originale gelöscht.`
+                                    : `Fertig ♥ ${next.converted} Bilder wurden erfolgreich zu WebP konvertiert.`
                         );
                     }
                 }
@@ -514,6 +527,10 @@ const MinitigerImageFixSettings = () => {
                 [
                     'Banner',
                     scan.bannerCandidates
+                ],
+                [
+                    'Cast / Personen',
+                    scan.peopleCandidates
                 ]
             ] as Array<[string, number]>
             : []
@@ -526,8 +543,8 @@ const MinitigerImageFixSettings = () => {
             <p className='minitigerSettingsIntro'>
                 Findet lokale JPG-/PNG-Metadatenbilder und konvertiert sie
                 nacheinander mit Jellyfins eigenem Bild-Encoder zu WebP.
-                Die Auflösung bleibt unverändert. Originaldateien werden
-                in dieser ersten sicheren Version nicht gelöscht.
+                Die Auflösung bleibt unverändert. Optional können die alten
+                JPG-/PNG-Dateien erst nach erfolgreicher WebP-Aktivierung gelöscht werden.
             </p>
 
             <section className='minitigerSettingsCard'>
@@ -559,6 +576,11 @@ const MinitigerImageFixSettings = () => {
                             'banners',
                             'Banner',
                             'Jellyfin-Bannerbilder.'
+                        ],
+                        [
+                            'people',
+                            'Cast / Personenbilder',
+                            'Primäre Bilder von Schauspielern und anderen Jellyfin-Personen.'
                         ]
                     ] as Array<[
                         keyof ImageFixSelection,
@@ -591,6 +613,27 @@ const MinitigerImageFixSettings = () => {
                         </label>
                     ))}
                 </div>
+
+                <label className='minitigerImageFixDeleteToggle'>
+                    <input
+                        type='checkbox'
+                        checked={deleteOriginals}
+                        disabled={Boolean(status?.running)}
+                        onChange={event =>
+                            setDeleteOriginals(
+                                event.currentTarget.checked
+                            )
+                        }
+                    />
+                    <span>
+                        <strong>
+                            Originaldateien nach erfolgreicher Konvertierung löschen
+                        </strong>
+                        <small>
+                            JPG/PNG wird erst gelöscht, nachdem WebP erzeugt, validiert und als aktives Jellyfin-Bild gespeichert wurde.
+                        </small>
+                    </span>
+                </label>
 
                 <p className='minitigerSettingsHint'>
                     Unterstützte Quellen für die Konvertierung: JPG/JPEG und
@@ -627,7 +670,7 @@ const MinitigerImageFixSettings = () => {
                             || !scan?.convertible
                         }
                         onClick={() => {
-                            void startConversion();
+                            setConfirmOpen(true);
                         }}
                     >
                         {busy === 'start'
@@ -743,6 +786,18 @@ const MinitigerImageFixSettings = () => {
                             <strong>{status.skipped.toLocaleString('de-DE')}</strong>
                             übersprungen
                         </span>
+                        {status.deleteOriginals && (
+                            <span>
+                                <strong>{status.deletedOriginals.toLocaleString('de-DE')}</strong>
+                                Originale gelöscht
+                            </span>
+                        )}
+                        {status.deleteOriginals && (
+                            <span>
+                                <strong>{status.deleteFailures.toLocaleString('de-DE')}</strong>
+                                Löschfehler
+                            </span>
+                        )}
                         <span>
                             <strong>{status.failed.toLocaleString('de-DE')}</strong>
                             Fehler
@@ -766,9 +821,9 @@ const MinitigerImageFixSettings = () => {
 
                     {status.processed > 0 && (
                         <p className='minitigerSettingsHint'>
-                            Bisherige Differenz: {status.savedBytes >= 0 ? '-' : '+'}
+                            Kompressionsdifferenz der erfolgreich konvertierten Bilder: {status.savedBytes >= 0 ? '-' : '+'}
                             {formatBytes(Math.abs(status.savedBytes))}.
-                            Ein Minus davor bedeutet kleinere WebP-Dateien.
+                            Ein Minus bedeutet kleinere WebP-Dateien.
                         </p>
                     )}
 
@@ -789,6 +844,43 @@ const MinitigerImageFixSettings = () => {
                     )}
                 </section>
             )}
+
+            <MinitigerConfirmDialog
+                open={confirmOpen}
+                title='WebP-Konvertierung starten?'
+                confirmLabel={
+                    deleteOriginals
+                        ? 'Konvertieren & Originale löschen'
+                        : 'Konvertierung starten'
+                }
+                danger={deleteOriginals}
+                busy={busy === 'start'}
+                onCancel={() => setConfirmOpen(false)}
+                onConfirm={() => {
+                    void startConversion();
+                }}
+            >
+                <p>
+                    Es werden <strong>{scan?.convertible.toLocaleString('de-DE') ?? 0}</strong>{' '}
+                    Bild{scan?.convertible === 1 ? '' : 'er'} nacheinander zu WebP konvertiert.
+                    Die Auflösung bleibt erhalten.
+                </p>
+
+                <div className='minitigerConfirmNotice'>
+                    {deleteOriginals ? (
+                        <>
+                            <strong>Originale löschen ist aktiviert.</strong>{' '}
+                            Eine JPG-/PNG-Datei wird erst entfernt, nachdem das neue
+                            WebP validiert und von Jellyfin erfolgreich übernommen wurde.
+                        </>
+                    ) : (
+                        <>
+                            <strong>Sicherheitsmodus.</strong>{' '}
+                            Die ursprünglichen JPG-/PNG-Dateien bleiben erhalten.
+                        </>
+                    )}
+                </div>
+            </MinitigerConfirmDialog>
         </>
     );
 };
