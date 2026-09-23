@@ -888,3 +888,4 @@ const MinitigerImageFixSettings = () => {
 export default MinitigerImageFixSettings;
 
 // MINITIGER_PATCH_MARKER: PHASE_IMAGE_FIX_1
+// MINITIGER_PATCH_MARKER: PHASE_IMAGE_FIX_FINAL
