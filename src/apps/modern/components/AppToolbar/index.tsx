@@ -1,4 +1,3 @@
-import Button from '@mui/material/Button/Button';
 import Stack from '@mui/material/Stack';
 import React, { type FC } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -109,29 +108,31 @@ const AppToolbar: FC<AppToolbarProps> = ({
                 alignItems='center'
                 sx={{
                     minWidth: 0,
-                    minHeight: '56px',
+                    minHeight: '64px',
+                    height: '64px',
                     overflow: 'visible'
                 }}
             >
                 {!isDrawerAvailable && showsMinitigerBranding && (
-                    <Button
+                    <Link
                         data-minitiger-toolbar-brand
-                        variant='text'
-                        size='large'
-                        color='inherit'
-                        component={Link}
                         to='/'
                         aria-label='Startseite'
-                        sx={{
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            alignSelf: 'stretch',
                             minWidth: 0,
                             maxWidth: '24rem',
+                            minHeight: '64px',
+                            height: '64px',
                             padding: '0 0.45rem',
-                            minHeight: '56px',
-                            height: '56px',
-                            gap: '0.5rem',
                             lineHeight: 0,
-                            textTransform: 'none',
-                            overflow: 'visible'
+                            overflow: 'visible',
+                            clipPath: 'none',
+                            textDecoration: 'none',
+                            color: 'inherit'
                         }}
                     >
                         <img
@@ -142,19 +143,20 @@ const AppToolbar: FC<AppToolbarProps> = ({
                             style={{
                                 width: 'auto',
                                 height: `${toolbarBrandLogoSize}px`,
-                                maxHeight: `${toolbarBrandLogoSize}px`,
                                 maxWidth: '15rem',
-                                flex: '0 1 auto',
+                                maxHeight: 'none',
+                                flex: '0 0 auto',
                                 objectFit: 'contain',
                                 objectPosition: 'center',
-                                display: 'block'
+                                display: 'block',
+                                overflow: 'visible',
+                                clipPath: 'none'
                             }}
                             onError={event => {
                                 event.currentTarget.style.display = 'none';
                             }}
                         />
-
-                    </Button>
+                    </Link>
                 )}
 
             </Stack>
