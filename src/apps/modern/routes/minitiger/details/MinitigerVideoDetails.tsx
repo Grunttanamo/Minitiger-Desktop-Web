@@ -1297,11 +1297,6 @@ const MinitigerVideoDetails = () => {
                     </section>
                 )}
 
-                {isAdmin && (
-                    <div className='minitigerDetailsAdminHint'>
-                        Native Detailpage · Phase 18.2
-                    </div>
-                )}
             </main>
         </Page>
     );
