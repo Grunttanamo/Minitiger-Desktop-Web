@@ -1403,6 +1403,7 @@ const EpisodePreviewList = ({
 
 interface SeriesPreviewSectionProps {
     series: ItemDto;
+    initialSeasonId?: string;
     apiClient?: ApiClient;
     onPlay: (item: ItemDto) => void;
     onClose: () => void;
@@ -1413,6 +1414,7 @@ const ALL_EPISODES_PAGE_SIZE = 25;
 
 const SeriesPreviewSection = ({
     series,
+    initialSeasonId = '',
     apiClient,
     onPlay,
     onClose
@@ -1454,14 +1456,29 @@ const SeriesPreviewSection = ({
     const [
         selectedSeasonId,
         setSelectedSeasonId
-    ] = useState<string>('');
+    ] = useState<string>(initialSeasonId);
 
     const [
         allEpisodesLimit,
         setAllEpisodesLimit
     ] = useState(ALL_EPISODES_PAGE_SIZE);
 
+    const [
+        retainedAllEpisodes,
+        setRetainedAllEpisodes
+    ] = useState<ItemDto[]>([]);
+
+    const [
+        retainedAllEpisodesTotal,
+        setRetainedAllEpisodesTotal
+    ] = useState(0);
+
     useEffect(() => {
+        if (initialSeasonId) {
+            setSelectedSeasonId(initialSeasonId);
+            return;
+        }
+
         if (
             selectedSeasonId
             || seasons.length === 0
@@ -1477,6 +1494,7 @@ const SeriesPreviewSection = ({
             setSelectedSeasonId(preferred.Id);
         }
     }, [
+        initialSeasonId,
         seasons,
         selectedSeasonId
     ]);
@@ -1486,7 +1504,15 @@ const SeriesPreviewSection = ({
 
     useEffect(() => {
         setAllEpisodesLimit(ALL_EPISODES_PAGE_SIZE);
-    }, [selectedSeasonId]);
+
+        if (selectedSeasonId !== ALL_EPISODES_ID) {
+            setRetainedAllEpisodes([]);
+            setRetainedAllEpisodesTotal(0);
+        }
+    }, [
+        selectedSeasonId,
+        series.Id
+    ]);
 
     const {
         data: episodesData,
@@ -1515,8 +1541,35 @@ const SeriesPreviewSection = ({
         enableTotalRecordCount: allEpisodesSelected
     });
 
+    useEffect(() => {
+        if (
+            !allEpisodesSelected
+            || !episodesData?.Items
+        ) {
+            return;
+        }
+
+        setRetainedAllEpisodes(
+            episodesData.Items
+        );
+        setRetainedAllEpisodesTotal(
+            episodesData.TotalRecordCount
+            ?? episodesData.Items.length
+        );
+    }, [
+        allEpisodesSelected,
+        episodesData?.Items,
+        episodesData?.TotalRecordCount
+    ]);
+
+    const episodeSourceItems =
+        allEpisodesSelected
+        && retainedAllEpisodes.length > 0
+            ? retainedAllEpisodes
+            : (episodesData?.Items ?? []);
+
     const episodes = useMemo(
-        () => [ ...(episodesData?.Items ?? []) ]
+        () => [ ...episodeSourceItems ]
             .filter(isMinitigerAvailableEpisode)
             .sort((left, right) => {
                 const seasonDifference =
@@ -1532,14 +1585,16 @@ const SeriesPreviewSection = ({
                     - (right.IndexNumber ?? 9999)
                 );
             }),
-        [episodesData?.Items]
+        [episodeSourceItems]
     );
 
     const hasMoreAllEpisodes = Boolean(
         allEpisodesSelected
-        && (episodesData?.TotalRecordCount ?? 0)
-            > (episodesData?.Items?.length ?? 0)
+        && retainedAllEpisodesTotal > episodes.length
     );
+
+    const showInitialEpisodesLoading =
+        episodesPending && episodes.length === 0;
 
     if (seasonsPending) {
         return (
@@ -1566,7 +1621,7 @@ const SeriesPreviewSection = ({
                 />
             </div>
 
-            {episodesPending ? (
+            {showInitialEpisodesLoading ? (
                 <div className='minitigerSeriesPreviewLoading'>
                     Folgen werden geladen …
                 </div>
@@ -1584,13 +1639,16 @@ const SeriesPreviewSection = ({
                             <button
                                 type='button'
                                 className='minitigerSeriesLoadMore'
+                                disabled={episodesPending}
                                 onClick={() =>
                                     setAllEpisodesLimit(current =>
                                         current + ALL_EPISODES_PAGE_SIZE
                                     )
                                 }
                             >
-                                Mehr laden
+                                {episodesPending
+                                    ? 'Wird geladen …'
+                                    : 'Mehr laden'}
                             </button>
                         </div>
                     )}
