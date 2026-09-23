@@ -44,11 +44,15 @@ public sealed class MinitigerImageFixController : ControllerBase
 
     [HttpPost("Start")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult Start()
+    public ActionResult Start(
+        [FromBody] MinitigerImageFixStartRequest? request)
     {
         try
         {
-            return Ok(_service.Start());
+            return Ok(
+                _service.Start(
+                    request?.DeleteOriginals
+                    ?? false));
         }
         catch (InvalidOperationException ex)
         {
@@ -85,6 +89,8 @@ public sealed class MinitigerImageFixScanRequest
 
     public bool Banners { get; set; }
 
+    public bool People { get; set; }
+
     public MinitigerImageFixSelection ToSelection()
     {
         return new MinitigerImageFixSelection(
@@ -92,6 +98,12 @@ public sealed class MinitigerImageFixScanRequest
             Backdrops,
             SeasonPosters,
             Landscape,
-            Banners);
+            Banners,
+            People);
     }
+}
+
+public sealed class MinitigerImageFixStartRequest
+{
+    public bool DeleteOriginals { get; set; }
 }
