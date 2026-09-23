@@ -67,3 +67,17 @@ Safety rules in the first implementation:
 - an existing same-name WebP target is never overwritten;
 - the generated WebP is validated before Jellyfin's image reference is updated;
 - conversion can be cancelled from the Minitiger settings UI.
+
+
+## Image Fix 1.5
+
+The Image Fix can now scan these image groups independently:
+
+- posters;
+- backdrops;
+- season posters;
+- landscape/thumb images;
+- banners;
+- cast/person primary images.
+
+The optional **delete originals after successful conversion** mode removes the source JPG/PNG only after the WebP has been written, validated and persisted as the active Jellyfin image. A deletion failure does not invalidate an otherwise successful WebP conversion and is reported separately in the UI.
