@@ -396,6 +396,7 @@ const MinitigerImageFixSettings = () => {
             !scan?.convertible
             || busy
             || status?.running
+            || status?.needsServerRestart
         ) {
             return;
         }
@@ -719,7 +720,10 @@ const MinitigerImageFixSettings = () => {
                     <input
                         type='checkbox'
                         checked={deleteOriginals}
-                        disabled={Boolean(status?.running)}
+                        disabled={
+                            Boolean(status?.running)
+                            || Boolean(status?.needsServerRestart)
+                        }
                         onChange={event =>
                             setDeleteOriginals(
                                 event.currentTarget.checked
