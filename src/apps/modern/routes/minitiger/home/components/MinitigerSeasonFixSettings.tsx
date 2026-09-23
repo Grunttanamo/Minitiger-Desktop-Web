@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useApi } from 'hooks/useApi';
 
 import { getMinitigerAccessToken } from '../apiAuth';
+import MinitigerConfirmDialog from './MinitigerConfirmDialog';
 
 import './MinitigerSeasonFixSettings.scss';
 
@@ -314,14 +315,7 @@ const MinitigerSeasonFixSettings = () => {
             return;
         }
 
-        const confirmed = window.confirm(
-            `${scan.mismatchCount} Staffel${scan.mismatchCount === 1 ? '' : 'n'} jetzt nach der Minitiger-Regel umbenennen?`
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
+        setConfirmOpen(false);
         setBusy('apply');
         setMessage('Staffeln werden korrigiert …');
 
@@ -400,7 +394,7 @@ const MinitigerSeasonFixSettings = () => {
                             || !scan?.mismatchCount
                         }
                         onClick={() => {
-                            void applyFix();
+                            setConfirmOpen(true);
                         }}
                     >
                         {busy === 'apply'
@@ -511,6 +505,28 @@ const MinitigerSeasonFixSettings = () => {
                     )}
                 </section>
             )}
+
+            <MinitigerConfirmDialog
+                open={confirmOpen}
+                title='Staffel-Korrekturen anwenden?'
+                confirmLabel='Korrekturen anwenden'
+                busy={busy === 'apply'}
+                onCancel={() => setConfirmOpen(false)}
+                onConfirm={() => {
+                    void applyFix();
+                }}
+            >
+                <p>
+                    <strong>{scan?.mismatchCount ?? 0}</strong>{' '}
+                    Staffel{scan?.mismatchCount === 1 ? '' : 'n'} werden nach der
+                    Minitiger-Regel umbenannt.
+                </p>
+
+                <div className='minitigerConfirmNotice'>
+                    Es werden nur Jellyfins angezeigte Metadaten-Namen geändert.
+                    Physische Ordner und Dateien bleiben unangetastet.
+                </div>
+            </MinitigerConfirmDialog>
         </>
     );
 };
