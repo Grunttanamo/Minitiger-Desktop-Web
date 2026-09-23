@@ -41,6 +41,7 @@ import MinitigerTranslationSettings from './MinitigerTranslationSettings';
 import MinitigerAvatarGallerySettings from './MinitigerAvatarGallerySettings';
 import MinitigerAdminMessagesSettings from './MinitigerAdminMessagesSettings';
 import MinitigerSeasonFixSettings from './MinitigerSeasonFixSettings';
+import MinitigerImageFixSettings from './MinitigerImageFixSettings';
 
 interface MinitigerSettingsPanelProps {
     settings: MinitigerHomeSettings;
@@ -154,6 +155,7 @@ type SettingsTab =
     | 'avatars'
     | 'messages'
     | 'seasonFix'
+    | 'imageFix'
     | 'backup';
 
 const ROTATION_OPTIONS: Array<{
@@ -904,6 +906,7 @@ const onUpdate = (
                                 {tabButton('messages', 'Nachrichten', '✉')}
                                 {tabButton('translation', 'Auto-Übersetzung', '文')}
                                 {tabButton('seasonFix', 'Staffel Fix', '↺')}
+                                {tabButton('imageFix', 'Image Fix', '▧')}
                                 {tabButton('backup', 'Backup & Import', '↕')}
                             </div>
                         )}
@@ -2724,6 +2727,10 @@ const onUpdate = (
 
                         {isAdmin && activeTab === 'seasonFix' && (
                             <MinitigerSeasonFixSettings />
+                        )}
+
+                        {isAdmin && activeTab === 'imageFix' && (
+                            <MinitigerImageFixSettings />
                         )}
 
                         {isAdmin && activeTab === 'backup' && (
