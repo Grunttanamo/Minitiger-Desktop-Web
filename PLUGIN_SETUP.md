@@ -65,6 +65,7 @@ Safety rules in the first implementation:
 - conversion runs one image at a time;
 - remote/missing/unsupported files are skipped;
 - an existing same-name WebP target is never overwritten;
+- a source image referenced by multiple Jellyfin image entries is protected from automatic deletion;
 - the generated WebP is validated before Jellyfin's image reference is updated;
 - conversion can be cancelled from the Minitiger settings UI.
 
