@@ -49,6 +49,7 @@ interface PreviewTarget {
     item: ItemDto;
     kind: PreviewKind;
     rect: DOMRect;
+    seriesItem?: ItemDto;
 }
 
 interface MinitigerPreviewLayerProps {
@@ -250,6 +251,7 @@ const MinitigerPreviewLayer = ({
     ] = useState<{
         item: ItemDto;
         kind: PreviewKind;
+        seriesItem?: ItemDto;
     } | null>(null);
 
     const hoverTimer = useRef<number | null>(null);
@@ -344,10 +346,52 @@ const MinitigerPreviewLayer = ({
                 return;
             }
 
+            let seriesItem: ItemDto | undefined;
+
+            if (kind === 'season' && item.SeriesId) {
+                try {
+                    const seriesCacheKey =
+                        `${client.serverId?.() ?? 'server'}:${item.SeriesId}`;
+                    const cachedSeries =
+                        previewItemCache.get(seriesCacheKey);
+
+                    seriesItem = (
+                        cachedSeries
+                        && Date.now() - cachedSeries.timestamp
+                            < PREVIEW_CACHE_MS
+                    )
+                        ? cachedSeries.item
+                        : await client.getItem(
+                            userId,
+                            item.SeriesId
+                        ) as ItemDto;
+
+                    if (
+                        !cachedSeries
+                        || cachedSeries.item !== seriesItem
+                    ) {
+                        previewItemCache.set(seriesCacheKey, {
+                            timestamp: Date.now(),
+                            item: seriesItem
+                        });
+                    }
+                } catch (seriesError) {
+                    console.warn(
+                        '[Minitiger Preview] Serien-Elternobjekt konnte nicht geladen werden',
+                        seriesError
+                    );
+                }
+            }
+
+            if (token !== requestToken.current) {
+                return;
+            }
+
             setPreview({
                 item,
                 kind,
-                rect: card.getBoundingClientRect()
+                rect: card.getBoundingClientRect(),
+                seriesItem
             });
         } catch (error) {
             console.warn(
@@ -660,7 +704,8 @@ const MinitigerPreviewLayer = ({
                 onExpand={() => {
                     setExpanded({
                         item: preview.item,
-                        kind: preview.kind
+                        kind: preview.kind,
+                        seriesItem: preview.seriesItem
                     });
                     setPreview(null);
                     clearCloseTimer();
@@ -719,10 +764,26 @@ const SmallPreview = ({
         [target.rect]
     );
 
+    const seasonSeriesItem =
+        target.kind === 'season'
+            ? target.seriesItem
+            : undefined;
+
+    const heroItem =
+        seasonSeriesItem ?? target.item;
+
     const imageUrl = target.kind === 'manga'
         ? getPrimaryImageUrl(apiClient, target.item)
         : target.kind === 'season'
-            ? getParentLandscapeImageUrl(apiClient, target.item)
+            ? seasonSeriesItem
+                ? getBackdropImageUrl(
+                    apiClient,
+                    seasonSeriesItem
+                )
+                : getParentLandscapeImageUrl(
+                    apiClient,
+                    target.item
+                )
             : getBackdropImageUrl(apiClient, target.item);
 
     const rawMangaAspectRatio = Number(
@@ -739,7 +800,7 @@ const SmallPreview = ({
 
     const logoUrl = getLogoImageUrl(
         apiClient,
-        target.item
+        heroItem
     );
 
     const rating = getRatingLabel(
@@ -811,7 +872,7 @@ const SmallPreview = ({
                     />
                 ) : (
                     <div className='minitigerHoverPreviewFallback'>
-                        {target.item.Name ?? 'Minitiger'}
+                        {heroItem.Name ?? 'Minitiger'}
                     </div>
                 )}
 
@@ -821,11 +882,11 @@ const SmallPreview = ({
                     <img
                         className='minitigerHoverPreviewLogo'
                         src={logoUrl}
-                        alt={target.item.Name ?? ''}
+                        alt={heroItem.Name ?? ''}
                     />
                 ) : (
                     <strong>
-                        {target.item.Name ?? 'Unbekannt'}
+                        {heroItem.Name ?? 'Unbekannt'}
                     </strong>
                 )}
             </Link>
@@ -891,6 +952,7 @@ interface LargePreviewProps {
     target: {
         item: ItemDto;
         kind: PreviewKind;
+        seriesItem?: ItemDto;
     };
     apiClient?: ApiClient;
     style: React.CSSProperties;
@@ -907,15 +969,31 @@ const LargePreview = ({
     onPlay,
     onToggleFavorite
 }: LargePreviewProps) => {
+    const seasonSeriesItem =
+        target.kind === 'season'
+            ? target.seriesItem
+            : undefined;
+
+    const heroItem =
+        seasonSeriesItem ?? target.item;
+
     const backdropUrl = target.kind === 'manga'
         ? getPrimaryImageUrl(apiClient, target.item)
         : target.kind === 'season'
-            ? getParentLandscapeImageUrl(apiClient, target.item)
+            ? seasonSeriesItem
+                ? getBackdropImageUrl(
+                    apiClient,
+                    seasonSeriesItem
+                )
+                : getParentLandscapeImageUrl(
+                    apiClient,
+                    target.item
+                )
             : getBackdropImageUrl(apiClient, target.item);
 
     const logoUrl = getLogoImageUrl(
         apiClient,
-        target.item
+        heroItem
     );
 
     const meta = [
@@ -994,7 +1072,7 @@ const LargePreview = ({
                     {target.kind !== 'manga' && (
                         <MinitigerInlineTrailer
                             apiClient={apiClient}
-                            item={target.item}
+                            item={heroItem}
                             className='minitigerLargePreviewTrailerMedia'
                             delayMs={650}
                         />
@@ -1007,11 +1085,11 @@ const LargePreview = ({
                             <img
                                 className='minitigerLargePreviewLogo'
                                 src={logoUrl}
-                                alt={target.item.Name ?? ''}
+                                alt={heroItem.Name ?? ''}
                             />
                         ) : (
                             <h2>
-                                {target.item.Name ?? 'Unbekannt'}
+                                {heroItem.Name ?? 'Unbekannt'}
                             </h2>
                         )}
 
@@ -1079,12 +1157,24 @@ const LargePreview = ({
                     )}
 
                     {target.kind === 'season' && (
-                        <SeasonPreviewSection
-                            season={target.item}
-                            apiClient={apiClient}
-                            onPlay={onPlay}
-                            onClose={onClose}
-                        />
+                        seasonSeriesItem ? (
+                            <SeriesPreviewSection
+                                series={seasonSeriesItem}
+                                initialSeasonId={
+                                    target.item.Id ?? ''
+                                }
+                                apiClient={apiClient}
+                                onPlay={onPlay}
+                                onClose={onClose}
+                            />
+                        ) : (
+                            <SeasonPreviewSection
+                                season={target.item}
+                                apiClient={apiClient}
+                                onPlay={onPlay}
+                                onClose={onClose}
+                            />
+                        )
                     )}
 
                     {target.kind === 'manga' && (
