@@ -1,3 +1,4 @@
+using Jellyfin.Plugin.MinitigerVirtualSync.ImageFix;
 using Jellyfin.Plugin.MinitigerVirtualSync.Translation;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
@@ -16,6 +17,8 @@ public sealed class PluginServiceRegistrator : IPluginServiceRegistrator
                 client.BaseAddress = new Uri("https://api.openai.com/v1/");
                 client.Timeout = TimeSpan.FromMinutes(5);
             });
+
+        serviceCollection.AddSingleton<MinitigerImageFixService>();
 
         serviceCollection.AddSingleton<MinitigerTranslationBackgroundService>();
         serviceCollection.AddHostedService<MinitigerTranslationBackgroundService>(provider => provider.GetRequiredService<MinitigerTranslationBackgroundService>());
