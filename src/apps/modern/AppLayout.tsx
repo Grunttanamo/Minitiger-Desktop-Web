@@ -47,7 +47,6 @@ export const Component = () => {
             >
                 <StrictMode>
                     <OffsetAppBar
-                        dense
                         forceTransparent={isCurrentLibraryPath}
                     >
                         <AppToolbar
