@@ -181,3 +181,49 @@
         rgb(255 255 255 / 58%);
     line-height: 1.4;
 }
+
+
+.minitigerImageFixRestartWarning {
+    border-color:
+        rgb(233 106 106 / 42%);
+    background:
+        linear-gradient(
+            145deg,
+            rgb(233 106 106 / 8%),
+            rgb(255 255 255 / 2%)
+        );
+}
+
+.minitigerImageFixRestartWarning h4 {
+    color: #ffaaaa;
+}
+
+.minitigerImageFixRestartWarning p {
+    color:
+        rgb(255 255 255 / 76%);
+    line-height: 1.5;
+}
+
+.minitigerImageFixRestartWarning code,
+.minitigerImageFixCurrent code {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0.48rem 0.55rem;
+    border: 1px solid
+        rgb(255 255 255 / 8%);
+    border-radius: 5px;
+    background:
+        rgb(0 0 0 / 24%);
+    color:
+        rgb(255 255 255 / 68%);
+    font-size: 0.72rem;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.minitigerImageFixCurrent small {
+    color:
+        rgb(255 190 190 / 76%);
+}
