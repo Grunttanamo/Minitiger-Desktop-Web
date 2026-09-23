@@ -59,20 +59,12 @@ export const Component = () => {
                 <StrictMode>
                     <OffsetAppBar
                         elevation={0}
-                        sx={{
-                            backgroundColor:
-                                `rgba(8, 9, 11, ${toolbarOpacity}) !important`,
-                            backgroundImage: 'none !important',
-                            boxShadow: 'none !important',
-                            backdropFilter:
-                                settings.toolbarGlassBlur > 0
-                                    ? `blur(${settings.toolbarGlassBlur}px)`
-                                    : 'none',
-                            WebkitBackdropFilter:
-                                settings.toolbarGlassBlur > 0
-                                    ? `blur(${settings.toolbarGlassBlur}px)`
-                                    : 'none'
-                        }}
+                        forcedBackgroundColor={
+                            `rgba(8, 9, 11, ${toolbarOpacity})`
+                        }
+                        forcedBackdropBlur={
+                            settings.toolbarGlassBlur
+                        }
                     >
                         <AppToolbar
                             isDrawerAvailable={!isMediumScreen && isDrawerAvailable}
