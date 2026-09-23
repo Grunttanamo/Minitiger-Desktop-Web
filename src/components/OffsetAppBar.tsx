@@ -12,6 +12,7 @@ interface OffsetAppBarProps extends AppBarProps {
     forceTransparent?: boolean;
     forcedBackgroundColor?: string;
     forcedBackdropBlur?: number;
+    disableOffset?: boolean;
 }
 
 const OffsetAppBar: FC<PropsWithChildren<OffsetAppBarProps>> = ({
@@ -21,6 +22,7 @@ const OffsetAppBar: FC<PropsWithChildren<OffsetAppBarProps>> = ({
     forceTransparent = false,
     forcedBackgroundColor,
     forcedBackdropBlur = 0,
+    disableOffset = false,
     ...props
 }) => {
     const appBarRef = useRef<HTMLHtmlElement>(null);
@@ -127,14 +129,16 @@ const OffsetAppBar: FC<PropsWithChildren<OffsetAppBarProps>> = ({
             >
                 {children}
             </AppBar>
-            <div
-                aria-hidden='true'
-                style={{
-                    height,
-                    width: '100%',
-                    flexShrink: 0
-                }}
-            />
+            {!disableOffset && (
+                <div
+                    aria-hidden='true'
+                    style={{
+                        height,
+                        width: '100%',
+                        flexShrink: 0
+                    }}
+                />
+            )}
         </>
     );
 };
