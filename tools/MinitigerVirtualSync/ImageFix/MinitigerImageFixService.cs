@@ -54,6 +54,7 @@ public sealed record MinitigerImageFixStatus(
     int Processed,
     int Converted,
     int DeletedOriginals,
+    int ProtectedOriginals,
     int DeleteFailures,
     int Failed,
     int Skipped,
@@ -71,12 +72,14 @@ internal sealed record MinitigerImageFixCandidate(
     int ImageIndex,
     string Category,
     string SourcePath,
-    long SourceBytes);
+    long SourceBytes,
+    bool SharedSource);
 
 internal sealed record MinitigerImageFixConversionResult(
     bool Converted,
     long OutputBytes,
     bool OriginalDeleted,
+    bool OriginalProtected,
     string? DeleteError);
 
 public sealed class MinitigerImageFixService
@@ -95,6 +98,7 @@ public sealed class MinitigerImageFixService
     private int _processed;
     private int _converted;
     private int _deletedOriginals;
+    private int _protectedOriginals;
     private int _deleteFailures;
     private int _failed;
     private int _skipped;
@@ -144,6 +148,9 @@ public sealed class MinitigerImageFixService
 
         var candidates =
             new List<MinitigerImageFixCandidate>();
+        var sourceReferenceCounts =
+            new Dictionary<string, int>(
+                StringComparer.OrdinalIgnoreCase);
 
         var scannedItems = 0;
         var selectedImages = 0;
@@ -171,6 +178,22 @@ public sealed class MinitigerImageFixService
 
             foreach (var image in item.ImageInfos)
             {
+                if (
+                    image.IsLocalFile
+                    && !string.IsNullOrWhiteSpace(
+                        image.Path)
+                )
+                {
+                    sourceReferenceCounts[
+                        image.Path] =
+                        sourceReferenceCounts
+                            .TryGetValue(
+                                image.Path,
+                                out var referenceCount)
+                            ? referenceCount + 1
+                            : 1;
+                }
+
                 var imageIndex =
                     indices.TryGetValue(
                         image.Type,
@@ -270,7 +293,8 @@ public sealed class MinitigerImageFixService
                         imageIndex,
                         category,
                         sourcePath,
-                        sourceBytes));
+                        sourceBytes,
+                        false));
 
                 convertibleBytes += sourceBytes;
 
@@ -297,6 +321,19 @@ public sealed class MinitigerImageFixService
                 }
             }
         }
+
+        candidates = candidates
+            .Select(candidate =>
+                candidate with
+                {
+                    SharedSource =
+                        sourceReferenceCounts
+                            .TryGetValue(
+                                candidate.SourcePath,
+                                out var references)
+                        && references > 1
+                })
+            .ToList();
 
         lock (_gate)
         {
@@ -428,6 +465,11 @@ public sealed class MinitigerImageFixService
                                 _deletedOriginals++;
                             }
 
+                            if (result.OriginalProtected)
+                            {
+                                _protectedOriginals++;
+                            }
+
                             if (!string.IsNullOrWhiteSpace(
                                 result.DeleteError))
                             {
@@ -521,6 +563,7 @@ public sealed class MinitigerImageFixService
                 false,
                 0,
                 false,
+                false,
                 null);
         }
 
@@ -533,6 +576,7 @@ public sealed class MinitigerImageFixService
             return new MinitigerImageFixConversionResult(
                 false,
                 0,
+                false,
                 false,
                 null);
         }
@@ -554,6 +598,7 @@ public sealed class MinitigerImageFixService
                 false,
                 0,
                 false,
+                false,
                 null);
         }
 
@@ -567,6 +612,7 @@ public sealed class MinitigerImageFixService
             return new MinitigerImageFixConversionResult(
                 false,
                 0,
+                false,
                 false,
                 null);
         }
@@ -700,9 +746,17 @@ public sealed class MinitigerImageFixService
                     targetPath).Length;
 
             var originalDeleted = false;
+            var originalProtected = false;
             string? deleteError = null;
 
-            if (deleteOriginals)
+            if (
+                deleteOriginals
+                && candidate.SharedSource
+            )
+            {
+                originalProtected = true;
+            }
+            else if (deleteOriginals)
             {
                 try
                 {
@@ -756,6 +810,7 @@ public sealed class MinitigerImageFixService
                 true,
                 outputBytes,
                 originalDeleted,
+                originalProtected,
                 deleteError);
         }
         catch
@@ -879,6 +934,7 @@ public sealed class MinitigerImageFixService
         _processed = 0;
         _converted = 0;
         _deletedOriginals = 0;
+        _protectedOriginals = 0;
         _deleteFailures = 0;
         _failed = 0;
         _skipped = 0;
@@ -900,6 +956,7 @@ public sealed class MinitigerImageFixService
             _processed,
             _converted,
             _deletedOriginals,
+            _protectedOriginals,
             _deleteFailures,
             _failed,
             _skipped,
