@@ -1180,6 +1180,42 @@ public sealed class MinitigerImageFixService
             EnableTotalRecordCount = false
         };
 
+        var imageTypes =
+            new HashSet<ImageType>();
+
+        if (
+            selection.Posters
+            || selection.SeasonPosters
+            || selection.People
+        )
+        {
+            imageTypes.Add(
+                ImageType.Primary);
+        }
+
+        if (selection.Backdrops)
+        {
+            imageTypes.Add(
+                ImageType.Backdrop);
+        }
+
+        if (selection.Landscape)
+        {
+            imageTypes.Add(
+                ImageType.Primary);
+            imageTypes.Add(
+                ImageType.Thumb);
+        }
+
+        if (selection.Banners)
+        {
+            imageTypes.Add(
+                ImageType.Banner);
+        }
+
+        query.ImageTypes =
+            [.. imageTypes];
+
         var needsBroadItemScan =
             selection.Posters
             || selection.Backdrops
