@@ -1154,3 +1154,19 @@
     border-color: var(--mt-preview-accent);
     outline: none;
 }
+
+
+/* Season separators inside the "Alle Folgen" preview. */
+.minitigerSeriesSeasonDivider {
+    grid-column: 1 / -1;
+    margin: 0.95rem 0 0.35rem;
+    color: var(--mt-preview-accent);
+    font-size: 0.98rem;
+    font-weight: 900;
+    line-height: 1.2;
+    text-align: left;
+}
+
+.minitigerSeriesSeasonDivider:first-child {
+    margin-top: 0.2rem;
+}
