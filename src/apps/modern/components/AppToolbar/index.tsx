@@ -10,7 +10,7 @@ import RemotePlayButton from './RemotePlayButton';
 import SyncPlayButton from './SyncPlayButton';
 import SearchButton from './SearchButton';
 import useMinitigerToolbarBranding from '../../routes/minitiger/home/hooks/useMinitigerToolbarBranding';
-import minitigerDefaultLogo from '../../../../assets/img/minitiger-logo.webp';
+import minitigerDefaultLogo from '../../../../assets/img/minitiger-logo.png';
 
 interface AppToolbarProps {
     isDrawerAvailable: boolean
