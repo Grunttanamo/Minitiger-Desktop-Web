@@ -612,6 +612,8 @@ const MinitigerImageFixSettings = () => {
                         disabled={
                             Boolean(busy)
                             || Boolean(status?.running)
+                            || Boolean(status?.completed)
+                            || Boolean(status?.cancelled)
                             || !scan?.convertible
                         }
                         onClick={() => {
@@ -752,7 +754,7 @@ const MinitigerImageFixSettings = () => {
                         <p className='minitigerSettingsHint'>
                             Bisherige Differenz: {status.savedBytes >= 0 ? '-' : '+'}
                             {formatBytes(Math.abs(status.savedBytes))}.
-                            Negative Differenz bedeutet kleinere WebP-Dateien.
+                            Ein Minus davor bedeutet kleinere WebP-Dateien.
                         </p>
                     )}
 
