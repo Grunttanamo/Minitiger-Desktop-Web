@@ -49,6 +49,7 @@ interface ImageFixStatus {
     processed: number;
     converted: number;
     deletedOriginals: number;
+    protectedOriginals: number;
     deleteFailures: number;
     failed: number;
     skipped: number;
@@ -126,6 +127,7 @@ const normalizeStatus = (
         processed: numberValue(pick(source, 'processed', 'Processed')),
         converted: numberValue(pick(source, 'converted', 'Converted')),
         deletedOriginals: numberValue(pick(source, 'deletedOriginals', 'DeletedOriginals')),
+        protectedOriginals: numberValue(pick(source, 'protectedOriginals', 'ProtectedOriginals')),
         deleteFailures: numberValue(pick(source, 'deleteFailures', 'DeleteFailures')),
         failed: numberValue(pick(source, 'failed', 'Failed')),
         skipped: numberValue(pick(source, 'skipped', 'Skipped')),
@@ -794,6 +796,12 @@ const MinitigerImageFixSettings = () => {
                         )}
                         {status.deleteOriginals && (
                             <span>
+                                <strong>{status.protectedOriginals.toLocaleString('de-DE')}</strong>
+                                gemeinsam genutzt · behalten
+                            </span>
+                        )}
+                        {status.deleteOriginals && (
+                            <span>
                                 <strong>{status.deleteFailures.toLocaleString('de-DE')}</strong>
                                 Löschfehler
                             </span>
@@ -872,6 +880,8 @@ const MinitigerImageFixSettings = () => {
                             <strong>Originale löschen ist aktiviert.</strong>{' '}
                             Eine JPG-/PNG-Datei wird erst entfernt, nachdem das neue
                             WebP validiert und von Jellyfin erfolgreich übernommen wurde.
+                            Dateien, die von mehreren Jellyfin-Bildern gemeinsam genutzt
+                            werden, bleiben aus Sicherheitsgründen erhalten.
                         </>
                     ) : (
                         <>
