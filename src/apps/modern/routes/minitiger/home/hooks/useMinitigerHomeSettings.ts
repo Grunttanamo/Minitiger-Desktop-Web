@@ -55,7 +55,10 @@ const PERSONAL_HOME_SETTING_KEYS: Array<keyof MinitigerHomeSettings> = [
     'playedIndicatorShape',
     'hoverEnabled',
     'glowEnabled',
-    'previewEnabled'
+    'previewEnabled',
+    'previewSeriesEnabled',
+    'previewMovieEnabled',
+    'previewMangaEnabled'
 ];
 
 const TOOLBAR_BRANDING_SETTING_KEYS: Array<keyof MinitigerHomeSettings> = [
