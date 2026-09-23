@@ -18,7 +18,13 @@ const DrawerHeaderLink = () => {
                 <Box
                     component='img'
                     src={appIcon}
-                    sx={{ height: '2.5rem' }}
+                    sx={{
+                        width: '2rem',
+                        height: '2rem',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                        display: 'block'
+                    }}
                 />
             </ListItemIcon>
             <ListItemText
