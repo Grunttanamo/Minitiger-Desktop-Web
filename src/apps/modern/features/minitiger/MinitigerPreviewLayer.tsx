@@ -1474,11 +1474,13 @@ const SeriesPreviewSection = ({
     ] = useState(0);
 
     useEffect(() => {
-        if (initialSeasonId) {
-            setSelectedSeasonId(initialSeasonId);
-            return;
-        }
+        setSelectedSeasonId(initialSeasonId);
+    }, [
+        initialSeasonId,
+        series.Id
+    ]);
 
+    useEffect(() => {
         if (
             selectedSeasonId
             || seasons.length === 0
@@ -1494,7 +1496,6 @@ const SeriesPreviewSection = ({
             setSelectedSeasonId(preferred.Id);
         }
     }, [
-        initialSeasonId,
         seasons,
         selectedSeasonId
     ]);
