@@ -28,14 +28,14 @@ const LibraryToolbar: FC = () => {
         data: item
     } = useItem(parentId || undefined);
 
+    const { libraryPageSize } = useUserSettings();
+
     if (!isLibraryPath) {
         return null;
     }
 
     const totalRecordCount =
         itemsResult?.data?.TotalRecordCount ?? 0;
-
-    const { libraryPageSize } = useUserSettings();
     const startIndex = viewSettings?.StartIndex ?? 0;
     const paginationEnabled =
         Boolean(content?.isPaginationEnabled)
