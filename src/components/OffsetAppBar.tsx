@@ -10,6 +10,8 @@ interface OffsetAppBarProps extends AppBarProps {
     dense?: boolean;
     elevation?: number;
     forceTransparent?: boolean;
+    forcedBackgroundColor?: string;
+    forcedBackdropBlur?: number;
 }
 
 const OffsetAppBar: FC<PropsWithChildren<OffsetAppBarProps>> = ({
@@ -17,6 +19,8 @@ const OffsetAppBar: FC<PropsWithChildren<OffsetAppBarProps>> = ({
     dense = false,
     elevation = 1,
     forceTransparent = false,
+    forcedBackgroundColor,
+    forcedBackdropBlur = 0,
     ...props
 }) => {
     const appBarRef = useRef<HTMLHtmlElement>(null);
@@ -52,6 +56,58 @@ const OffsetAppBar: FC<PropsWithChildren<OffsetAppBarProps>> = ({
             window.removeEventListener('resize', updateHeight);
         };
     }, []);
+
+    useLayoutEffect(() => {
+        const el = appBarRef.current;
+
+        if (!el || !forcedBackgroundColor) {
+            return;
+        }
+
+        /*
+         * Minitiger pages historically shipped several "always transparent"
+         * !important rules. Apply the user-selected glass appearance as an
+         * inline !important style so those legacy rules cannot win the cascade.
+         */
+        el.style.setProperty(
+            'background',
+            forcedBackgroundColor,
+            'important'
+        );
+        el.style.setProperty(
+            'background-color',
+            forcedBackgroundColor,
+            'important'
+        );
+        el.style.setProperty(
+            'background-image',
+            'none',
+            'important'
+        );
+        el.style.setProperty(
+            'box-shadow',
+            'none',
+            'important'
+        );
+
+        const blur = forcedBackdropBlur > 0
+            ? `blur(${forcedBackdropBlur}px)`
+            : 'none';
+
+        el.style.setProperty(
+            'backdrop-filter',
+            blur,
+            'important'
+        );
+        el.style.setProperty(
+            '-webkit-backdrop-filter',
+            blur,
+            'important'
+        );
+    }, [
+        forcedBackdropBlur,
+        forcedBackgroundColor
+    ]);
 
     const raised = scrollTrigger && !forceTransparent;
 
