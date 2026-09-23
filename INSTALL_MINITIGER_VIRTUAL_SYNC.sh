@@ -54,5 +54,5 @@ sleep 4
 sudo systemctl --no-pager --full status jellyfin | head -25
 
 echo
-echo "[Minitiger Sync] Fertig. Endpoint: /Minitiger/VirtualLibraries/Status"
+echo "[Minitiger Sync] Fertig. Endpoints: /Minitiger/VirtualLibraries/Status · /Minitiger/ImageFix/Status"
 echo "[Minitiger Sync] Beim ersten Admin-Aufruf überträgt Minitiger den bisherigen lokalen Stand automatisch, falls der Server noch leer ist."
