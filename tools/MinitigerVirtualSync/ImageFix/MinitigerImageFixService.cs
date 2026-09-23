@@ -152,7 +152,8 @@ public sealed class MinitigerImageFixService
     }
 
     public MinitigerImageFixScanResult Scan(
-        MinitigerImageFixSelection selection)
+        MinitigerImageFixSelection selection,
+        bool protectSharedSources)
     {
         if (!selection.Any)
         {
@@ -338,6 +339,17 @@ public sealed class MinitigerImageFixService
             }
         }
 
+        if (
+            protectSharedSources
+            && candidates.Count > 0
+        )
+        {
+            candidates = [
+                .. MarkSharedSources(
+                    candidates)
+            ];
+        }
+
         lock (_gate)
         {
             _candidates = candidates;
@@ -443,11 +455,7 @@ public sealed class MinitigerImageFixService
     {
         try
         {
-            var runCandidates = deleteOriginals
-                ? MarkSharedSources(candidates)
-                : candidates;
-
-            foreach (var candidate in runCandidates)
+            foreach (var candidate in candidates)
             {
                 cancellationToken
                     .ThrowIfCancellationRequested();
