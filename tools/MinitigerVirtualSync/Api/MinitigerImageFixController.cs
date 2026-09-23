@@ -28,7 +28,8 @@ public sealed class MinitigerImageFixController : ControllerBase
         {
             return Ok(
                 _service.Scan(
-                    request.ToSelection()));
+                    request.ToSelection(),
+                    request.DeleteOriginals));
         }
         catch (ArgumentException ex)
         {
@@ -90,6 +91,8 @@ public sealed class MinitigerImageFixScanRequest
     public bool Banners { get; set; }
 
     public bool People { get; set; }
+
+    public bool DeleteOriginals { get; set; }
 
     public MinitigerImageFixSelection ToSelection()
     {
