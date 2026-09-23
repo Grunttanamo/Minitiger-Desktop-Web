@@ -24,6 +24,7 @@ import {
     getBackdropImageUrl,
     getLandscapeImageUrl,
     getLogoImageUrl,
+    getParentLandscapeImageUrl,
     getMediaTypeName,
     getPrimaryImageUrl,
     getRatingLabel,
@@ -42,7 +43,7 @@ import MinitigerSeasonSwitcher from 'apps/modern/routes/minitiger/details/Miniti
 
 import './MinitigerPreview.scss';
 
-type PreviewKind = 'movie' | 'series' | 'manga';
+type PreviewKind = 'movie' | 'series' | 'season' | 'manga';
 
 interface PreviewTarget {
     item: ItemDto;
@@ -53,6 +54,9 @@ interface PreviewTarget {
 interface MinitigerPreviewLayerProps {
     accentColor: string;
     accentTextColor: string;
+    seriesEnabled?: boolean;
+    movieEnabled?: boolean;
+    mangaEnabled?: boolean;
 }
 
 const HOVER_DELAY = 1050;
@@ -116,6 +120,13 @@ const isSupportedItem = (
 
     if (type === 'series') {
         return 'series';
+    }
+
+    if (
+        type === 'season'
+        && Boolean(card.closest('.minitigerHome'))
+    ) {
+        return 'season';
     }
 
     if (type === 'movie') {
@@ -216,7 +227,10 @@ const getSmallPosition = (rect: DOMRect) => {
 
 const MinitigerPreviewLayer = ({
     accentColor,
-    accentTextColor
+    accentTextColor,
+    seriesEnabled = true,
+    movieEnabled = true,
+    mangaEnabled = true
 }: MinitigerPreviewLayerProps) => {
     const {
         __legacyApiClient__: apiClient
@@ -316,7 +330,17 @@ const MinitigerPreviewLayer = ({
 
             const kind = isSupportedItem(item, card);
 
-            if (!kind || !card.isConnected) {
+            const kindEnabled = (
+                (kind === 'series' || kind === 'season')
+                    ? seriesEnabled
+                    : kind === 'movie'
+                        ? movieEnabled
+                        : kind === 'manga'
+                            ? mangaEnabled
+                            : false
+            );
+
+            if (!kind || !kindEnabled || !card.isConnected) {
                 return;
             }
 
@@ -331,7 +355,11 @@ const MinitigerPreviewLayer = ({
                 error
             );
         }
-    }, []);
+    }, [
+        mangaEnabled,
+        movieEnabled,
+        seriesEnabled
+    ]);
 
     const schedulePreview = useCallback((
         card: Element
@@ -693,7 +721,9 @@ const SmallPreview = ({
 
     const imageUrl = target.kind === 'manga'
         ? getPrimaryImageUrl(apiClient, target.item)
-        : getBackdropImageUrl(apiClient, target.item);
+        : target.kind === 'season'
+            ? getParentLandscapeImageUrl(apiClient, target.item)
+            : getBackdropImageUrl(apiClient, target.item);
 
     const rawMangaAspectRatio = Number(
         target.item.PrimaryImageAspectRatio
@@ -725,6 +755,10 @@ const SmallPreview = ({
         target.kind === 'series'
             && target.item.ChildCount
             ? `${target.item.ChildCount} Staffeln`
+            : null,
+        target.kind === 'season'
+            && target.item.IndexNumber != null
+            ? `Staffel ${target.item.IndexNumber}`
             : null,
         target.kind === 'manga'
             && (
@@ -875,7 +909,9 @@ const LargePreview = ({
 }: LargePreviewProps) => {
     const backdropUrl = target.kind === 'manga'
         ? getPrimaryImageUrl(apiClient, target.item)
-        : getBackdropImageUrl(apiClient, target.item);
+        : target.kind === 'season'
+            ? getParentLandscapeImageUrl(apiClient, target.item)
+            : getBackdropImageUrl(apiClient, target.item);
 
     const logoUrl = getLogoImageUrl(
         apiClient,
@@ -891,6 +927,10 @@ const LargePreview = ({
         target.kind === 'series'
             && target.item.ChildCount
             ? `${target.item.ChildCount} Staffeln`
+            : null,
+        target.kind === 'season'
+            && target.item.IndexNumber != null
+            ? `Staffel ${target.item.IndexNumber}`
             : null,
         target.kind === 'manga'
             && (
@@ -1032,6 +1072,15 @@ const LargePreview = ({
                     {target.kind === 'series' && (
                         <SeriesPreviewSection
                             series={target.item}
+                            apiClient={apiClient}
+                            onPlay={onPlay}
+                            onClose={onClose}
+                        />
+                    )}
+
+                    {target.kind === 'season' && (
+                        <SeasonPreviewSection
+                            season={target.item}
                             apiClient={apiClient}
                             onPlay={onPlay}
                             onClose={onClose}
