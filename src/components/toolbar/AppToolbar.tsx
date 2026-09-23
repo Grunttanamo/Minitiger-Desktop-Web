@@ -44,9 +44,12 @@ const AppToolbar: FC<PropsWithChildren<AppToolbarProps>> = ({
 
     return (
         <Toolbar
-            variant='dense'
+            variant='regular'
             className={className}
             sx={{
+                minHeight: '64px !important',
+                height: '64px',
+                overflow: 'visible',
                 flexWrap: {
                     xs: 'wrap',
                     lg: 'nowrap'
