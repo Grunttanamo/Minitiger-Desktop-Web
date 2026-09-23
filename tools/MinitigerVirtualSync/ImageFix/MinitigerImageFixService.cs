@@ -721,11 +721,14 @@ public sealed class MinitigerImageFixService
                     FileAccess.Read,
                     FileShare.ReadWrite | FileShare.Delete))
         {
-            Span<byte> header =
-                stackalloc byte[16];
+            var header =
+                new byte[16];
 
             if (
-                sourceStream.Read(header)
+                sourceStream.Read(
+                    header,
+                    0,
+                    header.Length)
                 <= 0
             )
             {
@@ -1141,6 +1144,14 @@ public sealed class MinitigerImageFixService
             if (_backgroundEncodes > 0)
             {
                 _backgroundEncodes--;
+            }
+
+            if (
+                _backgroundEncodes == 0
+                && !_timedOut
+            )
+            {
+                _needsServerRestart = false;
             }
 
             _lastProgressAtUtc =
