@@ -669,7 +669,7 @@ const MinitigerImageFixSettings = () => {
                         [
                             'landscape',
                             'Landscape',
-                            'Jellyfin-Thumb/Landscape-Bilder.'
+                            'Jellyfin-Thumb/Landscape-Bilder inklusive Episodenbilder.'
                         ],
                         [
                             'banners',
