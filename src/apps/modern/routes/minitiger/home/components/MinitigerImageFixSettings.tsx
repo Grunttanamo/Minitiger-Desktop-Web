@@ -60,6 +60,12 @@ type ApiPath =
     | 'Status'
     | 'Cancel';
 
+const pick = (
+    source: Record<string, unknown>,
+    camel: string,
+    pascal: string
+) => source[camel] ?? source[pascal];
+
 const numberValue = (
     value: unknown
 ) => (
@@ -77,22 +83,22 @@ const normalizeScan = (
             : {};
 
     return {
-        scannedItems: numberValue(source.scannedItems),
-        selectedImages: numberValue(source.selectedImages),
-        alreadyWebp: numberValue(source.alreadyWebp),
-        jpg: numberValue(source.jpg),
-        png: numberValue(source.png),
-        otherFormats: numberValue(source.otherFormats),
-        remoteSkipped: numberValue(source.remoteSkipped),
-        missingSkipped: numberValue(source.missingSkipped),
-        targetExistsSkipped: numberValue(source.targetExistsSkipped),
-        convertible: numberValue(source.convertible),
-        convertibleBytes: numberValue(source.convertibleBytes),
-        posterCandidates: numberValue(source.posterCandidates),
-        backdropCandidates: numberValue(source.backdropCandidates),
-        seasonPosterCandidates: numberValue(source.seasonPosterCandidates),
-        landscapeCandidates: numberValue(source.landscapeCandidates),
-        bannerCandidates: numberValue(source.bannerCandidates)
+        scannedItems: numberValue(pick(source, 'scannedItems', 'ScannedItems')),
+        selectedImages: numberValue(pick(source, 'selectedImages', 'SelectedImages')),
+        alreadyWebp: numberValue(pick(source, 'alreadyWebp', 'AlreadyWebp')),
+        jpg: numberValue(pick(source, 'jpg', 'Jpg')),
+        png: numberValue(pick(source, 'png', 'Png')),
+        otherFormats: numberValue(pick(source, 'otherFormats', 'OtherFormats')),
+        remoteSkipped: numberValue(pick(source, 'remoteSkipped', 'RemoteSkipped')),
+        missingSkipped: numberValue(pick(source, 'missingSkipped', 'MissingSkipped')),
+        targetExistsSkipped: numberValue(pick(source, 'targetExistsSkipped', 'TargetExistsSkipped')),
+        convertible: numberValue(pick(source, 'convertible', 'Convertible')),
+        convertibleBytes: numberValue(pick(source, 'convertibleBytes', 'ConvertibleBytes')),
+        posterCandidates: numberValue(pick(source, 'posterCandidates', 'PosterCandidates')),
+        backdropCandidates: numberValue(pick(source, 'backdropCandidates', 'BackdropCandidates')),
+        seasonPosterCandidates: numberValue(pick(source, 'seasonPosterCandidates', 'SeasonPosterCandidates')),
+        landscapeCandidates: numberValue(pick(source, 'landscapeCandidates', 'LandscapeCandidates')),
+        bannerCandidates: numberValue(pick(source, 'bannerCandidates', 'BannerCandidates'))
     };
 };
 
@@ -105,27 +111,31 @@ const normalizeStatus = (
             : {};
 
     return {
-        running: source.running === true,
-        completed: source.completed === true,
-        cancelled: source.cancelled === true,
-        total: numberValue(source.total),
-        processed: numberValue(source.processed),
-        converted: numberValue(source.converted),
-        failed: numberValue(source.failed),
-        skipped: numberValue(source.skipped),
+        running: pick(source, 'running', 'Running') === true,
+        completed: pick(source, 'completed', 'Completed') === true,
+        cancelled: pick(source, 'cancelled', 'Cancelled') === true,
+        total: numberValue(pick(source, 'total', 'Total')),
+        processed: numberValue(pick(source, 'processed', 'Processed')),
+        converted: numberValue(pick(source, 'converted', 'Converted')),
+        failed: numberValue(pick(source, 'failed', 'Failed')),
+        skipped: numberValue(pick(source, 'skipped', 'Skipped')),
         currentItem:
-            typeof source.currentItem === 'string'
-                ? source.currentItem
+            typeof pick(source, 'currentItem', 'CurrentItem') === 'string'
+                ? String(pick(source, 'currentItem', 'CurrentItem'))
                 : '',
         currentCategory:
-            typeof source.currentCategory === 'string'
-                ? source.currentCategory
+            typeof pick(source, 'currentCategory', 'CurrentCategory') === 'string'
+                ? String(pick(source, 'currentCategory', 'CurrentCategory'))
                 : '',
-        sourceBytes: numberValue(source.sourceBytes),
-        outputBytes: numberValue(source.outputBytes),
-        savedBytes: numberValue(source.savedBytes),
-        errors: Array.isArray(source.errors)
-            ? source.errors.filter(
+        sourceBytes: numberValue(pick(source, 'sourceBytes', 'SourceBytes')),
+        outputBytes: numberValue(pick(source, 'outputBytes', 'OutputBytes')),
+        savedBytes: numberValue(pick(source, 'savedBytes', 'SavedBytes')),
+        errors: Array.isArray(
+            pick(source, 'errors', 'Errors')
+        )
+            ? (
+                pick(source, 'errors', 'Errors') as unknown[]
+            ).filter(
                 (entry): entry is string =>
                     typeof entry === 'string'
             )
@@ -654,6 +664,10 @@ const MinitigerImageFixSettings = () => {
                     <h4>Scan-Ergebnis</h4>
 
                     <div className='minitigerImageFixSummary'>
+                        <span>
+                            <strong>{scan.scannedItems.toLocaleString('de-DE')}</strong>
+                            geprüfte Jellyfin-Items
+                        </span>
                         <span>
                             <strong>{scan.selectedImages.toLocaleString('de-DE')}</strong>
                             ausgewählte Bilder
