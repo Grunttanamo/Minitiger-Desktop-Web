@@ -18,6 +18,7 @@ import { isLibraryPath } from './features/libraries/utils/path';
 import MinitigerAdminMessageHost from './features/minitiger/MinitigerAdminMessageHost';
 import MinitigerGlobalSettingsHost from './features/minitiger/MinitigerGlobalSettingsHost';
 import MinitigerProfileSelectionHost from './features/minitiger/MinitigerProfileSelectionHost';
+import useMinitigerHomeSettings from './routes/minitiger/home/hooks/useMinitigerHomeSettings';
 
 import './AppOverrides.scss';
 
@@ -25,6 +26,16 @@ export const Component = () => {
     const [ isDrawerActive, setIsDrawerActive ] = useState(false);
     const { user } = useApi();
     const location = useLocation();
+    const { settings } = useMinitigerHomeSettings();
+
+    const toolbarOpacity =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                1 - (settings.toolbarTransparency / 100)
+            )
+        );
 
     const isMediumScreen = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
     const isDrawerAvailable = isDrawerPath(location.pathname) && Boolean(user) && !isMediumScreen;
@@ -47,7 +58,21 @@ export const Component = () => {
             >
                 <StrictMode>
                     <OffsetAppBar
-                        forceTransparent={isCurrentLibraryPath}
+                        elevation={0}
+                        sx={{
+                            backgroundColor:
+                                `rgba(8, 9, 11, ${toolbarOpacity}) !important`,
+                            backgroundImage: 'none !important',
+                            boxShadow: 'none !important',
+                            backdropFilter:
+                                settings.toolbarGlassBlur > 0
+                                    ? `blur(${settings.toolbarGlassBlur}px)`
+                                    : 'none',
+                            WebkitBackdropFilter:
+                                settings.toolbarGlassBlur > 0
+                                    ? `blur(${settings.toolbarGlassBlur}px)`
+                                    : 'none'
+                        }}
                     >
                         <AppToolbar
                             isDrawerAvailable={!isMediumScreen && isDrawerAvailable}
