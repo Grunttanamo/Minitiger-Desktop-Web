@@ -44,6 +44,9 @@ interface ImageFixStatus {
     running: boolean;
     completed: boolean;
     cancelled: boolean;
+    cancelRequested: boolean;
+    needsServerRestart: boolean;
+    timedOut: boolean;
     deleteOriginals: boolean;
     total: number;
     processed: number;
@@ -55,6 +58,11 @@ interface ImageFixStatus {
     skipped: number;
     currentItem: string;
     currentCategory: string;
+    currentStep: string;
+    currentPath: string;
+    currentStartedAtUtc: string;
+    lastProgressAtUtc: string;
+    backgroundEncodes: number;
     sourceBytes: number;
     outputBytes: number;
     savedBytes: number;
@@ -122,6 +130,9 @@ const normalizeStatus = (
         running: pick(source, 'running', 'Running') === true,
         completed: pick(source, 'completed', 'Completed') === true,
         cancelled: pick(source, 'cancelled', 'Cancelled') === true,
+        cancelRequested: pick(source, 'cancelRequested', 'CancelRequested') === true,
+        needsServerRestart: pick(source, 'needsServerRestart', 'NeedsServerRestart') === true,
+        timedOut: pick(source, 'timedOut', 'TimedOut') === true,
         deleteOriginals: pick(source, 'deleteOriginals', 'DeleteOriginals') === true,
         total: numberValue(pick(source, 'total', 'Total')),
         processed: numberValue(pick(source, 'processed', 'Processed')),
@@ -139,6 +150,26 @@ const normalizeStatus = (
             typeof pick(source, 'currentCategory', 'CurrentCategory') === 'string'
                 ? String(pick(source, 'currentCategory', 'CurrentCategory'))
                 : '',
+        currentStep:
+            typeof pick(source, 'currentStep', 'CurrentStep') === 'string'
+                ? String(pick(source, 'currentStep', 'CurrentStep'))
+                : '',
+        currentPath:
+            typeof pick(source, 'currentPath', 'CurrentPath') === 'string'
+                ? String(pick(source, 'currentPath', 'CurrentPath'))
+                : '',
+        currentStartedAtUtc:
+            typeof pick(source, 'currentStartedAtUtc', 'CurrentStartedAtUtc') === 'string'
+                ? String(pick(source, 'currentStartedAtUtc', 'CurrentStartedAtUtc'))
+                : '',
+        lastProgressAtUtc:
+            typeof pick(source, 'lastProgressAtUtc', 'LastProgressAtUtc') === 'string'
+                ? String(pick(source, 'lastProgressAtUtc', 'LastProgressAtUtc'))
+                : '',
+        backgroundEncodes:
+            numberValue(
+                pick(source, 'backgroundEncodes', 'BackgroundEncodes')
+            ),
         sourceBytes: numberValue(pick(source, 'sourceBytes', 'SourceBytes')),
         outputBytes: numberValue(pick(source, 'outputBytes', 'OutputBytes')),
         savedBytes: numberValue(pick(source, 'savedBytes', 'SavedBytes')),
@@ -318,7 +349,12 @@ const MinitigerImageFixSettings = () => {
     };
 
     const runScan = async () => {
-        if (!selectedCount || busy || status?.running) {
+        if (
+            !selectedCount
+            || busy
+            || status?.running
+            || status?.needsServerRestart
+        ) {
             return;
         }
 
@@ -415,7 +451,9 @@ const MinitigerImageFixSettings = () => {
 
             setStatus(next);
             setMessage(
-                'Abbruch angefordert …'
+                next.needsServerRestart
+                    ? 'Abbruch angefordert. Ein Encoder läuft noch im Hintergrund – Jellyfin bitte einmal neu starten.'
+                    : 'Abbruch angefordert …'
             );
         } catch (error) {
             setMessage(
@@ -427,6 +465,58 @@ const MinitigerImageFixSettings = () => {
             setBusy('');
         }
     };
+
+    useEffect(() => {
+        if (!apiClient) {
+            return;
+        }
+
+        let cancelled = false;
+
+        const restoreServerStatus = async () => {
+            try {
+                const next =
+                    normalizeStatus(
+                        await request(
+                            'Status',
+                            'GET'
+                        )
+                    );
+
+                if (cancelled) {
+                    return;
+                }
+
+                if (
+                    next.running
+                    || next.needsServerRestart
+                    || next.processed > 0
+                ) {
+                    setStatus(next);
+
+                    if (next.running) {
+                        setMessage(
+                            'Laufender Image-Fix-Job vom Jellyfin-Server wurde wieder verbunden. ♥'
+                        );
+                    } else if (next.needsServerRestart) {
+                        setMessage(
+                            'Der vorherige Image-Fix hat einen hängenden Encoder erkannt. Bitte Jellyfin einmal neu starten.'
+                        );
+                    }
+                }
+            } catch {
+                // A missing/old endpoint is handled when the user actively uses Image Fix.
+            }
+        };
+
+        void restoreServerStatus();
+
+        return () => {
+            cancelled = true;
+        };
+        // apiClient changes when the active Jellyfin server changes.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [apiClient]);
 
     useEffect(() => {
         if (!status?.running) {
@@ -452,7 +542,13 @@ const MinitigerImageFixSettings = () => {
                 setStatus(next);
 
                 if (!next.running) {
-                    if (next.cancelled) {
+                    if (next.needsServerRestart) {
+                        setMessage(
+                            next.timedOut
+                                ? 'Ein Bild hat den 2-Minuten-Watchdog ausgelöst. Jellyfin bitte einmal neu starten; die Problemdatei steht unten.'
+                                : 'Die Konvertierung wurde beendet, aber ein Encoder-Task läuft noch im Hintergrund. Jellyfin bitte einmal neu starten.'
+                        );
+                    } else if (next.cancelled) {
                         setMessage(
                             `Konvertierung abgebrochen · ${next.converted} erfolgreich.`
                         );
@@ -600,7 +696,10 @@ const MinitigerImageFixSettings = () => {
                             <input
                                 type='checkbox'
                                 checked={selection[key]}
-                                disabled={Boolean(status?.running)}
+                                disabled={
+                            Boolean(status?.running)
+                            || Boolean(status?.needsServerRestart)
+                        }
                                 onChange={event =>
                                     updateSelection(
                                         key,
@@ -651,6 +750,7 @@ const MinitigerImageFixSettings = () => {
                         disabled={
                             Boolean(busy)
                             || Boolean(status?.running)
+                            || Boolean(status?.needsServerRestart)
                             || selectedCount === 0
                         }
                         onClick={() => {
@@ -667,6 +767,7 @@ const MinitigerImageFixSettings = () => {
                         disabled={
                             Boolean(busy)
                             || Boolean(status?.running)
+                            || Boolean(status?.needsServerRestart)
                             || Boolean(status?.completed)
                             || Boolean(status?.cancelled)
                             || !scan?.convertible
@@ -685,14 +786,19 @@ const MinitigerImageFixSettings = () => {
                     {status?.running && (
                         <button
                             type='button'
-                            disabled={Boolean(busy)}
+                            disabled={
+                                Boolean(busy)
+                                || Boolean(status.cancelRequested)
+                            }
                             onClick={() => {
                                 void cancelConversion();
                             }}
                         >
                             {busy === 'cancel'
                                 ? 'Abbruch …'
-                                : 'Abbrechen'}
+                                : status.cancelRequested
+                                    ? 'Abbruch angefordert …'
+                                    : 'Abbrechen'}
                         </button>
                     )}
                 </div>
@@ -760,6 +866,21 @@ const MinitigerImageFixSettings = () => {
                 </section>
             )}
 
+            {status?.needsServerRestart && (
+                <section className='minitigerSettingsCard minitigerImageFixRestartWarning'>
+                    <h4>Jellyfin-Neustart erforderlich</h4>
+                    <p>
+                        Jellyfins Bild-Encoder hat auf ein Bild nicht mehr reagiert oder
+                        lief beim Abbruch noch im Hintergrund. Minitiger blockiert deshalb
+                        bewusst einen neuen Scan und eine neue Konvertierung, damit nicht
+                        zwei Encoder-Läufe gleichzeitig auf dieselben Metadaten zugreifen.
+                    </p>
+                    {status.currentPath && (
+                        <code>{status.currentPath}</code>
+                    )}
+                </section>
+            )}
+
             {status && (
                 <section className='minitigerSettingsCard'>
                     <h4>Konvertierung</h4>
@@ -820,10 +941,25 @@ const MinitigerImageFixSettings = () => {
                         </span>
                     </div>
 
-                    {status.running && status.currentItem && (
+                    {(status.running || status.needsServerRestart)
+                        && status.currentItem && (
                         <div className='minitigerImageFixCurrent'>
-                            <strong>{status.currentCategory}</strong>
+                            <strong>
+                                {status.currentCategory}
+                                {status.currentStep
+                                    ? ` · ${status.currentStep}`
+                                    : ''}
+                            </strong>
                             <span>{status.currentItem}</span>
+                            {status.currentPath && (
+                                <code>{status.currentPath}</code>
+                            )}
+                            {status.backgroundEncodes > 0 && (
+                                <small>
+                                    {status.backgroundEncodes} Encoder-Task
+                                    {status.backgroundEncodes === 1 ? '' : 's'} noch aktiv
+                                </small>
+                            )}
                         </div>
                     )}
 
@@ -899,3 +1035,4 @@ export default MinitigerImageFixSettings;
 
 // MINITIGER_PATCH_MARKER: PHASE_IMAGE_FIX_1
 // MINITIGER_PATCH_MARKER: PHASE_IMAGE_FIX_FINAL
+// MINITIGER_PATCH_MARKER: PHASE_IMAGE_FIX_WATCHDOG
