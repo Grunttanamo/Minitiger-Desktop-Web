@@ -41,6 +41,9 @@ export const Component = () => {
     const isDrawerAvailable = isDrawerPath(location.pathname) && Boolean(user) && !isMediumScreen;
     const isDrawerOpen = isDrawerActive && isDrawerAvailable;
     const isCurrentLibraryPath = isLibraryPath(location.pathname);
+    const isMinitigerDetailsPath =
+        location.pathname.toLowerCase()
+        === '/minitigerdetails';
 
     const onToggleDrawer = useCallback(() => {
         setIsDrawerActive(!isDrawerActive);
@@ -64,6 +67,9 @@ export const Component = () => {
                         }
                         forcedBackdropBlur={
                             settings.toolbarGlassBlur
+                        }
+                        disableOffset={
+                            isMinitigerDetailsPath
                         }
                     >
                         <AppToolbar
