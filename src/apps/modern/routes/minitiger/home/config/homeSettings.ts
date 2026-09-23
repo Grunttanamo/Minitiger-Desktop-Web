@@ -108,6 +108,9 @@ export interface MinitigerHomeSettings {
     hoverEnabled: boolean;
     glowEnabled: boolean;
     previewEnabled: boolean;
+    previewSeriesEnabled: boolean;
+    previewMovieEnabled: boolean;
+    previewMangaEnabled: boolean;
     cardTextCentered: boolean;
 
     /**
@@ -366,6 +369,9 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     hoverEnabled: true,
     glowEnabled: true,
     previewEnabled: true,
+    previewSeriesEnabled: true,
+    previewMovieEnabled: true,
+    previewMangaEnabled: true,
     cardTextCentered: false,
     sectionOrder: [ ...HOME_SECTION_IDS ],
     homeRowOrder: [ ...DEFAULT_HOME_ROW_ORDER ],
@@ -775,6 +781,9 @@ export const normalizeHomeSettings = (
         hoverEnabled: source.hoverEnabled !== false,
         glowEnabled: source.glowEnabled !== false,
         previewEnabled: source.previewEnabled !== false,
+        previewSeriesEnabled: source.previewSeriesEnabled !== false,
+        previewMovieEnabled: source.previewMovieEnabled !== false,
+        previewMangaEnabled: source.previewMangaEnabled !== false,
         cardTextCentered:
             source.cardTextCentered === true,
         sectionOrder: derivedLegacyOrder,
