@@ -131,6 +131,9 @@ const LibraryPage: FC<LibraryPageProps> = ({
                             settings.accentColor
                         )
                     }
+                    seriesEnabled={settings.previewSeriesEnabled}
+                    movieEnabled={settings.previewMovieEnabled}
+                    mangaEnabled={settings.previewMangaEnabled}
                 />
             )}
         </Page>
