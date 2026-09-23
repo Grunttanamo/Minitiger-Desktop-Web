@@ -121,10 +121,12 @@ const AppToolbar: FC<AppToolbarProps> = ({
                         sx={{
                             minWidth: 0,
                             maxWidth: '24rem',
-                            padding: '0.2rem 0.45rem',
+                            padding: '0 0.45rem',
+                            minHeight: `${toolbarBrandLogoSize}px`,
                             gap: '0.5rem',
+                            lineHeight: 0,
                             textTransform: 'none',
-                            overflow: 'hidden'
+                            overflow: 'visible'
                         }}
                     >
                         <img
@@ -137,7 +139,9 @@ const AppToolbar: FC<AppToolbarProps> = ({
                                 height: `${toolbarBrandLogoSize}px`,
                                 maxWidth: '15rem',
                                 flex: '0 1 auto',
-                                objectFit: 'contain'
+                                objectFit: 'contain',
+                                objectPosition: 'center',
+                                display: 'block'
                             }}
                             onError={event => {
                                 event.currentTarget.style.display = 'none';
