@@ -16,6 +16,39 @@ interface PaginationProps {
     disabled?: boolean
 }
 
+const scrollLibraryToTop = () => {
+    window.scrollTo(0, 0);
+
+    const page =
+        document.querySelector<HTMLElement>(
+            '.minitigerLibraryPage'
+        );
+
+    if (!page) {
+        return;
+    }
+
+    page.scrollTop = 0;
+
+    page.querySelectorAll<HTMLElement>(
+        '.smoothScrollY, .scrollY, .emby-scroller, [data-scrollable="true"]'
+    ).forEach(element => {
+        element.scrollTop = 0;
+    });
+
+    let parent = page.parentElement;
+    let depth = 0;
+
+    while (parent && depth < 10) {
+        if (parent.scrollTop) {
+            parent.scrollTop = 0;
+        }
+
+        parent = parent.parentElement;
+        depth += 1;
+    }
+};
+
 const Pagination: FC<PaginationProps> = ({
     setLibraryViewSettings,
     index,
@@ -30,7 +63,7 @@ const Pagination: FC<PaginationProps> = ({
             ...prevState,
             StartIndex: index + pageSize
         }));
-        window.scrollTo(0, 0);
+        scrollLibraryToTop();
     }, [index, pageSize, setLibraryViewSettings]);
 
     const onPreviousPageClick = useCallback(() => {
@@ -38,7 +71,7 @@ const Pagination: FC<PaginationProps> = ({
             ...prevState,
             StartIndex: Math.max(0, index - pageSize)
         }));
-        window.scrollTo(0, 0);
+        scrollLibraryToTop();
     }, [index, pageSize, setLibraryViewSettings]);
 
     return (
