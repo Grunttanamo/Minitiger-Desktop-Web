@@ -775,15 +775,10 @@ const SmallPreview = ({
     const imageUrl = target.kind === 'manga'
         ? getPrimaryImageUrl(apiClient, target.item)
         : target.kind === 'season'
-            ? seasonSeriesItem
-                ? getBackdropImageUrl(
-                    apiClient,
-                    seasonSeriesItem
-                )
-                : getParentLandscapeImageUrl(
-                    apiClient,
-                    target.item
-                )
+            ? getParentLandscapeImageUrl(
+                apiClient,
+                target.item
+            )
             : getBackdropImageUrl(apiClient, target.item);
 
     const rawMangaAspectRatio = Number(
@@ -798,10 +793,12 @@ const SmallPreview = ({
         ? rawMangaAspectRatio
         : 2 / 3;
 
-    const logoUrl = getLogoImageUrl(
-        apiClient,
-        heroItem
-    );
+    const logoUrl = target.kind === 'season'
+        ? undefined
+        : getLogoImageUrl(
+            apiClient,
+            heroItem
+        );
 
     const rating = getRatingLabel(
         target.item.OfficialRating
@@ -878,16 +875,18 @@ const SmallPreview = ({
 
                 <div className='minitigerHoverPreviewHeroShade' />
 
-                {logoUrl ? (
-                    <img
-                        className='minitigerHoverPreviewLogo'
-                        src={logoUrl}
-                        alt={heroItem.Name ?? ''}
-                    />
-                ) : (
-                    <strong>
-                        {heroItem.Name ?? 'Unbekannt'}
-                    </strong>
+                {target.kind !== 'season' && (
+                    logoUrl ? (
+                        <img
+                            className='minitigerHoverPreviewLogo'
+                            src={logoUrl}
+                            alt={heroItem.Name ?? ''}
+                        />
+                    ) : (
+                        <strong>
+                            {heroItem.Name ?? 'Unbekannt'}
+                        </strong>
+                    )
                 )}
             </Link>
 
@@ -940,7 +939,7 @@ const SmallPreview = ({
 
             <p>
                 {shortOverview(
-                    target.item.Overview,
+                    heroItem.Overview,
                     260
                 ) || 'Keine Beschreibung hinterlegt.'}
             </p>
@@ -1142,7 +1141,7 @@ const LargePreview = ({
 
                     <p>
                         {shortOverview(
-                            target.item.Overview,
+                            heroItem.Overview,
                             820
                         ) || 'Keine Beschreibung hinterlegt.'}
                     </p>
@@ -1305,13 +1304,15 @@ interface EpisodePreviewListProps {
     apiClient?: ApiClient;
     onPlay: (item: ItemDto) => void;
     onClose: () => void;
+    showSeasonHeadings?: boolean;
 }
 
 const EpisodePreviewList = ({
     episodes,
     apiClient,
     onPlay,
-    onClose
+    onClose,
+    showSeasonHeadings = false
 }: EpisodePreviewListProps) => (
     <div className='minitigerSeriesEpisodeList'>
         {episodes.map((episode, index) => {
@@ -1327,11 +1328,36 @@ const EpisodePreviewList = ({
                 episode.RunTimeTicks
             );
 
+            const seasonNumber =
+                episode.ParentIndexNumber;
+
+            const previousSeasonNumber =
+                index > 0
+                    ? episodes[index - 1]?.ParentIndexNumber
+                    : undefined;
+
+            const startsSeason = Boolean(
+                showSeasonHeadings
+                && seasonNumber != null
+                && (
+                    index === 0
+                    || seasonNumber !== previousSeasonNumber
+                )
+            );
+
             return (
-                <article
-                    key={episode.Id ?? episode.Name}
-                    className='minitigerSeriesEpisodeCard'
+                <React.Fragment
+                    key={episode.Id ?? episode.Name ?? index}
                 >
+                    {startsSeason && (
+                        <div className='minitigerSeriesSeasonDivider'>
+                            Staffel {seasonNumber}
+                        </div>
+                    )}
+
+                    <article
+                        className='minitigerSeriesEpisodeCard'
+                    >
                     <Link
                         className='minitigerSeriesEpisodeLink'
                         to={getItemRoute(episode)}
@@ -1395,7 +1421,8 @@ const EpisodePreviewList = ({
                             </p>
                         </div>
                     </Link>
-                </article>
+                    </article>
+                </React.Fragment>
             );
         })}
     </div>
@@ -1633,6 +1660,7 @@ const SeriesPreviewSection = ({
                         apiClient={apiClient}
                         onPlay={onPlay}
                         onClose={onClose}
+                        showSeasonHeadings={allEpisodesSelected}
                     />
 
                     {hasMoreAllEpisodes && (
