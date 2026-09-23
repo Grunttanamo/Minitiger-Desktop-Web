@@ -222,6 +222,8 @@ const MinitigerSeasonFixSettings = () => {
         useState<SeasonFixScanResult | null>(null);
     const [ busy, setBusy ] = useState<'scan' | 'apply' | ''>('');
     const [ message, setMessage ] = useState('');
+    const [ confirmOpen, setConfirmOpen ] =
+        useState(false);
     const [ lastApply, setLastApply ] =
         useState<SeasonFixApplyResult | null>(null);
 
