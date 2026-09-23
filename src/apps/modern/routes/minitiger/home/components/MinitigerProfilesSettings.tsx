@@ -6,6 +6,7 @@ import {
     type MinitigerProfileAvatarId
 } from '../config/profiles';
 import useMinitigerProfiles from '../hooks/useMinitigerProfiles';
+import MinitigerConfirmDialog from './MinitigerConfirmDialog';
 import MinitigerProfileAvatarPicker from './MinitigerProfileAvatarPicker';
 import MinitigerProfileAvatarVisual from './MinitigerProfileAvatarVisual';
 import '../MinitigerProfiles.scss';
@@ -27,6 +28,10 @@ const MinitigerProfilesSettings = () => {
         avatarPickerTarget,
         setAvatarPickerTarget
     ] = useState<AvatarPickerTarget>(null);
+    const [
+        removeTarget,
+        setRemoveTarget
+    ] = useState<MinitigerProfile | null>(null);
 
     const newProfilePreview =
         useMemo<MinitigerProfile>(() => ({
@@ -293,15 +298,7 @@ const MinitigerProfilesSettings = () => {
                                         type='button'
                                         className='minitigerProfileRemoveButton'
                                         onClick={() => {
-                                            if (
-                                                window.confirm(
-                                                    `Profil "${profile.name}" wirklich löschen? Der getrennte Wiedergabefortschritt dieses Profils wird dabei ebenfalls entfernt.`
-                                                )
-                                            ) {
-                                                profiles.removeProfile(
-                                                    profile.id
-                                                );
-                                            }
+                                            setRemoveTarget(profile);
                                         }}
                                     >
                                         Entfernen
@@ -321,6 +318,34 @@ const MinitigerProfilesSettings = () => {
                     Ein zusätzliches Passwort ist nicht nötig.
                 </p>
             </section>
+
+            <MinitigerConfirmDialog
+                open={Boolean(removeTarget)}
+                title='Unterprofil löschen?'
+                confirmLabel='Profil löschen'
+                danger
+                onCancel={() => setRemoveTarget(null)}
+                onConfirm={() => {
+                    if (!removeTarget) {
+                        return;
+                    }
+
+                    profiles.removeProfile(
+                        removeTarget.id
+                    );
+                    setRemoveTarget(null);
+                }}
+            >
+                <p>
+                    Das Profil <strong>„{removeTarget?.name ?? ''}“</strong> wird
+                    dauerhaft aus Minitiger entfernt.
+                </p>
+
+                <div className='minitigerConfirmNotice'>
+                    Der getrennte Wiedergabefortschritt, die Watchlist und die
+                    Profildaten dieses Unterprofils werden ebenfalls entfernt.
+                </div>
+            </MinitigerConfirmDialog>
 
             {avatarPickerTarget
                 && pickerCurrentProfile
