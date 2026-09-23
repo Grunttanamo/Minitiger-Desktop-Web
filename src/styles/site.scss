@@ -16,14 +16,15 @@
 
 .splashLogo {
     animation: fadein 0.5s;
-    width: min(42vw, 26rem);
-    height: min(30vh, 12rem);
+    width: min(42vw, 26rem) !important;
+    height: min(45vh, 18rem) !important;
     background-image: url('../assets/img/minitiger-logo.png') !important;
     background-position: center center !important;
     background-repeat: no-repeat !important;
     background-size: contain !important;
     box-sizing: border-box;
-    overflow: visible;
+    overflow: visible !important;
+    clip-path: none !important;
     position: fixed;
     top: 50%;
     left: 50%;
