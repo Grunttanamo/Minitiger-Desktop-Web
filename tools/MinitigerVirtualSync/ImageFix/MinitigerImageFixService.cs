@@ -1229,6 +1229,16 @@ public sealed class MinitigerImageFixService
                 : null;
         }
 
+        if (
+            imageType == ImageType.Primary
+            && item is Episode
+        )
+        {
+            return selection.Landscape
+                ? "Landscape"
+                : null;
+        }
+
         if (imageType == ImageType.Primary)
         {
             return selection.Posters
