@@ -22,8 +22,11 @@ const ServerButton: FC = () => {
                     alt=''
                     aria-hidden
                     style={{
-                        maxHeight: '1.25em',
-                        maxWidth: '1.25em'
+                        width: '1.25em',
+                        height: '1.25em',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                        display: 'block'
                     }}
                 />
             }
