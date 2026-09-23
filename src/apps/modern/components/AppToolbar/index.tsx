@@ -107,7 +107,11 @@ const AppToolbar: FC<AppToolbarProps> = ({
                 direction='row'
                 spacing={0.5}
                 alignItems='center'
-                sx={{ minWidth: 0 }}
+                sx={{
+                    minWidth: 0,
+                    minHeight: '56px',
+                    overflow: 'visible'
+                }}
             >
                 {!isDrawerAvailable && showsMinitigerBranding && (
                     <Button
@@ -122,7 +126,8 @@ const AppToolbar: FC<AppToolbarProps> = ({
                             minWidth: 0,
                             maxWidth: '24rem',
                             padding: '0 0.45rem',
-                            minHeight: `${toolbarBrandLogoSize}px`,
+                            minHeight: '56px',
+                            height: '56px',
                             gap: '0.5rem',
                             lineHeight: 0,
                             textTransform: 'none',
@@ -137,6 +142,7 @@ const AppToolbar: FC<AppToolbarProps> = ({
                             style={{
                                 width: 'auto',
                                 height: `${toolbarBrandLogoSize}px`,
+                                maxHeight: `${toolbarBrandLogoSize}px`,
                                 maxWidth: '15rem',
                                 flex: '0 1 auto',
                                 objectFit: 'contain',
