@@ -14,14 +14,16 @@ public sealed record MinitigerImageFixSelection(
     bool Backdrops,
     bool SeasonPosters,
     bool Landscape,
-    bool Banners)
+    bool Banners,
+    bool People)
 {
     public bool Any =>
         Posters
         || Backdrops
         || SeasonPosters
         || Landscape
-        || Banners;
+        || Banners
+        || People;
 }
 
 public sealed record MinitigerImageFixScanResult(
@@ -40,15 +42,19 @@ public sealed record MinitigerImageFixScanResult(
     int BackdropCandidates,
     int SeasonPosterCandidates,
     int LandscapeCandidates,
-    int BannerCandidates);
+    int BannerCandidates,
+    int PeopleCandidates);
 
 public sealed record MinitigerImageFixStatus(
     bool Running,
     bool Completed,
     bool Cancelled,
+    bool DeleteOriginals,
     int Total,
     int Processed,
     int Converted,
+    int DeletedOriginals,
+    int DeleteFailures,
     int Failed,
     int Skipped,
     string CurrentItem,
@@ -67,6 +73,12 @@ internal sealed record MinitigerImageFixCandidate(
     string SourcePath,
     long SourceBytes);
 
+internal sealed record MinitigerImageFixConversionResult(
+    bool Converted,
+    long OutputBytes,
+    bool OriginalDeleted,
+    string? DeleteError);
+
 public sealed class MinitigerImageFixService
 {
     private readonly object _gate = new();
@@ -79,8 +91,11 @@ public sealed class MinitigerImageFixService
     private bool _running;
     private bool _completed;
     private bool _cancelled;
+    private bool _deleteOriginals;
     private int _processed;
     private int _converted;
+    private int _deletedOriginals;
+    private int _deleteFailures;
     private int _failed;
     private int _skipped;
     private string _currentItem = string.Empty;
@@ -145,6 +160,7 @@ public sealed class MinitigerImageFixService
         var seasonPosterCandidates = 0;
         var landscapeCandidates = 0;
         var bannerCandidates = 0;
+        var peopleCandidates = 0;
 
         foreach (var item in items)
         {
@@ -275,6 +291,9 @@ public sealed class MinitigerImageFixService
                     case "Banner":
                         bannerCandidates++;
                         break;
+                    case "Cast / Personen":
+                        peopleCandidates++;
+                        break;
                 }
             }
         }
@@ -301,10 +320,12 @@ public sealed class MinitigerImageFixService
             backdropCandidates,
             seasonPosterCandidates,
             landscapeCandidates,
-            bannerCandidates);
+            bannerCandidates,
+            peopleCandidates);
     }
 
-    public MinitigerImageFixStatus Start()
+    public MinitigerImageFixStatus Start(
+        bool deleteOriginals)
     {
         List<MinitigerImageFixCandidate> snapshot;
 
@@ -322,6 +343,8 @@ public sealed class MinitigerImageFixService
             }
 
             ResetRunState();
+            _deleteOriginals =
+                deleteOriginals;
             _running = true;
             _runCancellation =
                 new CancellationTokenSource();
@@ -331,6 +354,7 @@ public sealed class MinitigerImageFixService
             _ = Task.Run(
                 () => RunAsync(
                     snapshot,
+                    deleteOriginals,
                     _runCancellation.Token));
         }
 
@@ -360,6 +384,7 @@ public sealed class MinitigerImageFixService
 
     private async Task RunAsync(
         IReadOnlyList<MinitigerImageFixCandidate> candidates,
+        bool deleteOriginals,
         CancellationToken cancellationToken)
     {
         try
@@ -382,20 +407,38 @@ public sealed class MinitigerImageFixService
                     var result =
                         await ConvertCandidateAsync(
                             candidate,
+                            deleteOriginals,
                             cancellationToken)
                         .ConfigureAwait(false);
 
                     lock (_gate)
                     {
                         _processed++;
-                        _sourceBytes +=
-                            candidate.SourceBytes;
 
                         if (result.Converted)
                         {
                             _converted++;
+                            _sourceBytes +=
+                                candidate.SourceBytes;
                             _outputBytes +=
                                 result.OutputBytes;
+
+                            if (result.OriginalDeleted)
+                            {
+                                _deletedOriginals++;
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(
+                                result.DeleteError))
+                            {
+                                _deleteFailures++;
+
+                                if (_errors.Count < 30)
+                                {
+                                    _errors.Add(
+                                        $"{candidate.ItemName} · {candidate.Category}: {result.DeleteError}");
+                                }
+                            }
                         }
                         else
                         {
@@ -421,8 +464,6 @@ public sealed class MinitigerImageFixService
                     {
                         _processed++;
                         _failed++;
-                        _sourceBytes +=
-                            candidate.SourceBytes;
 
                         if (_errors.Count < 30)
                         {
@@ -458,9 +499,10 @@ public sealed class MinitigerImageFixService
         }
     }
 
-    private async Task<(bool Converted, long OutputBytes)>
+    private async Task<MinitigerImageFixConversionResult>
         ConvertCandidateAsync(
             MinitigerImageFixCandidate candidate,
+            bool deleteOriginals,
             CancellationToken cancellationToken)
     {
         if (
@@ -475,7 +517,11 @@ public sealed class MinitigerImageFixService
 
         if (!File.Exists(candidate.SourcePath))
         {
-            return (false, 0);
+            return new MinitigerImageFixConversionResult(
+                false,
+                0,
+                false,
+                null);
         }
 
         var item =
@@ -484,7 +530,11 @@ public sealed class MinitigerImageFixService
 
         if (item is null)
         {
-            return (false, 0);
+            return new MinitigerImageFixConversionResult(
+                false,
+                0,
+                false,
+                null);
         }
 
         var currentImage =
@@ -500,7 +550,11 @@ public sealed class MinitigerImageFixService
                 StringComparison.OrdinalIgnoreCase)
         )
         {
-            return (false, 0);
+            return new MinitigerImageFixConversionResult(
+                false,
+                0,
+                false,
+                null);
         }
 
         var targetPath =
@@ -510,7 +564,11 @@ public sealed class MinitigerImageFixService
 
         if (File.Exists(targetPath))
         {
-            return (false, 0);
+            return new MinitigerImageFixConversionResult(
+                false,
+                0,
+                false,
+                null);
         }
 
         var directory =
@@ -637,10 +695,68 @@ public sealed class MinitigerImageFixService
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            return (
-                true,
+            var outputBytes =
                 new FileInfo(
-                    targetPath).Length);
+                    targetPath).Length;
+
+            var originalDeleted = false;
+            string? deleteError = null;
+
+            if (deleteOriginals)
+            {
+                try
+                {
+                    var persistedImage =
+                        item.GetImageInfo(
+                            candidate.ImageType,
+                            candidate.ImageIndex);
+
+                    if (
+                        persistedImage is null
+                        || !string.Equals(
+                            persistedImage.Path,
+                            targetPath,
+                            StringComparison.OrdinalIgnoreCase)
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Jellyfin verweist nach dem Update nicht auf die neue WebP-Datei.");
+                    }
+
+                    if (File.Exists(
+                        candidate.SourcePath))
+                    {
+                        File.Delete(
+                            candidate.SourcePath);
+                    }
+
+                    originalDeleted =
+                        !File.Exists(
+                            candidate.SourcePath);
+
+                    if (!originalDeleted)
+                    {
+                        throw new IOException(
+                            "Die Originaldatei konnte nicht gelöscht werden.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    deleteError =
+                        $"WebP ist aktiv, Original konnte aber nicht gelöscht werden: {ex.Message}";
+
+                    _logger.LogWarning(
+                        ex,
+                        "Minitiger Image Fix could not delete original {SourcePath} after successful conversion.",
+                        candidate.SourcePath);
+                }
+            }
+
+            return new MinitigerImageFixConversionResult(
+                true,
+                outputBytes,
+                originalDeleted,
+                deleteError);
         }
         catch
         {
@@ -706,6 +822,16 @@ public sealed class MinitigerImageFixService
     {
         if (
             imageType == ImageType.Primary
+            && item is Person
+        )
+        {
+            return selection.People
+                ? "Cast / Personen"
+                : null;
+        }
+
+        if (
+            imageType == ImageType.Primary
             && item is Season
         )
         {
@@ -749,8 +875,11 @@ public sealed class MinitigerImageFixService
     {
         _completed = false;
         _cancelled = false;
+        _deleteOriginals = false;
         _processed = 0;
         _converted = 0;
+        _deletedOriginals = 0;
+        _deleteFailures = 0;
         _failed = 0;
         _skipped = 0;
         _currentItem = string.Empty;
@@ -766,9 +895,12 @@ public sealed class MinitigerImageFixService
             _running,
             _completed,
             _cancelled,
+            _deleteOriginals,
             _candidates.Count,
             _processed,
             _converted,
+            _deletedOriginals,
+            _deleteFailures,
             _failed,
             _skipped,
             _currentItem,
