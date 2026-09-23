@@ -616,6 +616,9 @@ const onUpdate = (
             'hoverEnabled',
             'glowEnabled',
             'previewEnabled',
+            'previewSeriesEnabled',
+            'previewMovieEnabled',
+            'previewMangaEnabled',
             'cardTextCentered'
         ]);
 
@@ -1173,6 +1176,21 @@ const onUpdate = (
                                             'previewEnabled',
                                             'Mini-Vorschaukarten aktivieren',
                                             'Schaltet kleine und große Netflix-artige Vorschau global ein oder aus.'
+                                        ],
+                                        [
+                                            'previewSeriesEnabled',
+                                            'Vorschaukarten für Serien aktivieren',
+                                            'Steuert Serien-Vorschauen. Staffeln auf der Startseite verwenden ebenfalls diese Einstellung.'
+                                        ],
+                                        [
+                                            'previewMovieEnabled',
+                                            'Vorschaukarten für Filme aktivieren',
+                                            'Schaltet kleine und große Vorschaukarten für Filme separat ein oder aus.'
+                                        ],
+                                        [
+                                            'previewMangaEnabled',
+                                            'Vorschaukarten für Manga aktivieren',
+                                            'Schaltet kleine und große Vorschaukarten für Manga / Bücher separat ein oder aus.'
                                         ],
                                         [
                                             'cardTextCentered',
