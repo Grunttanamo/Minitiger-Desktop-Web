@@ -360,7 +360,9 @@ const MinitigerImageFixSettings = () => {
 
         setBusy('scan');
         setMessage(
-            'Jellyfin-Bilder werden geprüft …'
+            deleteOriginals
+                ? 'Jellyfin-Bilder werden geprüft · inklusive Sicherheitsprüfung für gemeinsam verwendete Originaldateien …'
+                : 'Jellyfin-Bilder werden geprüft …'
         );
 
         try {
@@ -369,7 +371,10 @@ const MinitigerImageFixSettings = () => {
                     await request(
                         'Scan',
                         'POST',
-                        selection
+                        {
+                            ...selection,
+                            deleteOriginals
+                        }
                     )
                 );
 
@@ -746,11 +751,14 @@ const MinitigerImageFixSettings = () => {
                             Boolean(status?.running)
                             || Boolean(status?.needsServerRestart)
                         }
-                        onChange={event =>
+                        onChange={event => {
                             setDeleteOriginals(
                                 event.currentTarget.checked
-                            )
-                        }
+                            );
+                            setScan(null);
+                            setStatus(null);
+                            setMessage('');
+                        }}
                     />
                     <span>
                         <strong>
