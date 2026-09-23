@@ -2,7 +2,7 @@
 
 **Minitiger Virtual Sync** is the server-side companion plugin used by Minitiger features that need data or behavior beyond the normal Jellyfin Web frontend.
 
-Current plugin responsibilities include Minitiger profile synchronization, virtual-library support, background translation services, admin messages and the existing season repair/removal helpers.
+Current plugin responsibilities include Minitiger profile synchronization, virtual-library support, background translation services, admin messages, the season repair/removal helpers and the safe Image Fix scanner/conversion queue.
 
 The plugin does **not** replace Jellyfin or its database.
 
@@ -53,3 +53,17 @@ dotnet build tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csp
 ```
 
 The Desktop client build itself does not compile this plugin; it is a separate Jellyfin server component.
+
+## Image Fix
+
+The admin-only `Minitiger/ImageFix` API can scan selected Jellyfin metadata image types and convert local JPG/JPEG/PNG files sequentially to WebP using Jellyfin's own active image encoder.
+
+Safety rules in the first implementation:
+
+- originals are kept;
+- image resolution is not intentionally resized;
+- conversion runs one image at a time;
+- remote/missing/unsupported files are skipped;
+- an existing same-name WebP target is never overwritten;
+- the generated WebP is validated before Jellyfin's image reference is updated;
+- conversion can be cancelled from the Minitiger settings UI.
