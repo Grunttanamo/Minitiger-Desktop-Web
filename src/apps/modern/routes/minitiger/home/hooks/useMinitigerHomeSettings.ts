@@ -42,6 +42,8 @@ const PERSONAL_HOME_SETTING_KEYS: Array<keyof MinitigerHomeSettings> = [
     'genreTagColor',
     'glowStrength',
     'glowSize',
+    'toolbarTransparency',
+    'toolbarGlassBlur',
     'toolbarBrandTextEnabled',
     'toolbarBrandText',
     'bannerFskVisible',
