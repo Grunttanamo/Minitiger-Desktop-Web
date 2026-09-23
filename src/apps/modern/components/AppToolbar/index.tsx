@@ -43,7 +43,7 @@ const AppToolbar: FC<AppToolbarProps> = ({
     const toolbarBrandLogoSize =
         usesCustomToolbarBranding
             ? toolbarBranding.size
-            : 32;
+            : 44;
     const showsMinitigerBranding =
         !isPublicPath;
 
