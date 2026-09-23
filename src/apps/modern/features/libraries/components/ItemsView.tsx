@@ -32,6 +32,7 @@ import Loading from 'components/loading/LoadingComponent';
 import { ItemAction } from 'constants/itemAction';
 import ItemsContainer from 'elements/emby-itemscontainer/ItemsContainer';
 import { useApi } from 'hooks/useApi';
+import { useUserSettings } from 'hooks/useUserSettings';
 import type { CardOptions } from 'types/cardOptions';
 import type { ItemDto } from 'types/base/models/item-dto';
 import {
@@ -45,6 +46,7 @@ import 'apps/modern/routes/minitiger/home/MinitigerHome.scss';
 
 import AlphabetPicker from './AlphabetPicker';
 import FilterButton from './filter/FilterButton';
+import Pagination from './Pagination';
 
 const LETTER_VALUES = [
     '#',
@@ -216,7 +218,8 @@ const ItemsView: FC = () => {
         isAlphabetPickerEnabled,
         noItemsMessage,
         itemType,
-        isBtnFilterEnabled
+        isBtnFilterEnabled,
+        isPaginationEnabled
     } = content ?? {};
 
     const isAlphabetPickerSupported = useMediaQuery(t => [
@@ -228,6 +231,10 @@ const ItemsView: FC = () => {
         __legacyApiClient__,
         user
     } = useApi();
+
+    const {
+        libraryPageSize: paginationLimit
+    } = useUserSettings();
 
     const rawItems =
         (itemsResult?.data?.Items ?? []) as ItemDto[];
@@ -811,6 +818,30 @@ const ItemsView: FC = () => {
 
     const sortCode = getSortCode(libraryViewSettings);
 
+    const totalRecordCount =
+        itemsResult?.data?.TotalRecordCount ?? 0;
+
+    const startIndex =
+        libraryViewSettings.StartIndex ?? 0;
+
+    const paginationRequired =
+        Boolean(isPaginationEnabled)
+        && paginationLimit > 0
+        && totalRecordCount > paginationLimit;
+
+    const paginationStart =
+        totalRecordCount > 0
+            ? startIndex + 1
+            : 0;
+
+    const paginationEnd =
+        paginationLimit > 0
+            ? Math.min(
+                startIndex + paginationLimit,
+                totalRecordCount
+            )
+            : totalRecordCount;
+
     return (
         <>
         <Box className='padded-bottom-page'>
@@ -943,6 +974,33 @@ const ItemsView: FC = () => {
                 >
                     {getItems()}
                 </ItemsContainer>
+            )}
+
+            {paginationRequired && (
+                <div className='minitigerLibraryPagination'>
+                    <span>
+                        {paginationStart.toLocaleString('de-DE')}
+                        {'–'}
+                        {paginationEnd.toLocaleString('de-DE')}
+                        {' von '}
+                        {totalRecordCount.toLocaleString('de-DE')}
+                    </span>
+
+                    <Pagination
+                        setLibraryViewSettings={
+                            setLibraryViewSettings
+                        }
+                        index={startIndex}
+                        pageSize={paginationLimit}
+                        total={totalRecordCount}
+                        disabled={
+                            Boolean(itemsResult?.isPending)
+                            || Boolean(
+                                itemsResult?.isPlaceholderData
+                            )
+                        }
+                    />
+                </div>
             )}
         </Box>
 
