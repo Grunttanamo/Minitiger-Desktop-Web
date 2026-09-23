@@ -31,7 +31,10 @@ const MinitigerProfilesSettings = () => {
     const [
         removeTarget,
         setRemoveTarget
-    ] = useState<MinitigerProfile | null>(null);
+    ] = useState<{
+        id: string;
+        name: string;
+    } | null>(null);
 
     const newProfilePreview =
         useMemo<MinitigerProfile>(() => ({
