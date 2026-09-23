@@ -16,19 +16,20 @@
 
 .splashLogo {
     animation: fadein 0.5s;
-    width: min(42vw, 26rem) !important;
-    height: min(45vh, 18rem) !important;
-    background-image: url('../assets/img/minitiger-logo.png') !important;
-    background-position: center center !important;
-    background-repeat: no-repeat !important;
-    background-size: contain !important;
-    box-sizing: border-box;
-    overflow: visible !important;
-    clip-path: none !important;
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    display: block !important;
+    width: min(42vw, 26rem) !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    overflow: visible !important;
+    clip-path: none !important;
+    background: none !important;
 }
 
 
