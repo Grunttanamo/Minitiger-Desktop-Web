@@ -490,6 +490,63 @@ const MinitigerHome = () => {
         )
     );
 
+    const openLibraryMenu = async (
+        event: React.MouseEvent<HTMLButtonElement>,
+        library: ItemDto
+    ) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!apiClient || !library.Id) {
+            return;
+        }
+
+        const sourceButton = event.currentTarget;
+        const userId = apiClient.getCurrentUserId();
+
+        if (!userId) {
+            return;
+        }
+
+        try {
+            const [
+                itemContextMenu,
+                detailedItem,
+                currentUser
+            ] = await Promise.all([
+                import('components/itemContextMenu'),
+                apiClient.getItem(
+                    userId,
+                    library.Id
+                ) as Promise<ItemDto>,
+                apiClient.getCurrentUser()
+            ]);
+
+            const result = await itemContextMenu.show({
+                item: detailedItem,
+                user: currentUser,
+                positionTo: sourceButton,
+                play: false,
+                queue: false,
+                shuffle: false,
+                playlist: false,
+                playAllFromHere: false,
+                queueAllFromHere: false
+            });
+
+            if (result?.updated || result?.deleted) {
+                await queryClient.invalidateQueries({
+                    queryKey: [ 'Items' ]
+                });
+            }
+        } catch (menuError) {
+            console.error(
+                '[Minitiger Library] Jellyfin-Menü konnte nicht geöffnet werden',
+                menuError
+            );
+        }
+    };
+
     const orderedVirtualLibraries = virtualConfig.homeOrder
         .map(id => virtualConfig.libraries.find(library => library.id === id))
         .filter((library): library is NonNullable<typeof library> => (
@@ -573,6 +630,23 @@ const MinitigerHome = () => {
                                             {library.Name ?? 'Bibliothek'}
                                         </div>
                                     </div>
+
+                                    <button
+                                        type='button'
+                                        className='minitigerLibraryMenuButton'
+                                        onClick={event =>
+                                            openLibraryMenu(
+                                                event,
+                                                libraryItem
+                                            )
+                                        }
+                                        title='Bibliotheksmenü'
+                                        aria-label={
+                                            `Menü für ${library.Name ?? 'Bibliothek'}`
+                                        }
+                                    >
+                                        ⋮
+                                    </button>
                                 </Link>
                             );
                         })}
@@ -1036,6 +1110,9 @@ const MinitigerHome = () => {
                             settings.accentColor
                         )
                     }
+                    seriesEnabled={settings.previewSeriesEnabled}
+                    movieEnabled={settings.previewMovieEnabled}
+                    mangaEnabled={settings.previewMangaEnabled}
                 />
             )}
 
