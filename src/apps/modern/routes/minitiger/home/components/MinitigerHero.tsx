@@ -48,6 +48,8 @@ interface MinitigerHeroProps {
     maxItems?: number;
     debugEnabled?: boolean;
     youtubeTrailersEnabled?: boolean;
+    localTrailersEnabled?: boolean;
+    trailerButtonEnabled?: boolean;
     trailerDownloadEnabled?: boolean;
     isAdmin?: boolean;
     showNavigation?: boolean;
@@ -59,6 +61,8 @@ const MinitigerHero = ({
     maxItems = 10,
     debugEnabled = true,
     youtubeTrailersEnabled = true,
+    localTrailersEnabled = true,
+    trailerButtonEnabled = true,
     trailerDownloadEnabled = false,
     isAdmin = false,
     showNavigation = true,
@@ -303,18 +307,20 @@ const MinitigerHero = ({
         }
 
         try {
-            const trailers =
-                await resolveMinitigerLocalTrailers(
-                    apiClient,
-                    heroItem
-                );
+            if (localTrailersEnabled) {
+                const trailers =
+                    await resolveMinitigerLocalTrailers(
+                        apiClient,
+                        heroItem
+                    );
 
-            if (trailers.length > 0) {
-                await playbackManager.play({
-                    items: trailers
-                });
+                if (trailers.length > 0) {
+                    await playbackManager.play({
+                        items: trailers
+                    });
 
-                return;
+                    return;
+                }
             }
 
             const remoteUrl = youtubeTrailersEnabled
@@ -336,7 +342,12 @@ const MinitigerHero = ({
                 error
             );
         }
-    }, [ apiClient, heroItem, youtubeTrailersEnabled ]);
+    }, [
+        apiClient,
+        heroItem,
+        localTrailersEnabled,
+        youtubeTrailersEnabled
+    ]);
 
     if (bannerPending && !candidates.length) {
         return (
@@ -379,7 +390,10 @@ const MinitigerHero = ({
     );
 
     const hasTrailer = (
-        (heroItem.LocalTrailerCount ?? 0) > 0
+        (
+            localTrailersEnabled
+            && (heroItem.LocalTrailerCount ?? 0) > 0
+        )
         || (
             youtubeTrailersEnabled
             && Boolean(
@@ -411,6 +425,7 @@ const MinitigerHero = ({
                     delayMs={900}
                     onLoadingChange={setTrailerLoading}
                     allowYouTube={youtubeTrailersEnabled}
+                    allowLocal={localTrailersEnabled}
                 />
                 </div>
 
@@ -513,7 +528,7 @@ const MinitigerHero = ({
                         <span>Watchliste</span>
                     </button>
 
-                    {hasTrailer && (
+                    {trailerButtonEnabled && hasTrailer && (
                         <button
                             type='button'
                             className='minitigerHeroButton minitigerHeroTrailer'
