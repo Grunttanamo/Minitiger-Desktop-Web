@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
-using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.IO;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MinitigerVirtualSync.TrailerDownload;
@@ -23,8 +21,6 @@ public sealed class MinitigerTrailerDownloadService
 {
     private readonly object _gate = new();
     private readonly ILibraryManager _libraryManager;
-    private readonly IProviderManager _providerManager;
-    private readonly IFileSystem _fileSystem;
     private readonly ILogger<MinitigerTrailerDownloadService> _logger;
 
     private CancellationTokenSource? _cancellation;
@@ -40,13 +36,9 @@ public sealed class MinitigerTrailerDownloadService
 
     public MinitigerTrailerDownloadService(
         ILibraryManager libraryManager,
-        IProviderManager providerManager,
-        IFileSystem fileSystem,
         ILogger<MinitigerTrailerDownloadService> logger)
     {
         _libraryManager = libraryManager;
-        _providerManager = providerManager;
-        _fileSystem = fileSystem;
         _logger = logger;
     }
 
@@ -137,7 +129,6 @@ public sealed class MinitigerTrailerDownloadService
 
         _ = Task.Run(
             () => RunAsync(
-                item.Id,
                 ytDlpPath,
                 youtubeUrl,
                 targetDirectory,
@@ -165,7 +156,6 @@ public sealed class MinitigerTrailerDownloadService
     }
 
     private async Task RunAsync(
-        Guid itemId,
         string ytDlpPath,
         string youtubeUrl,
         string targetDirectory,
@@ -318,10 +308,12 @@ public sealed class MinitigerTrailerDownloadService
                 tempPrefix);
 
             /*
-             * Mark the actual download as finished immediately after the
-             * completed MP4 has been moved into place. Jellyfin's refresh
-             * queue can occasionally block on network-backed media paths;
-             * that must never keep the global trailer downloader locked.
+             * The download is finished as soon as the completed MP4 has
+             * reached the media folder. Do not enqueue a Jellyfin metadata
+             * refresh from inside the plugin here: on some network-backed
+             * media paths that refresh can stall or destabilize the server.
+             * Jellyfin's normal filesystem/library handling can pick up the
+             * new trailer independently.
              */
             lock (_gate)
             {
@@ -331,45 +323,10 @@ public sealed class MinitigerTrailerDownloadService
                 _cancelRequested = false;
                 _currentStep = "Fertig";
                 _message =
-                    "Trailer wurde als trailer.mp4 gespeichert. Jellyfin-Neueinlesen wurde angestoßen.";
+                    "Trailer wurde als trailer.mp4 gespeichert.";
                 _cancellation?.Dispose();
                 _cancellation = null;
             }
-
-            _ = Task.Run(() =>
-            {
-                try
-                {
-                    var refreshOptions =
-                        new MetadataRefreshOptions(
-                            new DirectoryService(
-                                _fileSystem))
-                        {
-                            MetadataRefreshMode =
-                                MetadataRefreshMode.None,
-                            ImageRefreshMode =
-                                MetadataRefreshMode.None,
-                            ReplaceAllImages = false,
-                            ReplaceAllMetadata = false,
-                            ForceSave = false,
-                            IsAutomated = false,
-                            RemoveOldMetadata = false,
-                            RegenerateTrickplay = false
-                        };
-
-                    _providerManager.QueueRefresh(
-                        itemId,
-                        refreshOptions,
-                        RefreshPriority.High);
-                }
-                catch (Exception refreshError)
-                {
-                    _logger.LogWarning(
-                        refreshError,
-                        "Minitiger trailer was saved, but Jellyfin refresh could not be queued for {ItemId}.",
-                        itemId);
-                }
-            });
         }
         catch (OperationCanceledException)
         {
