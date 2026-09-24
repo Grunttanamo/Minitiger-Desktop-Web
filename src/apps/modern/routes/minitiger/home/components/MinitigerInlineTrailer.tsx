@@ -42,6 +42,7 @@ interface Props {
     delayMs?: number;
     onLoadingChange?: (loading: boolean) => void;
     allowYouTube?: boolean;
+    allowLocal?: boolean;
 }
 
 interface TrailerCacheEntry {
@@ -108,12 +109,11 @@ export const notifyMinitigerLocalTrailerChanged = (
     const cacheKeyBase =
         `${apiClient.serverId?.() ?? 'server'}:${itemId}`;
 
-    trailerCache.delete(
-        `${cacheKeyBase}:youtube-0`
-    );
-    trailerCache.delete(
-        `${cacheKeyBase}:youtube-1`
-    );
+    for (const key of trailerCache.keys()) {
+        if (key.startsWith(`${cacheKeyBase}:`)) {
+            trailerCache.delete(key);
+        }
+    }
 
     window.dispatchEvent(
         new CustomEvent(
@@ -825,14 +825,15 @@ export const refreshMinitigerLocalTrailerRegistration = async (
 const resolveSources = async (
     apiClient: ApiClient,
     item: ItemDto,
-    allowYouTube = true
+    allowYouTube = true,
+    allowLocal = true
 ): Promise<TrailerSource[]> => {
     if (!item.Id) {
         return [];
     }
 
     const cacheKey =
-        `${apiClient.serverId?.() ?? 'server'}:${item.Id}:youtube-${allowYouTube ? '1' : '0'}`;
+        `${apiClient.serverId?.() ?? 'server'}:${item.Id}:local-${allowLocal ? '1' : '0'}:youtube-${allowYouTube ? '1' : '0'}`;
 
     const cached =
         trailerCache.get(cacheKey);
@@ -850,11 +851,12 @@ const resolveSources = async (
         TrailerSource[] = [];
 
     try {
-        const trailers =
-            await resolveMinitigerLocalTrailers(
+        const trailers = allowLocal
+            ? await resolveMinitigerLocalTrailers(
                 apiClient,
                 item
-            );
+            )
+            : [];
 
         if (trailers.length) {
             console.info(
@@ -1333,7 +1335,8 @@ const MinitigerInlineTrailer = ({
     className,
     delayMs = 700,
     onLoadingChange,
-    allowYouTube = true
+    allowYouTube = true,
+    allowLocal = true
 }: Props) => {
     const videoRef =
         useRef<HTMLVideoElement | null>(null);
@@ -1449,7 +1452,8 @@ const MinitigerInlineTrailer = ({
         void resolveSources(
             apiClient,
             item,
-            allowYouTube
+            allowYouTube,
+            allowLocal
         ).then(result => {
             if (!cancelled) {
                 setSources(result);
@@ -1477,6 +1481,7 @@ const MinitigerInlineTrailer = ({
         delayMs,
         item?.Id,
         allowYouTube,
+        allowLocal,
         sourceRevision
     ]);
 
