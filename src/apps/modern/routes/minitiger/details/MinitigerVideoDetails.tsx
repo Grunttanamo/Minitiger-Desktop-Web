@@ -27,6 +27,7 @@ import MinitigerRail from './MinitigerRail';
 import MinitigerSeasonSwitcher from './MinitigerSeasonSwitcher';
 import MinitigerSelectDropdown from './MinitigerSelectDropdown';
 import MinitigerTrailerDetectButton from './MinitigerTrailerDetectButton';
+import MinitigerDirectoryUpdateButton from './MinitigerDirectoryUpdateButton';
 import {
     getMinitigerEpisodeCode,
     isMinitigerAvailableEpisode
@@ -782,7 +783,9 @@ const MinitigerVideoDetails = () => {
                                 ▶ Abspielen
                             </button>
 
-                            {remoteTrailerUrl && (
+                            {detailSettings.trailerButtonEnabled
+                                && remoteTrailerUrl
+                                && (
                                 <button
                                     type='button'
                                     onClick={() =>
@@ -797,12 +800,24 @@ const MinitigerVideoDetails = () => {
                                 </button>
                             )}
 
-                            {isAdmin && (
+                            {isAdmin
+                                && detailSettings.trailerDetectButtonEnabled
+                                && (
                                 <MinitigerTrailerDetectButton
                                     apiClient={apiClient}
                                     itemId={item.Id}
                                 />
                             )}
+
+                            {isAdmin
+                                && isSeries
+                                && detailSettings.directoryUpdateButtonEnabled
+                                && (
+                                    <MinitigerDirectoryUpdateButton
+                                        apiClient={apiClient}
+                                        itemId={item.Id}
+                                    />
+                                )}
 
                             <button
                                 type='button'
