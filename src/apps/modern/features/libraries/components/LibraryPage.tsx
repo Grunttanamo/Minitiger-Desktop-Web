@@ -134,6 +134,7 @@ const LibraryPage: FC<LibraryPageProps> = ({
                     seriesEnabled={settings.previewSeriesEnabled}
                     movieEnabled={settings.previewMovieEnabled}
                     mangaEnabled={settings.previewMangaEnabled}
+                    trailerDownloadEnabled={settings.trailerDownloadEnabled}
                 />
             )}
         </Page>
