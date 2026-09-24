@@ -11,6 +11,9 @@ import type { ItemDto } from 'types/base/models/item-dto';
 import {
     getMinitigerAccessToken
 } from '../bannerPlaylistUtils';
+import {
+    refreshMinitigerLocalTrailerRegistration
+} from './MinitigerInlineTrailer';
 interface Props {
     apiClient?: ApiClient;
     item?: ItemDto;
@@ -360,8 +363,36 @@ const MinitigerTrailerDownloadButton = ({
                 ) {
                     refreshed = true;
                     setMessage(
-                        '✓ Trailer lokal gespeichert.'
+                        '↻ Trailer wird in Jellyfin eingelesen …'
                     );
+
+                    try {
+                        const trailers =
+                            await refreshMinitigerLocalTrailerRegistration(
+                                apiClient,
+                                item
+                            );
+
+                        if (cancelled) {
+                            return;
+                        }
+
+                        setMessage(
+                            trailers.length
+                                ? '✓ Trailer gespeichert & eingelesen.'
+                                : '✓ Trailer gespeichert · Jellyfin hat ihn noch nicht registriert.'
+                        );
+                    } catch (error) {
+                        if (!cancelled) {
+                            const detail = error instanceof Error
+                                ? error.message
+                                : String(error);
+                            setMessage(
+                                '✓ Trailer gespeichert · Einlesen fehlgeschlagen: ' + detail
+                            );
+                        }
+                    }
+
                     return;
                 }
 
