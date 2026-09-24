@@ -14,6 +14,9 @@ export interface MinitigerDetailSettings {
     layoutMode: MinitigerDetailLayout;
     showStudios: boolean;
     showGenres: boolean;
+    trailerButtonEnabled: boolean;
+    trailerDetectButtonEnabled: boolean;
+    directoryUpdateButtonEnabled: boolean;
     posterWidth: number;
     seasonPosterWidth: number;
     seasonWrapEnabled: boolean;
@@ -28,6 +31,9 @@ export const DEFAULT_DETAIL_SETTINGS: MinitigerDetailSettings = {
     layoutMode: 'compact',
     showStudios: true,
     showGenres: true,
+    trailerButtonEnabled: true,
+    trailerDetectButtonEnabled: true,
+    directoryUpdateButtonEnabled: true,
     posterWidth: 460,
     seasonPosterWidth: 260,
     seasonWrapEnabled: false,
@@ -107,6 +113,12 @@ export const normalizeDetailSettings = (
             ),
         showStudios: source.showStudios !== false,
         showGenres: source.showGenres !== false,
+        trailerButtonEnabled:
+            source.trailerButtonEnabled !== false,
+        trailerDetectButtonEnabled:
+            source.trailerDetectButtonEnabled !== false,
+        directoryUpdateButtonEnabled:
+            source.directoryUpdateButtonEnabled !== false,
         posterWidth: clamp(
             source.posterWidth,
             DEFAULT_DETAIL_SETTINGS.posterWidth,
