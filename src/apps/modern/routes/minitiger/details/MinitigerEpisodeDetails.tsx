@@ -81,9 +81,6 @@ const getEpisodeStreamLabel = (
     || fallback
 );
 
-const noItemId =
-    '00000000000000000000000000000000';
-
 const MinitigerEpisodeDetails = ({
     itemId
 }: Props) => {
@@ -142,7 +139,7 @@ const MinitigerEpisodeDetails = ({
     } = useGetItems({
         parentId:
             item?.SeriesId
-            ?? noItemId,
+            ?? undefined,
         recursive: false,
         limit: 100,
         fields: [
@@ -156,7 +153,7 @@ const MinitigerEpisodeDetails = ({
         includeItemTypes: [
             BaseItemKind.Season
         ]
-    });
+    }, Boolean(item?.SeriesId));
 
     const seasons = useMemo(
         () => [ ...(seasonsData?.Items ?? []) ]
@@ -200,7 +197,7 @@ const MinitigerEpisodeDetails = ({
         parentId:
             selectedSeasonId
             || item?.SeasonId
-            || noItemId,
+            || undefined,
         recursive: false,
         limit: 300,
         fields: [
@@ -219,7 +216,10 @@ const MinitigerEpisodeDetails = ({
         includeItemTypes: [
             BaseItemKind.Episode
         ]
-    });
+    }, Boolean(
+        selectedSeasonId
+        || item?.SeasonId
+    ));
 
     const siblings = useMemo(
         () => [
