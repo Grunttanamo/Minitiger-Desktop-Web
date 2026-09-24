@@ -984,6 +984,7 @@ const LargePreview = ({
     onPlay,
     onToggleFavorite,
     isAdmin,
+    localTrailersEnabled,
     trailerDownloadEnabled
 }: LargePreviewProps) => {
     const seasonSeriesItem =
