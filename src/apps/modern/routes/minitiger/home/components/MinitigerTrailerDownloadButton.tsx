@@ -355,12 +355,11 @@ const MinitigerTrailerDownloadButton = ({
                     return;
                 }
 
-                setActive(false);
+                if (next.completed) {
+                    if (refreshed) {
+                        return;
+                    }
 
-                if (
-                    next.completed
-                    && !refreshed
-                ) {
                     refreshed = true;
                     setMessage(
                         '↻ Trailer wird in Jellyfin eingelesen …'
@@ -393,8 +392,13 @@ const MinitigerTrailerDownloadButton = ({
                         }
                     }
 
+                    if (!cancelled) {
+                        setActive(false);
+                    }
                     return;
                 }
+
+                setActive(false);
 
                 if (next.failed) {
                     setMessage(
