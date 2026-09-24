@@ -69,7 +69,6 @@ interface DetailMediaSource {
     Container?: string | null;
 }
 
-const noItemId = '00000000000000000000000000000000';
 
 const getPersonImageUrl = (
     apiClient: ReturnType<typeof useApi>['__legacyApiClient__'],
@@ -156,9 +155,8 @@ const MinitigerVideoDetails = () => {
         isPending: seasonsPending
     } = useGetItems({
         parentId:
-            isSeries
-                ? (item?.Id ?? noItemId)
-                : noItemId,
+            item?.Id
+            ?? undefined,
         recursive: false,
         limit: 100,
         fields: [
@@ -176,7 +174,7 @@ const MinitigerVideoDetails = () => {
         includeItemTypes: [
             BaseItemKind.Season
         ]
-    });
+    }, isSeries && Boolean(item?.Id));
 
     const seasons = useMemo(
         () => [ ...(seasonsData?.Items ?? []) ]
@@ -197,9 +195,8 @@ const MinitigerVideoDetails = () => {
         data: allSeriesEpisodesData
     } = useGetItems({
         parentId:
-            isSeries
-                ? (item?.Id ?? noItemId)
-                : noItemId,
+            item?.Id
+            ?? undefined,
         recursive: true,
         limit: 5000,
         fields: [
@@ -210,7 +207,7 @@ const MinitigerVideoDetails = () => {
         includeItemTypes: [
             BaseItemKind.Episode
         ]
-    });
+    }, isSeries && Boolean(item?.Id));
 
     const allSeriesEpisodes = useMemo(
         () => (
@@ -263,7 +260,7 @@ const MinitigerVideoDetails = () => {
     } = useGetItems({
         parentId:
             selectedSeasonId
-            || noItemId,
+            || undefined,
         recursive: false,
         limit: 300,
         fields: [
@@ -281,7 +278,7 @@ const MinitigerVideoDetails = () => {
         includeItemTypes: [
             BaseItemKind.Episode
         ]
-    });
+    }, isSeries && Boolean(selectedSeasonId));
 
     const episodes = useMemo(
         () => [ ...(episodesData?.Items ?? []) ]
