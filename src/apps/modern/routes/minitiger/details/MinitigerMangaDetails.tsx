@@ -27,6 +27,7 @@ import {
 import { getItemRoute } from '../home/routingUtils';
 
 import MinitigerItemMenuButton from './MinitigerItemMenuButton';
+import MinitigerDirectoryUpdateButton from './MinitigerDirectoryUpdateButton';
 
 import './MinitigerVideoDetails.scss';
 
@@ -487,6 +488,15 @@ export const MinitigerMangaSeriesDetails = ({
                     </p>
 
                     <div className='minitigerDetailsActions'>
+                        {isAdmin
+                            && detailSettings.directoryUpdateButtonEnabled
+                            && (
+                                <MinitigerDirectoryUpdateButton
+                                    apiClient={apiClient}
+                                    itemId={item.Id}
+                                />
+                            )}
+
                         {isAdmin && (
                             <MinitigerItemMenuButton
                                 apiClient={apiClient}
@@ -1084,6 +1094,15 @@ export const MinitigerMangaVolumeDetails = ({
                                     : '♡'
                             }
                         </button>
+
+                        {isAdmin
+                            && detailSettings.directoryUpdateButtonEnabled
+                            && (
+                                <MinitigerDirectoryUpdateButton
+                                    apiClient={apiClient}
+                                    itemId={item.Id}
+                                />
+                            )}
 
                         {isAdmin && (
                             <MinitigerItemMenuButton
