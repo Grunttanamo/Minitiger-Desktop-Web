@@ -175,3 +175,31 @@ input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline::aft
     line-height: 1;
     pointer-events: none;
 }
+
+
+/* Native-shell fallback driven by emby-checkbox.js. This avoids relying on
+   Qt WebEngine repainting the :checked pseudo-class in legacy dialogs. */
+.checkboxOutline.minitigerChecked {
+    border-color: var(--jf-palette-primary-main, #00a4dc) !important;
+    background-color: var(--jf-palette-primary-main, #00a4dc) !important;
+}
+
+.checkboxOutline.minitigerChecked > .checkboxIcon {
+    display: none !important;
+}
+
+.checkboxOutline.minitigerChecked::after {
+    content: '✓';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 1.25em;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
