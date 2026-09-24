@@ -30,6 +30,45 @@ fi
 export DOTNET_ROOT="$(dirname "$DOTNET_BIN")"
 export PATH="$DOTNET_ROOT:$PATH"
 
+if ! command -v yt-dlp >/dev/null 2>&1; then
+  echo "[Minitiger Sync] yt-dlp fehlt – installiere optionale Trailer-Download-Abhängigkeit ..."
+  ARCH="$(uname -m)"
+  case "$ARCH" in
+    aarch64|arm64)
+      YTDLP_ASSET="yt-dlp_linux_aarch64"
+      ;;
+    x86_64|amd64)
+      YTDLP_ASSET="yt-dlp_linux"
+      ;;
+    armv7l|armv7)
+      YTDLP_ASSET="yt-dlp_linux_armv7l"
+      ;;
+    *)
+      YTDLP_ASSET=""
+      ;;
+  esac
+
+  if [[ -n "$YTDLP_ASSET" ]]; then
+    sudo curl -fL \
+      "https://github.com/yt-dlp/yt-dlp/releases/latest/download/$YTDLP_ASSET" \
+      -o /usr/local/bin/yt-dlp
+    sudo chmod 755 /usr/local/bin/yt-dlp
+  else
+    echo "[Minitiger Sync] WARNUNG: Architektur $ARCH wird vom automatischen yt-dlp-Installer nicht erkannt."
+    echo "[Minitiger Sync] Trailer-Download bleibt deaktiviert, bis yt-dlp manuell installiert wurde."
+  fi
+fi
+
+if command -v yt-dlp >/dev/null 2>&1; then
+  echo "[Minitiger Sync] yt-dlp: $(yt-dlp --version 2>/dev/null || echo installiert)"
+fi
+
+if [[ -x /usr/lib/jellyfin-ffmpeg/ffmpeg ]]; then
+  echo "[Minitiger Sync] Jellyfin-ffmpeg für Trailer-Remux gefunden."
+elif ! command -v ffmpeg >/dev/null 2>&1; then
+  echo "[Minitiger Sync] WARNUNG: ffmpeg wurde nicht gefunden. yt-dlp kann Trailer dann eventuell nicht als MP4 zusammenführen."
+fi
+
 echo "[Minitiger Sync] Verwende: $($DOTNET_BIN --version)"
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
@@ -54,5 +93,5 @@ sleep 4
 sudo systemctl --no-pager --full status jellyfin | head -25
 
 echo
-echo "[Minitiger Sync] Fertig. Endpoints: /Minitiger/VirtualLibraries/Status · /Minitiger/ImageFix/Status"
+echo "[Minitiger Sync] Fertig. Endpoints: /Minitiger/VirtualLibraries/Status · /Minitiger/ImageFix/Status · /Minitiger/TrailerDownload/Status"
 echo "[Minitiger Sync] Beim ersten Admin-Aufruf überträgt Minitiger den bisherigen lokalen Stand automatisch, falls der Server noch leer ist."
