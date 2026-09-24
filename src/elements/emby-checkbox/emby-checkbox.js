@@ -36,6 +36,22 @@ function forceRefresh(loading) {
     }, (loading === true ? 520 : 20));
 }
 
+
+function syncCheckedVisual() {
+    const labelElement = this.parentNode;
+    const outline =
+        labelElement?.querySelector('.checkboxOutline');
+
+    if (!outline) {
+        return;
+    }
+
+    outline.classList.toggle(
+        'minitigerChecked',
+        Boolean(this.checked)
+    );
+}
+
 EmbyCheckboxPrototype.attachedCallback = function () {
     if (this.getAttribute('data-embycheckbox') === 'true') {
         return;
@@ -66,6 +82,19 @@ EmbyCheckboxPrototype.attachedCallback = function () {
     labelTextElement.classList.add('checkboxLabel');
 
     this.addEventListener('keydown', onKeyDown);
+    this.addEventListener('change', syncCheckedVisual);
+    this.addEventListener('click', syncCheckedVisual);
+
+    // Qt WebEngine occasionally fails to repaint CSS :checked selectors in
+    // legacy Jellyfin dialogs. Mirror the real input.checked property into a
+    // class on the generated outline instead.
+    syncCheckedVisual.call(this);
+    requestAnimationFrame(() => {
+        syncCheckedVisual.call(this);
+    });
+    setTimeout(() => {
+        syncCheckedVisual.call(this);
+    }, 0);
 
     if (enableRefreshHack) {
         forceRefresh.call(this, true);
@@ -86,6 +115,8 @@ EmbyCheckboxPrototype.attachedCallback = function () {
 
 EmbyCheckboxPrototype.detachedCallback = function () {
     this.removeEventListener('keydown', onKeyDown);
+    this.removeEventListener('change', syncCheckedVisual);
+    this.removeEventListener('click', syncCheckedVisual);
 
     dom.removeEventListener(this, 'click', forceRefresh, {
         passive: true
