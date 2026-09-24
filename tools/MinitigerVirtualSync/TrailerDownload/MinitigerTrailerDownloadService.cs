@@ -21,6 +21,7 @@ public sealed class MinitigerTrailerDownloadService
 {
     private readonly object _gate = new();
     private readonly ILibraryManager _libraryManager;
+    private readonly ILibraryMonitor _libraryMonitor;
     private readonly ILogger<MinitigerTrailerDownloadService> _logger;
 
     private CancellationTokenSource? _cancellation;
@@ -36,9 +37,11 @@ public sealed class MinitigerTrailerDownloadService
 
     public MinitigerTrailerDownloadService(
         ILibraryManager libraryManager,
+        ILibraryMonitor libraryMonitor,
         ILogger<MinitigerTrailerDownloadService> logger)
     {
         _libraryManager = libraryManager;
+        _libraryMonitor = libraryMonitor;
         _logger = logger;
     }
 
@@ -322,10 +325,33 @@ public sealed class MinitigerTrailerDownloadService
                     "Der Trailer konnte nicht als MP4 fertiggestellt werden. Bitte ffmpeg auf dem Server prüfen.");
             }
 
-            File.Move(
-                downloadedPath,
-                targetPath,
-                overwrite: false);
+            /*
+             * Suppress Jellyfin's realtime library watcher around the atomic
+             * trailer move. Without this, creating trailer.mp4 can enqueue a
+             * parent-item refresh at the same moment Minitiger registers the
+             * extra. On Jellyfin 12.1 that can race with image-row writes and
+             * leave the pessimistic database lock congested.
+             *
+             * Jellyfin's own image/subtitle writers use the same monitor
+             * guard. Registration is handled explicitly by Minitiger after
+             * the download, so refreshPath must stay false.
+             */
+            _libraryMonitor.ReportFileSystemChangeBeginning(
+                targetPath);
+
+            try
+            {
+                File.Move(
+                    downloadedPath,
+                    targetPath,
+                    overwrite: false);
+            }
+            finally
+            {
+                _libraryMonitor.ReportFileSystemChangeComplete(
+                    targetPath,
+                    refreshPath: false);
+            }
 
             CleanupTemporaryFiles(
                 tempPrefix);
