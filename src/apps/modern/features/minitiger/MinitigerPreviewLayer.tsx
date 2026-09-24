@@ -59,6 +59,7 @@ interface MinitigerPreviewLayerProps {
     seriesEnabled?: boolean;
     movieEnabled?: boolean;
     mangaEnabled?: boolean;
+    localTrailersEnabled?: boolean;
     trailerDownloadEnabled?: boolean;
 }
 
@@ -234,6 +235,7 @@ const MinitigerPreviewLayer = ({
     seriesEnabled = true,
     movieEnabled = true,
     mangaEnabled = true,
+    localTrailersEnabled = true,
     trailerDownloadEnabled = false
 }: MinitigerPreviewLayerProps) => {
     const {
@@ -734,6 +736,7 @@ const MinitigerPreviewLayer = ({
                 onPlay={playItem}
                 onToggleFavorite={toggleFavorite}
                 isAdmin={isAdmin}
+                localTrailersEnabled={localTrailersEnabled}
                 trailerDownloadEnabled={trailerDownloadEnabled}
             />,
             document.body
@@ -969,6 +972,7 @@ interface LargePreviewProps {
     onPlay: (item: ItemDto) => void;
     onToggleFavorite: (item: ItemDto) => void;
     isAdmin: boolean;
+    localTrailersEnabled: boolean;
     trailerDownloadEnabled: boolean;
 }
 
@@ -1088,6 +1092,7 @@ const LargePreview = ({
                             item={heroItem}
                             className='minitigerLargePreviewTrailerMedia'
                             delayMs={650}
+                            allowLocal={localTrailersEnabled}
                         />
                     )}
 
