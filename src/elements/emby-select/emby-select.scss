@@ -133,3 +133,61 @@
 .emby-select-iconbutton {
     align-self: flex-end;
 }
+
+
+/* Minitiger Desktop: Qt WebEngine's platform select popup paints invalid
+   multi-selection states. Render a lightweight anchored menu instead of the
+   full-screen Jellyfin action sheet. */
+.minitigerNativeSelectMenu {
+    position: fixed;
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 0.35em;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.35em;
+    background: #171717;
+    box-shadow: 0 0.45em 1.6em rgba(0, 0, 0, 0.6);
+    color: #fff;
+}
+
+.minitigerNativeSelectOption {
+    display: block;
+    width: 100%;
+    min-height: 2.5em;
+    box-sizing: border-box;
+    padding: 0.55em 0.8em;
+    border: 0;
+    border-radius: 0.25em;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    white-space: normal;
+    cursor: pointer;
+}
+
+.minitigerNativeSelectOption:hover,
+.minitigerNativeSelectOption:focus-visible {
+    background: rgba(255, 255, 255, 0.10);
+    outline: none;
+}
+
+.minitigerNativeSelectOption.isSelected {
+    background: rgba(170, 92, 195, 0.26);
+}
+
+.minitigerNativeSelectOption.isSelected::before {
+    content: '✓';
+    display: inline-block;
+    width: 1.4em;
+    margin-right: 0.25em;
+}
+
+.minitigerNativeSelectOption:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
