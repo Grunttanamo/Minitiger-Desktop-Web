@@ -1,4 +1,5 @@
 using Jellyfin.Plugin.MinitigerVirtualSync.ImageFix;
+using Jellyfin.Plugin.MinitigerVirtualSync.TrailerDownload;
 using Jellyfin.Plugin.MinitigerVirtualSync.Translation;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
@@ -19,6 +20,7 @@ public sealed class PluginServiceRegistrator : IPluginServiceRegistrator
             });
 
         serviceCollection.AddSingleton<MinitigerImageFixService>();
+        serviceCollection.AddSingleton<MinitigerTrailerDownloadService>();
 
         serviceCollection.AddSingleton<MinitigerTranslationBackgroundService>();
         serviceCollection.AddHostedService<MinitigerTranslationBackgroundService>(provider => provider.GetRequiredService<MinitigerTranslationBackgroundService>());
