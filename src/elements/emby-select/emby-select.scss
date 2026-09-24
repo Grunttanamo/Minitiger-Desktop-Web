@@ -140,7 +140,7 @@
    full-screen Jellyfin action sheet. */
 .minitigerNativeSelectMenu {
     position: fixed;
-    z-index: 100000;
+    z-index: 1000005 !important;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
