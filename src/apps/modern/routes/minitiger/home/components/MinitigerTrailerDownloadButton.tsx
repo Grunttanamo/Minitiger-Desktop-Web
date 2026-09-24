@@ -11,10 +11,6 @@ import type { ItemDto } from 'types/base/models/item-dto';
 import {
     getMinitigerAccessToken
 } from '../bannerPlaylistUtils';
-import {
-    refreshMinitigerLocalTrailerRegistration
-} from './MinitigerInlineTrailer';
-
 interface Props {
     apiClient?: ApiClient;
     item?: ItemDto;
@@ -51,6 +47,12 @@ const stringValue = (value: unknown) =>
     typeof value === 'string'
         ? value
         : '';
+
+const normalizeItemId = (
+    value?: string | null
+) => String(value ?? '')
+    .replace(/-/g, '')
+    .toLowerCase();
 
 const normalizeStatus = (
     value: unknown
@@ -325,10 +327,15 @@ const MinitigerTrailerDownloadButton = ({
 
                 setStatus(next);
 
-                if (
-                    next.itemId
-                    && next.itemId !== item.Id
-                ) {
+                const sameItem = !next.itemId
+                    || normalizeItemId(next.itemId)
+                        === normalizeItemId(item.Id);
+
+                if (!sameItem) {
+                    if (!next.running) {
+                        setActive(false);
+                    }
+
                     return;
                 }
 
@@ -343,35 +350,9 @@ const MinitigerTrailerDownloadButton = ({
                     && !refreshed
                 ) {
                     refreshed = true;
-
                     setMessage(
-                        next.message
-                        || 'Trailer wurde gespeichert. Jellyfin liest ihn neu ein …'
+                        '✓ Trailer lokal gespeichert und Jellyfin-Neueinlesen gestartet.'
                     );
-
-                    try {
-                        await refreshMinitigerLocalTrailerRegistration(
-                            apiClient,
-                            item
-                        );
-
-                        if (!cancelled) {
-                            setMessage(
-                                '✓ Trailer lokal gespeichert und von Jellyfin erkannt.'
-                            );
-                        }
-                    } catch (error) {
-                        if (!cancelled) {
-                            setMessage(
-                                `Trailer gespeichert · Jellyfin-Neueinlesen fehlgeschlagen: ${
-                                    error instanceof Error
-                                        ? error.message
-                                        : String(error)
-                                }`
-                            );
-                        }
-                    }
-
                     return;
                 }
 
@@ -434,7 +415,8 @@ const MinitigerTrailerDownloadButton = ({
         && status?.running
         && (
             !status.itemId
-            || status.itemId === item.Id
+            || normalizeItemId(status.itemId)
+                === normalizeItemId(item.Id)
         )
     );
 
