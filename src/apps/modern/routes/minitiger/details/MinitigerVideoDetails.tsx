@@ -72,6 +72,90 @@ interface DetailMediaSource {
 }
 
 
+const MISSING_PERSON_IMAGE_CACHE_TTL_MS =
+    24 * 60 * 60 * 1000;
+const MISSING_PERSON_IMAGE_CACHE_PREFIX =
+    'Minitiger.MissingPersonImage.v1';
+
+const getMissingPersonImageCacheKey = (
+    apiClient: ReturnType<typeof useApi>['__legacyApiClient__'],
+    person: DetailPerson
+) => [
+    MISSING_PERSON_IMAGE_CACHE_PREFIX,
+    apiClient?.serverId() ?? 'server',
+    person.Id ?? '',
+    person.PrimaryImageTag ?? ''
+].join(':');
+
+const isPersonImageTemporarilyMissing = (
+    apiClient: ReturnType<typeof useApi>['__legacyApiClient__'],
+    person: DetailPerson
+) => {
+    if (
+        typeof window === 'undefined'
+        || !person.Id
+        || !person.PrimaryImageTag
+    ) {
+        return false;
+    }
+
+    const key =
+        getMissingPersonImageCacheKey(
+            apiClient,
+            person
+        );
+
+    try {
+        const raw =
+            window.localStorage.getItem(key);
+
+        if (!raw) {
+            return false;
+        }
+
+        const timestamp =
+            Number(raw);
+
+        if (
+            !Number.isFinite(timestamp)
+            || Date.now() - timestamp
+                > MISSING_PERSON_IMAGE_CACHE_TTL_MS
+        ) {
+            window.localStorage.removeItem(key);
+            return false;
+        }
+
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+const rememberMissingPersonImage = (
+    apiClient: ReturnType<typeof useApi>['__legacyApiClient__'],
+    person: DetailPerson
+) => {
+    if (
+        typeof window === 'undefined'
+        || !person.Id
+        || !person.PrimaryImageTag
+    ) {
+        return;
+    }
+
+    try {
+        window.localStorage.setItem(
+            getMissingPersonImageCacheKey(
+                apiClient,
+                person
+            ),
+            String(Date.now())
+        );
+    } catch {
+        // Cosmetic negative cache only.
+    }
+};
+
 const getPersonImageUrl = (
     apiClient: ReturnType<typeof useApi>['__legacyApiClient__'],
     person: DetailPerson
@@ -1263,6 +1347,11 @@ const MinitigerVideoDetails = () => {
                                         apiClient,
                                         person
                                     );
+                                const imageTemporarilyMissing =
+                                    isPersonImageTemporarilyMissing(
+                                        apiClient,
+                                        person
+                                    );
 
                                 return (
                                     <Link
@@ -1288,14 +1377,47 @@ const MinitigerVideoDetails = () => {
                                                 title='Personen-Menü'
                                             />
 
-                                            {imageUrl ? (
-                                                <img
-                                                    src={imageUrl}
-                                                    alt=''
-                                                />
-                                            ) : (
-                                                <span>👤</span>
-                                            )}
+                                            {imageUrl
+                                                && !imageTemporarilyMissing
+                                                && (
+                                                    <img
+                                                        src={imageUrl}
+                                                        alt=''
+                                                        onError={event => {
+                                                            rememberMissingPersonImage(
+                                                                apiClient,
+                                                                person
+                                                            );
+
+                                                            event.currentTarget.style.display =
+                                                                'none';
+
+                                                            const fallback =
+                                                                event.currentTarget
+                                                                    .nextElementSibling;
+
+                                                            if (
+                                                                fallback
+                                                                instanceof HTMLElement
+                                                            ) {
+                                                                fallback.style.display =
+                                                                    'flex';
+                                                            }
+                                                        }}
+                                                    />
+                                                )}
+
+                                            <span
+                                                style={{
+                                                    display:
+                                                        imageUrl
+                                                        && !imageTemporarilyMissing
+                                                            ? 'none'
+                                                            : 'flex'
+                                                }}
+                                            >
+                                                👤
+                                            </span>
                                         </div>
 
                                         <strong>
