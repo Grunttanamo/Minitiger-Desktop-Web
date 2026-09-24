@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.IO;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MinitigerVirtualSync.TrailerDownload;
@@ -21,6 +23,8 @@ public sealed class MinitigerTrailerDownloadService
 {
     private readonly object _gate = new();
     private readonly ILibraryManager _libraryManager;
+    private readonly IProviderManager _providerManager;
+    private readonly IFileSystem _fileSystem;
     private readonly ILogger<MinitigerTrailerDownloadService> _logger;
 
     private CancellationTokenSource? _cancellation;
@@ -36,9 +40,13 @@ public sealed class MinitigerTrailerDownloadService
 
     public MinitigerTrailerDownloadService(
         ILibraryManager libraryManager,
+        IProviderManager providerManager,
+        IFileSystem fileSystem,
         ILogger<MinitigerTrailerDownloadService> logger)
     {
         _libraryManager = libraryManager;
+        _providerManager = providerManager;
+        _fileSystem = fileSystem;
         _logger = logger;
     }
 
@@ -129,6 +137,7 @@ public sealed class MinitigerTrailerDownloadService
 
         _ = Task.Run(
             () => RunAsync(
+                item.Id,
                 ytDlpPath,
                 youtubeUrl,
                 targetDirectory,
@@ -156,6 +165,7 @@ public sealed class MinitigerTrailerDownloadService
     }
 
     private async Task RunAsync(
+        Guid itemId,
         string ytDlpPath,
         string youtubeUrl,
         string targetDirectory,
@@ -291,6 +301,31 @@ public sealed class MinitigerTrailerDownloadService
                 downloadedPath,
                 targetPath,
                 overwrite: false);
+
+            SetStep(
+                "Jellyfin liest den lokalen Trailer neu ein");
+
+            var refreshOptions =
+                new MetadataRefreshOptions(
+                    new DirectoryService(
+                        _fileSystem))
+                {
+                    MetadataRefreshMode =
+                        MetadataRefreshMode.None,
+                    ImageRefreshMode =
+                        MetadataRefreshMode.None,
+                    ReplaceAllImages = false,
+                    ReplaceAllMetadata = false,
+                    ForceSave = false,
+                    IsAutomated = false,
+                    RemoveOldMetadata = false,
+                    RegenerateTrickplay = false
+                };
+
+            _providerManager.QueueRefresh(
+                itemId,
+                refreshOptions,
+                RefreshPriority.High);
 
             CleanupTemporaryFiles(
                 tempPrefix);
