@@ -11,6 +11,9 @@ import type { ItemDto } from 'types/base/models/item-dto';
 import {
     getMinitigerAccessToken
 } from '../bannerPlaylistUtils';
+import {
+    detectMinitigerLocalTrailer
+} from '../trailerDetection';
 
 type TrailerItem = ItemDto;
 
@@ -789,58 +792,34 @@ export const refreshMinitigerLocalTrailerRegistration = async (
         return [];
     }
 
-    const token =
-        getMinitigerAccessToken(apiClient);
+    /*
+     * IMPORTANT: Never use Jellyfin's generic Items/{id}/Refresh endpoint
+     * here. On Jellyfin 12.1 an owner refresh can race with image-row writes
+     * and leave the database query lock congested. The companion plugin
+     * resolves and persists only the local trailer extra instead.
+     */
+    const detection =
+        await detectMinitigerLocalTrailer(
+            apiClient,
+            item.Id
+        );
 
-    const response = await fetch(
-        apiClient.getUrl(
-            `Items/${item.Id}/Refresh`,
-            {
-                MetadataRefreshMode: 'None',
-                ImageRefreshMode: 'None',
-                ReplaceAllMetadata: false,
-                ReplaceAllImages: false,
-                RegenerateTrickplay: false,
-                ...(token ? { ApiKey: token } : {})
-            }
-        ),
-        { method: 'POST' }
+    if (
+        detection.status
+        !== 'activated'
+    ) {
+        return [];
+    }
+
+    notifyMinitigerLocalTrailerChanged(
+        apiClient,
+        item.Id
     );
 
-    if (!response.ok) {
-        throw new Error(
-            `Jellyfin Trailer-Refresh fehlgeschlagen: HTTP ${response.status}`
-        );
-    }
-
-    const cacheKeyBase =
-        `${apiClient.serverId?.() ?? 'server'}:${item.Id}`;
-    trailerCache.delete(`${cacheKeyBase}:youtube-0`);
-    trailerCache.delete(`${cacheKeyBase}:youtube-1`);
-
-    /* Refresh is queued server-side. Poll only this item for a short period;
-       no global library scan and no image refresh is triggered here. */
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-        await new Promise<void>(resolve =>
-            window.setTimeout(resolve, attempt === 0 ? 700 : 1_000)
-        );
-
-        const trailers =
-            await resolveMinitigerLocalTrailers(
-                apiClient,
-                item
-            );
-
-        if (trailers.length) {
-            trailerCache.delete(`${cacheKeyBase}:youtube-0`);
-            trailerCache.delete(`${cacheKeyBase}:youtube-1`);
-            return trailers;
-        }
-    }
-
-    trailerCache.delete(`${cacheKeyBase}:youtube-0`);
-    trailerCache.delete(`${cacheKeyBase}:youtube-1`);
-    return [];
+    return resolveMinitigerLocalTrailers(
+        apiClient,
+        item
+    );
 };
 
 const resolveSources = async (
