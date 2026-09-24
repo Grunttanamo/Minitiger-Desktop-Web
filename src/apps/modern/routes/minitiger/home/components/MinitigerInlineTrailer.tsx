@@ -98,6 +98,32 @@ const trailerCache =
 
 const CACHE_MS = 60_000;
 
+export const notifyMinitigerLocalTrailerChanged = (
+    apiClient: ApiClient,
+    itemId: string
+) => {
+    const cacheKeyBase =
+        `${apiClient.serverId?.() ?? 'server'}:${itemId}`;
+
+    trailerCache.delete(
+        `${cacheKeyBase}:youtube-0`
+    );
+    trailerCache.delete(
+        `${cacheKeyBase}:youtube-1`
+    );
+
+    window.dispatchEvent(
+        new CustomEvent(
+            'minitiger:local-trailer-changed',
+            {
+                detail: {
+                    itemId
+                }
+            }
+        )
+    );
+};
+
 let youtubeApiPromise:
     Promise<MinitigerYouTubeNamespace>
     | null = null;
@@ -1359,6 +1385,11 @@ const MinitigerInlineTrailer = ({
     );
 
     const [
+        sourceRevision,
+        setSourceRevision
+    ] = useState(0);
+
+    const [
         sourceIndex,
         setSourceIndex
     ] = useState(0);
@@ -1387,6 +1418,39 @@ const MinitigerInlineTrailer = ({
         readyStateRef.current =
             ready;
     }, [ready]);
+
+    useEffect(() => {
+        const onTrailerChanged = (
+            event: Event
+        ) => {
+            const detail = (
+                event as CustomEvent<{
+                    itemId?: string;
+                }>
+            ).detail;
+
+            if (
+                detail?.itemId
+                && detail.itemId === item?.Id
+            ) {
+                setSourceRevision(
+                    value => value + 1
+                );
+            }
+        };
+
+        window.addEventListener(
+            'minitiger:local-trailer-changed',
+            onTrailerChanged
+        );
+
+        return () => {
+            window.removeEventListener(
+                'minitiger:local-trailer-changed',
+                onTrailerChanged
+            );
+        };
+    }, [item?.Id]);
 
     useEffect(() => {
         setSources([]);
@@ -1433,7 +1497,8 @@ const MinitigerInlineTrailer = ({
         apiClient,
         delayMs,
         item?.Id,
-        allowYouTube
+        allowYouTube,
+        sourceRevision
     ]);
 
     const source =
