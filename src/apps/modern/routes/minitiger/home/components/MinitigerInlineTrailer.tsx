@@ -965,17 +965,21 @@ const resolveSources = async (
 
             if (desktopShell) {
                 /*
-                 * Do not force an inline server transcode inside the native
-                 * desktop shell. Qt WebEngine can report no H264/AAC support,
-                 * and the previous VP8 fallback kept Jellyfin ffmpeg jobs
-                 * alive across banner changes. That can make unrelated
-                 * metadata/image pages feel stalled on smaller servers.
+                 * Local trailers are intentionally enabled again for the
+                 * native Minitiger Desktop test. Qt WebEngine often reports
+                 * no H264/AAC support, so prefer a royalty-free WebM
+                 * transcode (VP8, then VP9) before direct local playback.
                  *
-                 * Use a local trailer only when the embedded browser can
-                 * consume it directly. Otherwise let the normal YouTube
-                 * source appended below handle the inline preview without
-                 * spending Jellyfin server CPU.
+                 * This restores the original local-trailer behavior so the
+                 * interaction with Intro Skipper / library analysis can be
+                 * tested under otherwise optimized frontend conditions.
                  */
+                if (canVp8) {
+                    pushVp8();
+                } else {
+                    pushVp9();
+                }
+
                 if (directCodecPlayable && direct) {
                     sources.push({
                         kind: 'video',
@@ -993,6 +997,8 @@ const resolveSources = async (
                         mode: 'download'
                     });
                 }
+
+                pushH264();
             } else if (isLikelyBrowserSafe(local)) {
                 if (direct) {
                     sources.push({
