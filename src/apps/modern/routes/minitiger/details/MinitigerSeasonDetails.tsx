@@ -37,9 +37,6 @@ interface Props {
     itemId: string;
 }
 
-const noItemId =
-    '__minitiger-no-season__';
-
 const MinitigerSeasonDetails = ({
     itemId
 }: Props) => {
@@ -83,7 +80,7 @@ const MinitigerSeasonDetails = ({
     } = useGetItems({
         parentId:
             season?.Id
-            ?? noItemId,
+            ?? undefined,
         recursive: false,
         limit: 500,
         fields: [
@@ -102,7 +99,7 @@ const MinitigerSeasonDetails = ({
         includeItemTypes: [
             BaseItemKind.Episode
         ]
-    });
+    }, Boolean(season?.Id));
 
     const episodes = useMemo(
         () => [
