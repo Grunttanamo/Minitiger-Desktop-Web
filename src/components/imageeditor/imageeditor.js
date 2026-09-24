@@ -36,10 +36,6 @@ async function reload(page, item, focusContext) {
     const apiClient = ServerConnections.getApiClient(item ? item.ServerId : currentItem.ServerId);
     if (!item) item = await apiClient.getItem(apiClient.getCurrentUserId(), currentItem.Id);
 
-    // NOTE: We have to invalidate all queries for the user because images can show up in various places in the app and
-    // we want them all to update when changed.
-    void queryClient.invalidateQueries(['User', apiClient.getCurrentUserId()]);
-
     reloadItem(page, item, apiClient, focusContext);
 }
 
@@ -436,6 +432,20 @@ function showEditor(options, resolve, reject) {
             loading.hide();
 
             if (hasChanges) {
+                const userId = apiClient.getCurrentUserId();
+
+                if (userId) {
+                    // TanStack Query v5 expects a filters object. Passing an
+                    // array here makes it behave like an unfiltered
+                    // invalidation and can wake up every active query in the
+                    // Minitiger UI. Mark only user-scoped item data stale and
+                    // do not refetch it while the editor is closing.
+                    void queryClient.invalidateQueries({
+                        queryKey: [ 'User', userId ],
+                        refetchType: 'none'
+                    });
+                }
+
                 resolve();
             } else {
                 reject();
