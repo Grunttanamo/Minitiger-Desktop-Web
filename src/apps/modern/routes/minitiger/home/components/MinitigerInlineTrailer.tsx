@@ -964,15 +964,18 @@ const resolveSources = async (
             );
 
             if (desktopShell) {
-                /* Jellyfin Desktop 3 currently reports no H264/AAC support in
-                   its embedded HTML video element.  Never feed it MP4/H264
-                   when canPlayType() says no; use royalty-free WebM first. */
-                if (canVp8) {
-                    pushVp8();
-                } else {
-                    pushVp9();
-                }
-
+                /*
+                 * Do not force an inline server transcode inside the native
+                 * desktop shell. Qt WebEngine can report no H264/AAC support,
+                 * and the previous VP8 fallback kept Jellyfin ffmpeg jobs
+                 * alive across banner changes. That can make unrelated
+                 * metadata/image pages feel stalled on smaller servers.
+                 *
+                 * Use a local trailer only when the embedded browser can
+                 * consume it directly. Otherwise let the normal YouTube
+                 * source appended below handle the inline preview without
+                 * spending Jellyfin server CPU.
+                 */
                 if (directCodecPlayable && direct) {
                     sources.push({
                         kind: 'video',
@@ -990,8 +993,6 @@ const resolveSources = async (
                         mode: 'download'
                     });
                 }
-
-                pushH264();
             } else if (isLikelyBrowserSafe(local)) {
                 if (direct) {
                     sources.push({
