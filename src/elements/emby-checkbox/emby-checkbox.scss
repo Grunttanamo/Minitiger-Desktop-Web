@@ -143,3 +143,35 @@ input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline > .c
     display: none !important;
 }
 
+
+
+/* Minitiger Desktop / Qt WebEngine:
+   Some legacy Jellyfin dialogs update the real checkbox state correctly but
+   the Material Icons check glyph is not repainted. Paint the checked state
+   directly on the generated outline so the UI always reflects input.checked. */
+.emby-checkbox:checked ~ .checkboxOutline,
+input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline {
+    border-color: var(--jf-palette-primary-main, #00a4dc) !important;
+    background-color: var(--jf-palette-primary-main, #00a4dc) !important;
+}
+
+.emby-checkbox:checked ~ .checkboxOutline > .checkboxIcon,
+input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline > .checkboxIcon {
+    display: none !important;
+}
+
+.emby-checkbox:checked ~ .checkboxOutline::after,
+input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline::after {
+    content: '✓';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 1.25em;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
