@@ -64,6 +64,16 @@ const CUSTOM_ROW_DATA_CACHE_TTL_MS =
 const CUSTOM_ROW_DATA_CACHE_PREFIX =
     'Minitiger.CustomRowData.v1';
 
+const isMinitigerDesktopShell = () => (
+    typeof window !== 'undefined'
+    && Boolean(
+        window.NativeShell
+        || /QtWebEngine|Jellyfin(?:\\s+Desktop|MediaPlayer)/i.test(
+            navigator.userAgent
+        )
+    )
+);
+
 interface MinitigerCustomRowDataCache {
     version: 1;
     savedAt: number;
@@ -91,7 +101,7 @@ const readCustomRowDataCache = (
     key: string
 ): ItemDto[] | undefined => {
     if (
-        typeof window === 'undefined'
+        !isMinitigerDesktopShell()
         || !key
     ) {
         return undefined;
@@ -131,7 +141,7 @@ const writeCustomRowDataCache = (
     items: ItemDto[]
 ) => {
     if (
-        typeof window === 'undefined'
+        !isMinitigerDesktopShell()
         || !key
     ) {
         return;
