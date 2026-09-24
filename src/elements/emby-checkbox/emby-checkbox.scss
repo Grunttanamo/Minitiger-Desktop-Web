@@ -127,3 +127,28 @@
         margin: 0;
     }
 }
+
+
+/* Jellyfin screens do not always keep the label text directly between the
+   input and the generated outline. Use a general-sibling fallback so checked
+   state remains visible in the native Minitiger shell (image search, language
+   filters, metadata dialogs, etc.). */
+.emby-checkbox:checked ~ .checkboxOutline > .checkboxIcon-checked,
+input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline > .checkboxIcon-checked {
+    display: flex !important;
+}
+
+.emby-checkbox:checked ~ .checkboxOutline > .checkboxIcon-unchecked,
+input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline > .checkboxIcon-unchecked {
+    display: none !important;
+}
+
+.emby-checkbox:checked ~ .checkboxOutline,
+input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline {
+    background: currentcolor;
+}
+
+.emby-checkbox:checked ~ .checkboxOutline > .checkboxIcon,
+input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline > .checkboxIcon {
+    color: #fff;
+}
