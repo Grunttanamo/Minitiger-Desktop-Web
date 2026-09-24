@@ -1069,6 +1069,8 @@ const MinitigerHome = () => {
                     maxItems={settings.bannerItemLimit}
                     debugEnabled={settings.trailerDebugEnabled}
                     youtubeTrailersEnabled={settings.youtubeTrailersEnabled}
+                    trailerDownloadEnabled={settings.trailerDownloadEnabled}
+                    isAdmin={isAdmin}
                     showNavigation={settings.bannerNavigationVisible}
                     showFsk={settings.bannerFskVisible}
                 />
@@ -1113,6 +1115,7 @@ const MinitigerHome = () => {
                     seriesEnabled={settings.previewSeriesEnabled}
                     movieEnabled={settings.previewMovieEnabled}
                     mangaEnabled={settings.previewMangaEnabled}
+                    trailerDownloadEnabled={settings.trailerDownloadEnabled}
                 />
             )}
 
