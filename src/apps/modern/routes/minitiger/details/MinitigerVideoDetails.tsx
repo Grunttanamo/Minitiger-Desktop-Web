@@ -26,6 +26,7 @@ import MinitigerItemMenuButton from './MinitigerItemMenuButton';
 import MinitigerRail from './MinitigerRail';
 import MinitigerSeasonSwitcher from './MinitigerSeasonSwitcher';
 import MinitigerSelectDropdown from './MinitigerSelectDropdown';
+import MinitigerTrailerDetectButton from './MinitigerTrailerDetectButton';
 import {
     getMinitigerEpisodeCode,
     isMinitigerAvailableEpisode
@@ -794,6 +795,13 @@ const MinitigerVideoDetails = () => {
                                 >
                                     ▷ Trailer
                                 </button>
+                            )}
+
+                            {isAdmin && (
+                                <MinitigerTrailerDetectButton
+                                    apiClient={apiClient}
+                                    itemId={item.Id}
+                                />
                             )}
 
                             <button
