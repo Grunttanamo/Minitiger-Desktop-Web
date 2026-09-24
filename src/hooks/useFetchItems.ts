@@ -51,7 +51,10 @@ const fetchGetItems = async (
     }
 };
 
-export const useGetItems = (parametersOptions: LibraryApiGetItemsRequest) => {
+export const useGetItems = (
+    parametersOptions: LibraryApiGetItemsRequest,
+    queryEnabled = true
+) => {
     const currentApi = useApi();
     const isRandom = Boolean(parametersOptions.sortBy?.includes(ItemSortBy.Random));
 
@@ -67,7 +70,7 @@ export const useGetItems = (parametersOptions: LibraryApiGetItemsRequest) => {
         gcTime: isRandom ? Infinity : undefined,
         refetchOnMount: isRandom ? false : undefined,
         refetchOnWindowFocus: isRandom ? false : undefined,
-        enabled: !!currentApi.api && !!currentApi.user?.Id
+        enabled: queryEnabled && !!currentApi.api && !!currentApi.user?.Id
     });
 };
 
