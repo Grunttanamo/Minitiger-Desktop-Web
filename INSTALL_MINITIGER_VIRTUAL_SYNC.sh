@@ -40,9 +40,6 @@ if ! command -v yt-dlp >/dev/null 2>&1; then
     x86_64|amd64)
       YTDLP_ASSET="yt-dlp_linux"
       ;;
-    armv7l|armv7)
-      YTDLP_ASSET="yt-dlp_linux_armv7l"
-      ;;
     *)
       YTDLP_ASSET=""
       ;;
