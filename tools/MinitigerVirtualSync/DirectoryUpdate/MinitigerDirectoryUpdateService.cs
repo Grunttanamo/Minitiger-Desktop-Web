@@ -102,9 +102,9 @@ public sealed class MinitigerDirectoryUpdateService
                     _directoryService)
                 {
                     MetadataRefreshMode =
-                        MediaBrowser.Model.Entities.MetadataRefreshMode.Default,
+                        MetadataRefreshMode.Default,
                     ImageRefreshMode =
-                        MediaBrowser.Model.Entities.MetadataRefreshMode.Default,
+                        MetadataRefreshMode.Default,
                     ReplaceAllMetadata = false,
                     ReplaceAllImages = false,
                     RemoveOldMetadata = false,
