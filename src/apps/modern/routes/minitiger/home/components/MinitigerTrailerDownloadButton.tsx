@@ -351,7 +351,7 @@ const MinitigerTrailerDownloadButton = ({
                 ) {
                     refreshed = true;
                     setMessage(
-                        '✓ Trailer lokal gespeichert und Jellyfin-Neueinlesen gestartet.'
+                        '✓ Trailer lokal gespeichert.'
                     );
                     return;
                 }
