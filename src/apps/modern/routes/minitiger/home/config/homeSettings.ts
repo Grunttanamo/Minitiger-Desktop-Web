@@ -104,6 +104,7 @@ export interface MinitigerHomeSettings {
     playedIndicatorShape: PlayedIndicatorShape;
     trailerDebugEnabled: boolean;
     youtubeTrailersEnabled: boolean;
+    trailerDownloadEnabled: boolean;
     sideRowTitlesEnabled: boolean;
     hoverEnabled: boolean;
     glowEnabled: boolean;
@@ -365,6 +366,7 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     playedIndicatorShape: 'round',
     trailerDebugEnabled: true,
     youtubeTrailersEnabled: true,
+    trailerDownloadEnabled: false,
     sideRowTitlesEnabled: false,
     hoverEnabled: true,
     glowEnabled: true,
@@ -777,6 +779,7 @@ export const normalizeHomeSettings = (
                 : DEFAULT_HOME_SETTINGS.playedIndicatorShape,
         trailerDebugEnabled: source.trailerDebugEnabled !== false,
         youtubeTrailersEnabled: source.youtubeTrailersEnabled !== false,
+        trailerDownloadEnabled: source.trailerDownloadEnabled === true,
         sideRowTitlesEnabled: source.sideRowTitlesEnabled === true,
         hoverEnabled: source.hoverEnabled !== false,
         glowEnabled: source.glowEnabled !== false,
