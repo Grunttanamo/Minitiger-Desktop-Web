@@ -156,6 +156,12 @@ public sealed class MinitigerTrailerDetectionService
 
         try
         {
+            // The download path deliberately suppresses Jellyfin's realtime
+            // watcher. Drop DirectoryService's cached view explicitly so the
+            // newly-created trailer is visible to FindExtras immediately.
+            _directoryService.Invalidate(
+                trailerPath);
+
             var children =
                 _directoryService.GetFileSystemEntries(directory);
 
