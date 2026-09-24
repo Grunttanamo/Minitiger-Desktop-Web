@@ -60,6 +60,40 @@ if command -v yt-dlp >/dev/null 2>&1; then
   echo "[Minitiger Sync] yt-dlp: $(yt-dlp --version 2>/dev/null || echo installiert)"
 fi
 
+if ! command -v deno >/dev/null 2>&1; then
+  echo "[Minitiger Sync] Deno fehlt – installiere JavaScript-Runtime für aktuelle YouTube-Extraktion ..."
+  ARCH="$(uname -m)"
+  case "$ARCH" in
+    aarch64|arm64)
+      DENO_ASSET="deno-aarch64-unknown-linux-gnu.zip"
+      ;;
+    x86_64|amd64)
+      DENO_ASSET="deno-x86_64-unknown-linux-gnu.zip"
+      ;;
+    *)
+      DENO_ASSET=""
+      ;;
+  esac
+
+  if [[ -n "$DENO_ASSET" ]]; then
+    TMP_DENO_DIR="$(mktemp -d)"
+    curl -fL       "https://github.com/denoland/deno/releases/latest/download/$DENO_ASSET"       -o "$TMP_DENO_DIR/deno.zip"
+
+    python3 -m zipfile -e       "$TMP_DENO_DIR/deno.zip"       "$TMP_DENO_DIR"
+
+    sudo install -m 755       "$TMP_DENO_DIR/deno"       /usr/local/bin/deno
+
+    rm -rf "$TMP_DENO_DIR"
+  else
+    echo "[Minitiger Sync] WARNUNG: Architektur $ARCH wird vom automatischen Deno-Installer nicht erkannt."
+    echo "[Minitiger Sync] YouTube-Trailer können dadurch eingeschränkt sein."
+  fi
+fi
+
+if command -v deno >/dev/null 2>&1; then
+  echo "[Minitiger Sync] Deno: $(deno --version 2>/dev/null | head -n 1 || echo installiert)"
+fi
+
 if [[ -x /usr/lib/jellyfin-ffmpeg/ffmpeg ]]; then
   echo "[Minitiger Sync] Jellyfin-ffmpeg für Trailer-Remux gefunden."
 elif ! command -v ffmpeg >/dev/null 2>&1; then
