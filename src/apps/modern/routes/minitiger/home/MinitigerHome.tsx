@@ -1064,11 +1064,15 @@ const MinitigerHome = () => {
             {!activeVirtualLibrary && settings.bannerEnabled && (
                 <MinitigerHero
                     autoRotateMs={
-                        settings.bannerRotationSeconds * 1000
+                        settings.bannerRotationEnabled
+                            ? settings.bannerRotationSeconds * 1000
+                            : 0
                     }
                     maxItems={settings.bannerItemLimit}
                     debugEnabled={settings.trailerDebugEnabled}
                     youtubeTrailersEnabled={settings.youtubeTrailersEnabled}
+                    localTrailersEnabled={settings.localTrailersEnabled}
+                    trailerButtonEnabled={settings.bannerTrailerButtonEnabled}
                     trailerDownloadEnabled={settings.trailerDownloadEnabled}
                     isAdmin={isAdmin}
                     showNavigation={settings.bannerNavigationVisible}
@@ -1115,6 +1119,7 @@ const MinitigerHome = () => {
                     seriesEnabled={settings.previewSeriesEnabled}
                     movieEnabled={settings.previewMovieEnabled}
                     mangaEnabled={settings.previewMangaEnabled}
+                    localTrailersEnabled={settings.localTrailersEnabled}
                     trailerDownloadEnabled={settings.trailerDownloadEnabled}
                 />
             )}
