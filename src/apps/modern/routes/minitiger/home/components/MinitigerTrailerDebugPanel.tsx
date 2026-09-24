@@ -5,9 +5,12 @@ import { createPortal } from 'react-dom';
 import type { ItemDto } from 'types/base/models/item-dto';
 
 import {
-    refreshMinitigerLocalTrailerRegistration,
+    notifyMinitigerLocalTrailerChanged,
     runMinitigerTrailerDiagnostic
 } from './MinitigerInlineTrailer';
+import {
+    detectMinitigerLocalTrailer
+} from '../trailerDetection';
 
 interface Props {
     apiClient?: ApiClient;
@@ -111,24 +114,41 @@ const MinitigerTrailerDebugPanel = ({
         setRefreshing(true);
         setCopyState('Kopieren');
         setReport(
-            `Jellyfin liest lokale Extras für „${item.Name ?? item.Id ?? 'unbekannt'}“ neu ein …
+            `Minitiger prüft das Root-Verzeichnis von „${item.Name ?? item.Id ?? 'unbekannt'}“ auf trailer.mp4 / trailer.mkv …
 
-Bilder werden dabei ausdrücklich NICHT aktualisiert.`
+Es wird KEIN Jellyfin-Metadaten- oder Bilder-Refresh gestartet.`
         );
 
         try {
-            const trailers =
-                await refreshMinitigerLocalTrailerRegistration(
+            if (!item.Id) {
+                throw new Error(
+                    'Das Item besitzt keine Jellyfin-ID.'
+                );
+            }
+
+            const detection =
+                await detectMinitigerLocalTrailer(
                     apiClient,
-                    item
+                    item.Id
                 );
 
-            if (trailers.length) {
+            if (
+                detection.status
+                === 'activated'
+            ) {
+                notifyMinitigerLocalTrailerChanged(
+                    apiClient,
+                    item.Id
+                );
+
                 setReport(
-                    `Neu-Einlesen abgeschlossen: ${trailers.length} lokaler Trailer erkannt.
+                    `Trailer-Erkennung erfolgreich.
+
+${detection.message}
 
 Starte Diagnose …`
                 );
+
                 const result =
                     await runMinitigerTrailerDiagnostic(
                         apiClient,
@@ -137,9 +157,9 @@ Starte Diagnose …`
                 setReport(result);
             } else {
                 setReport(
-                    `Neu-Einlesen abgeschlossen, aber Jellyfin registriert weiterhin keinen lokalen Trailer.
+                    `Trailer-Erkennung: ${detection.status}
 
-Dann liegt die Datei zwar im Ordner, ist serverseitig aber noch kein Trailer-Item. In diesem Fall ist ein Bibliotheksscan bzw. die Jellyfin-Dateierkennung selbst der nächste Ansatz.`
+${detection.message}`
                 );
             }
         } catch (error) {
