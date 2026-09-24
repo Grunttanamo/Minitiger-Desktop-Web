@@ -1476,10 +1476,45 @@ const onUpdate = (
                                     </label>
 
                                     {isAdmin && (
-                                        <label className='minitigerSettingsToggle'>
-                                            <input
-                                                type='checkbox'
-                                                checked={settings.trailerDownloadEnabled}
+                                        <>
+                                            <label className='minitigerSettingsToggle'>
+                                                <input
+                                                    type='checkbox'
+                                                    checked={settings.localTrailersEnabled}
+                                                    onChange={event =>
+                                                        onUpdate({
+                                                            localTrailersEnabled:
+                                                                event.currentTarget.checked
+                                                        })
+                                                    }
+                                                />
+                                                <span>
+                                                    <strong>Lokale Trailer verwenden</strong>
+                                                    <small>Erlaubt Minitiger, lokal registrierte Trailer im Banner und in großen Vorschaukarten abzuspielen. YouTube bleibt separat steuerbar.</small>
+                                                </span>
+                                            </label>
+
+                                            <label className='minitigerSettingsToggle'>
+                                                <input
+                                                    type='checkbox'
+                                                    checked={settings.bannerTrailerButtonEnabled}
+                                                    onChange={event =>
+                                                        onUpdate({
+                                                            bannerTrailerButtonEnabled:
+                                                                event.currentTarget.checked
+                                                        })
+                                                    }
+                                                />
+                                                <span>
+                                                    <strong>Trailer-Button im Banner anzeigen</strong>
+                                                    <small>Blendet den normalen Trailer-Button im Banner ein oder aus. Download und Trailer-Diagnose bleiben unabhängig davon.</small>
+                                                </span>
+                                            </label>
+
+                                            <label className='minitigerSettingsToggle'>
+                                                <input
+                                                    type='checkbox'
+                                                    checked={settings.trailerDownloadEnabled}
                                                 onChange={event =>
                                                     onUpdate({
                                                         trailerDownloadEnabled:
@@ -1492,20 +1527,34 @@ const onUpdate = (
                                                 <small>Blendet für Administratoren bei YouTube-Trailern einen Download-Button im Banner und in großen Vorschaukarten ein. Der Companion speichert den Trailer als trailer.mp4 direkt im Medienordner.</small>
                                             </span>
                                         </label>
+                                        </>
                                     )}
 
                                     <label className='minitigerSettingsField'>
                                         <span>Automatischer Wechsel</span>
                                         <select
-                                            value={settings.bannerRotationSeconds}
-                                            onChange={event =>
-                                                onUpdate({
-                                                    bannerRotationSeconds:
-                                                        Number(
-                                                            event.currentTarget.value
-                                                        ) as BannerRotationSeconds
-                                                })
+                                            value={
+                                                settings.bannerRotationEnabled
+                                                    ? settings.bannerRotationSeconds
+                                                    : 0
                                             }
+                                            onChange={event => {
+                                                const value =
+                                                    Number(
+                                                        event.currentTarget.value
+                                                    ) as BannerRotationSeconds;
+
+                                                onUpdate(
+                                                    value === 0
+                                                        ? {
+                                                            bannerRotationEnabled: false
+                                                        }
+                                                        : {
+                                                            bannerRotationEnabled: true,
+                                                            bannerRotationSeconds: value
+                                                        }
+                                                );
+                                            }}
                                         >
                                             {ROTATION_OPTIONS.map(option => (
                                                 <option
@@ -2317,6 +2366,66 @@ const onUpdate = (
                                         </span>
                                     </label>
                                 </section>
+
+                                {isAdmin && (
+                                    <section className='minitigerSettingsCard'>
+                                        <h4>Admin-Aktionen</h4>
+                                        <p className='minitigerSettingsHint'>
+                                            Steuert die zusätzlichen Administrator-Buttons auf unterstützten Minitiger-Detailpages.
+                                        </p>
+
+                                        <label className='minitigerSettingsToggle'>
+                                            <input
+                                                type='checkbox'
+                                                checked={detailSettings.trailerButtonEnabled}
+                                                onChange={event =>
+                                                    onUpdateDetailSettings({
+                                                        trailerButtonEnabled:
+                                                            event.currentTarget.checked
+                                                    })
+                                                }
+                                            />
+                                            <span>
+                                                <strong>Trailer-Button anzeigen</strong>
+                                                <small>Blendet den normalen Trailer-Button auf Serien-/Film-Detailpages ein oder aus.</small>
+                                            </span>
+                                        </label>
+
+                                        <label className='minitigerSettingsToggle'>
+                                            <input
+                                                type='checkbox'
+                                                checked={detailSettings.trailerDetectButtonEnabled}
+                                                onChange={event =>
+                                                    onUpdateDetailSettings({
+                                                        trailerDetectButtonEnabled:
+                                                            event.currentTarget.checked
+                                                    })
+                                                }
+                                            />
+                                            <span>
+                                                <strong>„Trailer erkennen“ anzeigen</strong>
+                                                <small>Blendet den Admin-Button ein, der trailer.mp4 / trailer.mkv im Root-Verzeichnis sucht und registriert.</small>
+                                            </span>
+                                        </label>
+
+                                        <label className='minitigerSettingsToggle'>
+                                            <input
+                                                type='checkbox'
+                                                checked={detailSettings.directoryUpdateButtonEnabled}
+                                                onChange={event =>
+                                                    onUpdateDetailSettings({
+                                                        directoryUpdateButtonEnabled:
+                                                            event.currentTarget.checked
+                                                    })
+                                                }
+                                            />
+                                            <span>
+                                                <strong>„Verzeichnis Update“ anzeigen</strong>
+                                                <small>Blendet den gezielten Mini-Scan für Serien sowie Manga-/Buch-Verzeichnisse ein oder aus.</small>
+                                            </span>
+                                        </label>
+                                    </section>
+                                )}
 
                                 <section className='minitigerSettingsCard'>
                                     <h4>Metadaten</h4>
