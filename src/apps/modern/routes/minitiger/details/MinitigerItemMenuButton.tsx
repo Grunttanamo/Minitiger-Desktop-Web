@@ -85,14 +85,33 @@ const MinitigerItemMenuButton = ({
             });
 
             if (result?.updated || result?.deleted) {
-                await Promise.all([
-                    queryClient.invalidateQueries({
-                        queryKey: [ 'Items' ]
-                    }),
-                    queryClient.invalidateQueries({
-                        queryKey: [ 'Minitiger' ]
-                    })
-                ]);
+                // Keep the editor interaction responsive. Refetch only the
+                // item that was actually edited; broad list/home caches are
+                // marked stale without immediately waking all active rows.
+                if (
+                    result.updated
+                    && !result.deleted
+                    && item.Id
+                ) {
+                    await queryClient.invalidateQueries({
+                        queryKey: [
+                            'User',
+                            userId,
+                            'Items',
+                            item.Id
+                        ]
+                    });
+                }
+
+                void queryClient.invalidateQueries({
+                    queryKey: [ 'Items' ],
+                    refetchType: 'none'
+                });
+
+                void queryClient.invalidateQueries({
+                    queryKey: [ 'Minitiger' ],
+                    refetchType: 'none'
+                });
             }
         } catch (error) {
             console.error(
