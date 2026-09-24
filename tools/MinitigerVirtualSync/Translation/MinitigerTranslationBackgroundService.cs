@@ -361,6 +361,44 @@ public sealed class MinitigerTranslationBackgroundService : BackgroundService
         CancellationToken stoppingToken)
     {
         /*
+         * Safety rule: background translation never resumes automatically
+         * merely because Jellyfin or the plugin restarted. A previous
+         * "Speichern & starten" state can otherwise survive a restart and
+         * immediately launch a large library scan while the server itself
+         * is still starting. The user must explicitly start automation
+         * again from the Minitiger settings for each server session.
+         */
+        try
+        {
+            var startupSettings =
+                await LoadSettingsAsync(
+                    stoppingToken).ConfigureAwait(false);
+
+            if (startupSettings.Enabled)
+            {
+                startupSettings.Enabled = false;
+
+                await SaveSettingsFileAsync(
+                    startupSettings.Normalize(),
+                    stoppingToken).ConfigureAwait(false);
+
+                _logger.LogInformation(
+                    "Minitiger background translation was armed before restart; startup safety disabled automatic resume.");
+            }
+        }
+        catch (OperationCanceledException)
+            when (stoppingToken.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception startupError)
+        {
+            _logger.LogWarning(
+                startupError,
+                "Minitiger could not apply translation startup safety.");
+        }
+
+        /*
          * Keep the heartbeat independent from RunOnceAsync().
          * A scan or an OpenAI request can take much longer than the UI's
          * stale-heartbeat window, so the outer worker loop alone is not
@@ -507,18 +545,52 @@ public sealed class MinitigerTranslationBackgroundService : BackgroundService
                     ex,
                     "Minitiger background translation loop failed.");
 
+                /*
+                 * A failed translation pass must not silently retry forever.
+                 * Large scans + repeated OpenAI failures can create sustained
+                 * DB pressure. Disable persisted automation and wait for an
+                 * explicit user start instead.
+                 */
+                try
+                {
+                    var failedSettings =
+                        await LoadSettingsAsync(
+                            stoppingToken).ConfigureAwait(false);
+
+                    if (failedSettings.Enabled)
+                    {
+                        failedSettings.Enabled = false;
+
+                        await SaveSettingsFileAsync(
+                            failedSettings.Normalize(),
+                            stoppingToken).ConfigureAwait(false);
+                    }
+                }
+                catch (OperationCanceledException)
+                    when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception disableError)
+                {
+                    _logger.LogWarning(
+                        disableError,
+                        "Minitiger could not persist translation auto-disable after an error.");
+                }
+
+                _runRequested = false;
+
                 lock (_statusLock)
                 {
                     _status.Running = false;
+                    _status.Enabled = false;
                     _status.State = "error";
                     _status.Errors += 1;
                     _status.LastError =
                         ex.Message;
                     _status.Message =
-                        $"Hintergrunddienst-Fehler: {ex.Message}";
-                    _status.NextRunUtc =
-                        DateTimeOffset.UtcNow
-                            .AddMinutes(5);
+                        $"Hintergrunddienst-Fehler: {ex.Message} · Automatik wurde zur Sicherheit deaktiviert.";
+                    _status.NextRunUtc = null;
                 }
             }
 
