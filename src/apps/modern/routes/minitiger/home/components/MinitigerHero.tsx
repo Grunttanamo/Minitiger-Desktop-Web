@@ -19,6 +19,7 @@ import MinitigerInlineTrailer, {
     resolveMinitigerLocalTrailers
 } from './MinitigerInlineTrailer';
 import MinitigerTrailerDebugPanel from './MinitigerTrailerDebugPanel';
+import MinitigerTrailerDownloadButton from './MinitigerTrailerDownloadButton';
 import {
     getBackdropImageUrl,
     getLogoImageUrl,
@@ -47,6 +48,8 @@ interface MinitigerHeroProps {
     maxItems?: number;
     debugEnabled?: boolean;
     youtubeTrailersEnabled?: boolean;
+    trailerDownloadEnabled?: boolean;
+    isAdmin?: boolean;
     showNavigation?: boolean;
     showFsk?: boolean;
 }
@@ -56,6 +59,8 @@ const MinitigerHero = ({
     maxItems = 10,
     debugEnabled = true,
     youtubeTrailersEnabled = true,
+    trailerDownloadEnabled = false,
+    isAdmin = false,
     showNavigation = true,
     showFsk = true
 }: MinitigerHeroProps) => {
@@ -517,6 +522,14 @@ const MinitigerHero = ({
                             <span aria-hidden='true'>🎞</span>
                             <span>Trailer</span>
                         </button>
+                    )}
+
+                    {isAdmin && trailerDownloadEnabled && (
+                        <MinitigerTrailerDownloadButton
+                            apiClient={apiClient}
+                            item={heroItem}
+                            className='minitigerHeroButton minitigerHeroTrailerDownload'
+                        />
                     )}
 
                     <Link
