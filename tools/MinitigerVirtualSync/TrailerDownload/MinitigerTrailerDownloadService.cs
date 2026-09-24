@@ -493,11 +493,33 @@ public sealed class MinitigerTrailerDownloadService
             }
         }
 
-        foreach (var candidate in new[]
+        var requestedNames = names
+            .Select(Path.GetFileName)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var fallbackCandidates =
+            new List<string>();
+
+        if (
+            requestedNames.Contains("yt-dlp")
+            || requestedNames.Contains("yt-dlp.exe")
+        )
         {
-            "/usr/local/bin/yt-dlp",
-            "/usr/bin/yt-dlp"
-        })
+            fallbackCandidates.Add("/usr/local/bin/yt-dlp");
+            fallbackCandidates.Add("/usr/bin/yt-dlp");
+        }
+
+        if (
+            requestedNames.Contains("deno")
+            || requestedNames.Contains("deno.exe")
+        )
+        {
+            fallbackCandidates.Add("/usr/local/bin/deno");
+            fallbackCandidates.Add("/usr/bin/deno");
+        }
+
+        foreach (var candidate in fallbackCandidates)
         {
             if (File.Exists(candidate))
             {
