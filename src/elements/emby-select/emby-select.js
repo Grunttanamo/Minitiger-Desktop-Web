@@ -58,6 +58,206 @@ function showActionSheet(select, bubbleChange = false) {
     });
 }
 
+
+let nativeShellDropdownCleanup = null;
+
+function closeNativeShellDropdown() {
+    if (nativeShellDropdownCleanup) {
+        nativeShellDropdownCleanup();
+        nativeShellDropdownCleanup = null;
+    }
+}
+
+function showNativeShellDropdown(select, bubbleChange = false) {
+    closeNativeShellDropdown();
+
+    const menu = document.createElement('div');
+    menu.className = 'minitigerNativeSelectMenu';
+    menu.setAttribute('role', 'listbox');
+    menu.setAttribute(
+        'aria-label',
+        select.getAttribute('aria-label')
+            || getLabel(select)?.textContent
+            || 'Auswahl'
+    );
+
+    const options = Array.from(select.options);
+
+    options.forEach(option => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'minitigerNativeSelectOption';
+        button.setAttribute('role', 'option');
+        button.setAttribute(
+            'aria-selected',
+            option.selected ? 'true' : 'false'
+        );
+        button.disabled = option.disabled;
+        button.textContent = option.textContent || option.label || option.value;
+
+        if (option.selected) {
+            button.classList.add('isSelected');
+        }
+
+        button.addEventListener('click', () => {
+            if (option.disabled) {
+                return;
+            }
+
+            setValue(select, option.value);
+            closeNativeShellDropdown();
+            triggerChange(select, bubbleChange);
+            select.focus();
+        });
+
+        menu.appendChild(button);
+    });
+
+    document.body.appendChild(menu);
+    select.setAttribute('aria-expanded', 'true');
+
+    const position = () => {
+        const rect = select.getBoundingClientRect();
+        const viewportPadding = 8;
+        const minWidth = Math.max(220, rect.width);
+        const maxWidth = Math.max(
+            minWidth,
+            Math.min(520, window.innerWidth - viewportPadding * 2)
+        );
+
+        menu.style.minWidth = minWidth + 'px';
+        menu.style.maxWidth = maxWidth + 'px';
+
+        const availableBelow =
+            window.innerHeight - rect.bottom - viewportPadding;
+        const availableAbove =
+            rect.top - viewportPadding;
+        const useAbove =
+            availableBelow < 180
+            && availableAbove > availableBelow;
+
+        menu.style.maxHeight =
+            Math.max(
+                140,
+                Math.min(
+                    420,
+                    useAbove ? availableAbove : availableBelow
+                )
+            ) + 'px';
+
+        const menuRect = menu.getBoundingClientRect();
+        let left = rect.left;
+
+        if (left + menuRect.width > window.innerWidth - viewportPadding) {
+            left =
+                window.innerWidth
+                - viewportPadding
+                - menuRect.width;
+        }
+
+        left = Math.max(viewportPadding, left);
+
+        let top = useAbove
+            ? rect.top - menuRect.height - 4
+            : rect.bottom + 4;
+
+        top = Math.max(
+            viewportPadding,
+            Math.min(
+                top,
+                window.innerHeight
+                - viewportPadding
+                - menuRect.height
+            )
+        );
+
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+    };
+
+    position();
+
+    const selectedButton =
+        menu.querySelector('.minitigerNativeSelectOption.isSelected');
+
+    selectedButton?.scrollIntoView({
+        block: 'nearest'
+    });
+
+    const onDocumentMouseDown = event => {
+        if (
+            event.target instanceof Node
+            && (
+                menu.contains(event.target)
+                || select.contains(event.target)
+            )
+        ) {
+            return;
+        }
+
+        closeNativeShellDropdown();
+    };
+
+    const onKeyDown = event => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeNativeShellDropdown();
+            select.focus();
+        }
+    };
+
+    const onViewportChange = () => {
+        closeNativeShellDropdown();
+    };
+
+    window.setTimeout(() => {
+        document.addEventListener(
+            'mousedown',
+            onDocumentMouseDown,
+            true
+        );
+    }, 0);
+    document.addEventListener(
+        'keydown',
+        onKeyDown,
+        true
+    );
+    window.addEventListener(
+        'resize',
+        onViewportChange,
+        { passive: true }
+    );
+    window.addEventListener(
+        'scroll',
+        onViewportChange,
+        true
+    );
+
+    nativeShellDropdownCleanup = () => {
+        document.removeEventListener(
+            'mousedown',
+            onDocumentMouseDown,
+            true
+        );
+        document.removeEventListener(
+            'keydown',
+            onKeyDown,
+            true
+        );
+        window.removeEventListener(
+            'resize',
+            onViewportChange
+        );
+        window.removeEventListener(
+            'scroll',
+            onViewportChange,
+            true
+        );
+        select.removeAttribute('aria-expanded');
+        menu.remove();
+    };
+}
+
 function getLabel(select) {
     let elem = select.previousSibling;
     while (elem && elem.tagName !== 'LABEL') {
@@ -133,7 +333,7 @@ function onNativeShellSelectMouseDown(e) {
 
     e.preventDefault();
     e.stopImmediatePropagation();
-    showActionSheet(select, true);
+    showNativeShellDropdown(select, true);
 }
 
 function onNativeShellSelectKeyDown(e) {
@@ -156,7 +356,7 @@ function onNativeShellSelectKeyDown(e) {
 
     e.preventDefault();
     e.stopImmediatePropagation();
-    showActionSheet(select, true);
+    showNativeShellDropdown(select, true);
 }
 
 document.addEventListener('mousedown', onNativeShellSelectMouseDown, true);
