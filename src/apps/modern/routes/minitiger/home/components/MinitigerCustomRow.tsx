@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ApiClient } from 'jellyfin-apiclient';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import type { ItemDto } from 'types/base/models/item-dto';
 
@@ -57,6 +57,104 @@ const LATEST_SEASON_BOOTSTRAP_PREMIERE_GAP_MS =
     2 * 24 * 60 * 60 * 1000;
 const LATEST_SEASON_BOOTSTRAP_RECENT_PREMIERE_MS =
     21 * 24 * 60 * 60 * 1000;
+
+const CUSTOM_ROW_DATA_CACHE_VERSION = 1;
+const CUSTOM_ROW_DATA_CACHE_TTL_MS =
+    24 * 60 * 60 * 1000;
+const CUSTOM_ROW_DATA_CACHE_PREFIX =
+    'Minitiger.CustomRowData.v1';
+
+interface MinitigerCustomRowDataCache {
+    version: 1;
+    savedAt: number;
+    items: ItemDto[];
+}
+
+const getCustomRowDataCacheKey = (
+    apiClient: ApiClient | undefined,
+    userId: string,
+    row: MinitigerCustomRow,
+    slot: 'library1' | 'library2',
+    libraryId?: string | null
+) => [
+    CUSTOM_ROW_DATA_CACHE_PREFIX,
+    apiClient?.serverId() ?? 'server',
+    userId || 'user',
+    row.key,
+    slot,
+    libraryId ?? '',
+    row.sortMode,
+    row.count
+].join(':');
+
+const readCustomRowDataCache = (
+    key: string
+): ItemDto[] | undefined => {
+    if (
+        typeof window === 'undefined'
+        || !key
+    ) {
+        return undefined;
+    }
+
+    try {
+        const raw =
+            window.localStorage.getItem(key);
+
+        if (!raw) {
+            return undefined;
+        }
+
+        const parsed =
+            JSON.parse(raw) as Partial<MinitigerCustomRowDataCache>;
+
+        if (
+            parsed.version
+            !== CUSTOM_ROW_DATA_CACHE_VERSION
+            || !Array.isArray(parsed.items)
+            || typeof parsed.savedAt !== 'number'
+            || Date.now() - parsed.savedAt
+                > CUSTOM_ROW_DATA_CACHE_TTL_MS
+        ) {
+            window.localStorage.removeItem(key);
+            return undefined;
+        }
+
+        return parsed.items;
+    } catch {
+        return undefined;
+    }
+};
+
+const writeCustomRowDataCache = (
+    key: string,
+    items: ItemDto[]
+) => {
+    if (
+        typeof window === 'undefined'
+        || !key
+    ) {
+        return;
+    }
+
+    try {
+        const value: MinitigerCustomRowDataCache = {
+            version: 1,
+            savedAt: Date.now(),
+            items
+        };
+
+        window.localStorage.setItem(
+            key,
+            JSON.stringify(value)
+        );
+    } catch (error) {
+        console.warn(
+            '[Minitiger CustomRow] Persistenter Zeilen-Cache konnte nicht gespeichert werden.',
+            error
+        );
+    }
+};
 
 const getLatestSeasonHistoryKey = (
     userId: string,
@@ -640,6 +738,62 @@ const MinitigerCustomRow = ({
         && secondLibrary?.Id !== firstLibrary?.Id
     );
 
+    const firstCacheKey = useMemo(
+        () => getCustomRowDataCacheKey(
+            apiClient,
+            userId,
+            row,
+            'library1',
+            firstLibrary?.Id
+        ),
+        [
+            apiClient,
+            firstLibrary?.Id,
+            row,
+            userId
+        ]
+    );
+
+    const secondCacheKey = useMemo(
+        () => getCustomRowDataCacheKey(
+            apiClient,
+            userId,
+            row,
+            'library2',
+            secondLibrary?.Id
+        ),
+        [
+            apiClient,
+            row,
+            secondLibrary?.Id,
+            userId
+        ]
+    );
+
+    const firstInitialData = useMemo(
+        () => firstEnabled
+            ? readCustomRowDataCache(
+                firstCacheKey
+            )
+            : undefined,
+        [
+            firstCacheKey,
+            firstEnabled
+        ]
+    );
+
+    const secondInitialData = useMemo(
+        () => secondEnabled
+            ? readCustomRowDataCache(
+                secondCacheKey
+            )
+            : undefined,
+        [
+            secondCacheKey,
+            secondEnabled
+        ]
+    );
+
     const firstQuery = useQuery({
         queryKey: [
             'Minitiger',
@@ -656,7 +810,12 @@ const MinitigerCustomRow = ({
             firstLibrary!,
             row
         ),
-        enabled: firstEnabled
+        enabled: firstEnabled,
+        initialData: firstInitialData,
+        initialDataUpdatedAt:
+            firstInitialData
+                ? 0
+                : undefined
     });
 
     const secondQuery = useQuery({
@@ -675,8 +834,49 @@ const MinitigerCustomRow = ({
             secondLibrary!,
             row
         ),
-        enabled: secondEnabled
+        enabled: secondEnabled,
+        initialData: secondInitialData,
+        initialDataUpdatedAt:
+            secondInitialData
+                ? 0
+                : undefined
     });
+
+    useEffect(() => {
+        if (
+            firstEnabled
+            && firstQuery.data
+            && firstQuery.dataUpdatedAt > 0
+        ) {
+            writeCustomRowDataCache(
+                firstCacheKey,
+                firstQuery.data
+            );
+        }
+    }, [
+        firstCacheKey,
+        firstEnabled,
+        firstQuery.data,
+        firstQuery.dataUpdatedAt
+    ]);
+
+    useEffect(() => {
+        if (
+            secondEnabled
+            && secondQuery.data
+            && secondQuery.dataUpdatedAt > 0
+        ) {
+            writeCustomRowDataCache(
+                secondCacheKey,
+                secondQuery.data
+            );
+        }
+    }, [
+        secondCacheKey,
+        secondEnabled,
+        secondQuery.data,
+        secondQuery.dataUpdatedAt
+    ]);
 
     const items = useMemo(
         () => uniqueById([
