@@ -86,6 +86,7 @@ export interface MinitigerHomeSettings {
     bannerFadeStrength: number;
     bannerNavigationVisible: boolean;
     bannerFskVisible: boolean;
+    bannerRotationEnabled: boolean;
     bannerRotationSeconds: BannerRotationSeconds;
     bannerItemLimit: BannerItemLimit;
     cardSize: MinitigerCardSize;
@@ -104,6 +105,8 @@ export interface MinitigerHomeSettings {
     playedIndicatorShape: PlayedIndicatorShape;
     trailerDebugEnabled: boolean;
     youtubeTrailersEnabled: boolean;
+    localTrailersEnabled: boolean;
+    bannerTrailerButtonEnabled: boolean;
     trailerDownloadEnabled: boolean;
     sideRowTitlesEnabled: boolean;
     hoverEnabled: boolean;
@@ -338,6 +341,7 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     bannerFadeStrength: 92,
     bannerNavigationVisible: true,
     bannerFskVisible: true,
+    bannerRotationEnabled: true,
     bannerRotationSeconds: 12,
     bannerItemLimit: 10,
     cardSize: 'normal',
@@ -366,6 +370,8 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     playedIndicatorShape: 'round',
     trailerDebugEnabled: true,
     youtubeTrailersEnabled: true,
+    localTrailersEnabled: true,
+    bannerTrailerButtonEnabled: true,
     trailerDownloadEnabled: false,
     sideRowTitlesEnabled: false,
     hoverEnabled: true,
@@ -720,6 +726,10 @@ export const normalizeHomeSettings = (
         ),
         bannerNavigationVisible: source.bannerNavigationVisible !== false,
         bannerFskVisible: source.bannerFskVisible !== false,
+        bannerRotationEnabled:
+            typeof source.bannerRotationEnabled === 'boolean'
+                ? source.bannerRotationEnabled
+                : source.bannerRotationSeconds !== 0,
         bannerRotationSeconds:
             isRotationSeconds(source.bannerRotationSeconds)
                 ? source.bannerRotationSeconds
@@ -779,6 +789,9 @@ export const normalizeHomeSettings = (
                 : DEFAULT_HOME_SETTINGS.playedIndicatorShape,
         trailerDebugEnabled: source.trailerDebugEnabled !== false,
         youtubeTrailersEnabled: source.youtubeTrailersEnabled !== false,
+        localTrailersEnabled: source.localTrailersEnabled !== false,
+        bannerTrailerButtonEnabled:
+            source.bannerTrailerButtonEnabled !== false,
         trailerDownloadEnabled: source.trailerDownloadEnabled === true,
         sideRowTitlesEnabled: source.sideRowTitlesEnabled === true,
         hoverEnabled: source.hoverEnabled !== false,
