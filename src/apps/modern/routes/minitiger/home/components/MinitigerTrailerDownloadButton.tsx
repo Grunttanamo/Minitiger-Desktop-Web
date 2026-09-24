@@ -137,6 +137,15 @@ const MinitigerTrailerDownloadButton = ({
     const [ message, setMessage ] =
         useState('');
 
+    useEffect(() => {
+        /*
+         * MinitigerHero reuses the same button component while the banner
+         * rotates to another item. Never carry a success/error label from
+         * the previous movie/series into the new one.
+         */
+        setMessage('');
+    }, [item?.Id]);
+
     const hasYouTubeTrailer = useMemo(
         () => Boolean(
             item?.RemoteTrailers
@@ -410,14 +419,21 @@ const MinitigerTrailerDownloadButton = ({
         return null;
     }
 
+    const statusMatchesThisItem = Boolean(
+        status?.itemId
+        && normalizeItemId(status.itemId)
+            === normalizeItemId(item.Id)
+    );
+
     const isThisItemRunning = Boolean(
         active
         && status?.running
-        && (
-            !status.itemId
-            || normalizeItemId(status.itemId)
-                === normalizeItemId(item.Id)
-        )
+        && statusMatchesThisItem
+    );
+
+    const isThisItemCompleted = Boolean(
+        status?.completed
+        && statusMatchesThisItem
     );
 
     const label = busy
@@ -426,7 +442,7 @@ const MinitigerTrailerDownloadButton = ({
             ? status?.cancelRequested
                 ? 'Abbruch …'
                 : '↓ Download läuft'
-            : message.startsWith('✓')
+            : isThisItemCompleted
                 ? '✓ Trailer gespeichert'
                 : '↓ Trailer speichern';
 
@@ -442,8 +458,7 @@ const MinitigerTrailerDownloadButton = ({
             disabled={
                 busy
                 || Boolean(
-                    active
-                    && status?.running
+                    status?.running
                     && !isThisItemRunning
                 )
             }
