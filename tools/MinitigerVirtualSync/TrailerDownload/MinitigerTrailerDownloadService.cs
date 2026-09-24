@@ -193,6 +193,18 @@ public sealed class MinitigerTrailerDownloadService
 
             startInfo.ArgumentList.Add("--no-playlist");
             startInfo.ArgumentList.Add("--newline");
+
+            var denoPath = FindExecutable(
+                OperatingSystem.IsWindows()
+                    ? new[] { "deno.exe", "deno" }
+                    : new[] { "deno" });
+
+            if (denoPath is not null)
+            {
+                startInfo.ArgumentList.Add("--js-runtimes");
+                startInfo.ArgumentList.Add(
+                    $"deno:{denoPath}");
+            }
             startInfo.ArgumentList.Add("--no-overwrites");
             startInfo.ArgumentList.Add("--format");
             startInfo.ArgumentList.Add(
