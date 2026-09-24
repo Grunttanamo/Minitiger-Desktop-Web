@@ -196,6 +196,14 @@ public sealed class MinitigerTrailerDownloadService
                     $"deno:{denoPath}");
             }
             startInfo.ArgumentList.Add("--no-overwrites");
+            startInfo.ArgumentList.Add("--socket-timeout");
+            startInfo.ArgumentList.Add("20");
+            startInfo.ArgumentList.Add("--retries");
+            startInfo.ArgumentList.Add("3");
+            startInfo.ArgumentList.Add("--fragment-retries");
+            startInfo.ArgumentList.Add("3");
+            startInfo.ArgumentList.Add("--retry-sleep");
+            startInfo.ArgumentList.Add("2");
             startInfo.ArgumentList.Add("--format");
             startInfo.ArgumentList.Add(
                 "bv*[height<=1080]+ba/b[height<=1080]/b");
@@ -242,12 +250,27 @@ public sealed class MinitigerTrailerDownloadService
             var stderrTask =
                 process.StandardError.ReadToEndAsync();
 
+            using var downloadTimeout =
+                CancellationTokenSource
+                    .CreateLinkedTokenSource(
+                        cancellationToken);
+
+            downloadTimeout.CancelAfter(
+                TimeSpan.FromMinutes(3));
+
             try
             {
                 await process
                     .WaitForExitAsync(
-                        cancellationToken)
+                        downloadTimeout.Token)
                     .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+                when (!cancellationToken.IsCancellationRequested)
+            {
+                TryKill(process);
+                throw new TimeoutException(
+                    "yt-dlp hat nach 3 Minuten nicht beendet. Der Prozess wurde abgebrochen, damit weitere Trailer-Downloads nicht blockiert werden.");
             }
             catch (OperationCanceledException)
             {
