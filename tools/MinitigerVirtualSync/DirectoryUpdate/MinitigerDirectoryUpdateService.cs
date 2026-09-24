@@ -163,10 +163,24 @@ public sealed class MinitigerDirectoryUpdateService
 
         if (requested.ParentId != Guid.Empty)
         {
-            return _libraryManager
+            var parent = _libraryManager
                 .GetItemById(
                     requested.ParentId)
                 as Folder;
+
+            /*
+             * Never let a single Book/volume button accidentally promote the
+             * operation into a whole-library scan. A directly library-rooted
+             * item has no narrower folder to validate, so require a
+             * non-top-parent folder here.
+             */
+            if (
+                parent is not null
+                && !parent.IsTopParent
+            )
+            {
+                return parent;
+            }
         }
 
         return null;
