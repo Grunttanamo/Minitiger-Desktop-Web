@@ -143,12 +143,3 @@ input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline > .c
     display: none !important;
 }
 
-.emby-checkbox:checked ~ .checkboxOutline,
-input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline {
-    background: currentcolor;
-}
-
-.emby-checkbox:checked ~ .checkboxOutline > .checkboxIcon,
-input[type='checkbox'][data-embycheckbox='true']:checked ~ .checkboxOutline > .checkboxIcon {
-    color: #fff;
-}
