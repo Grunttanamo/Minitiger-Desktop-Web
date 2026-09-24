@@ -326,6 +326,7 @@ const MinitigerTrailerDownloadButton = ({
             return;
         }
 
+        const currentItemId = item.Id;
         let cancelled = false;
         let refreshed = false;
 
@@ -344,7 +345,7 @@ const MinitigerTrailerDownloadButton = ({
 
                 const sameItem = !next.itemId
                     || normalizeItemId(next.itemId)
-                        === normalizeItemId(item.Id);
+                        === normalizeItemId(currentItemId);
 
                 if (!sameItem) {
                     if (!next.running) {
@@ -372,7 +373,7 @@ const MinitigerTrailerDownloadButton = ({
                         const detection =
                             await detectMinitigerLocalTrailer(
                                 apiClient,
-                                item.Id
+                                currentItemId
                             );
 
                         if (cancelled) {
@@ -385,7 +386,7 @@ const MinitigerTrailerDownloadButton = ({
                         ) {
                             notifyMinitigerLocalTrailerChanged(
                                 apiClient,
-                                item.Id
+                                currentItemId
                             );
 
                             setMessage(
