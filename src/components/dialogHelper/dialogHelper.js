@@ -14,8 +14,21 @@ import '../../styles/scrollstyles.scss';
 let globalOnOpenCallback;
 
 function enableAnimation() {
-    // too slow
-    if (browser.tv) {
+    // Dialog/action-sheet animations are cheap in a normal browser, but the
+    // native Minitiger QtWebEngine shell can spend seconds in animation /
+    // microtask processing before dispatching animationend. Every burger-menu
+    // editor waits on those close events before the selected command can
+    // continue, so use the synchronous dialog path in the native shell.
+    const isMinitigerDesktop =
+        typeof window !== 'undefined'
+        && Boolean(
+            window.NativeShell
+            || /QtWebEngine|Jellyfin(?:\\s+Desktop|MediaPlayer)/i.test(
+                navigator.userAgent
+            )
+        );
+
+    if (browser.tv || isMinitigerDesktop) {
         return false;
     }
 
