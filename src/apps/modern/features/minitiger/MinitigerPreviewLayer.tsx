@@ -39,6 +39,7 @@ import {
     isMinitigerAvailableEpisode
 } from 'apps/modern/routes/minitiger/details/episodeUtils';
 import MinitigerInlineTrailer from 'apps/modern/routes/minitiger/home/components/MinitigerInlineTrailer';
+import MinitigerTrailerDownloadButton from 'apps/modern/routes/minitiger/home/components/MinitigerTrailerDownloadButton';
 import MinitigerSeasonSwitcher from 'apps/modern/routes/minitiger/details/MinitigerSeasonSwitcher';
 
 import './MinitigerPreview.scss';
@@ -58,6 +59,7 @@ interface MinitigerPreviewLayerProps {
     seriesEnabled?: boolean;
     movieEnabled?: boolean;
     mangaEnabled?: boolean;
+    trailerDownloadEnabled?: boolean;
 }
 
 const HOVER_DELAY = 1050;
@@ -231,11 +233,17 @@ const MinitigerPreviewLayer = ({
     accentTextColor,
     seriesEnabled = true,
     movieEnabled = true,
-    mangaEnabled = true
+    mangaEnabled = true,
+    trailerDownloadEnabled = false
 }: MinitigerPreviewLayerProps) => {
     const {
-        __legacyApiClient__: apiClient
+        __legacyApiClient__: apiClient,
+        user
     } = useApi();
+
+    const isAdmin = Boolean(
+        user?.Policy?.IsAdministrator
+    );
 
     const queryClient = useQueryClient();
     const favoriteMutation = useToggleFavoriteMutation();
@@ -725,6 +733,8 @@ const MinitigerPreviewLayer = ({
                 onClose={() => setExpanded(null)}
                 onPlay={playItem}
                 onToggleFavorite={toggleFavorite}
+                isAdmin={isAdmin}
+                trailerDownloadEnabled={trailerDownloadEnabled}
             />,
             document.body
         )
@@ -958,6 +968,8 @@ interface LargePreviewProps {
     onClose: () => void;
     onPlay: (item: ItemDto) => void;
     onToggleFavorite: (item: ItemDto) => void;
+    isAdmin: boolean;
+    trailerDownloadEnabled: boolean;
 }
 
 const LargePreview = ({
@@ -966,7 +978,9 @@ const LargePreview = ({
     style,
     onClose,
     onPlay,
-    onToggleFavorite
+    onToggleFavorite,
+    isAdmin,
+    trailerDownloadEnabled
 }: LargePreviewProps) => {
     const seasonSeriesItem =
         target.kind === 'season'
@@ -1124,6 +1138,15 @@ const LargePreview = ({
                             >
                                 Weitere Infos
                             </Link>
+
+                            {isAdmin
+                                && trailerDownloadEnabled
+                                && target.kind !== 'manga' && (
+                                <MinitigerTrailerDownloadButton
+                                    apiClient={apiClient}
+                                    item={heroItem}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>
