@@ -12,8 +12,11 @@ import {
     getMinitigerAccessToken
 } from '../bannerPlaylistUtils';
 import {
-    refreshMinitigerLocalTrailerRegistration
+    notifyMinitigerLocalTrailerChanged
 } from './MinitigerInlineTrailer';
+import {
+    detectMinitigerLocalTrailer
+} from '../trailerDetection';
 interface Props {
     apiClient?: ApiClient;
     item?: ItemDto;
@@ -366,21 +369,43 @@ const MinitigerTrailerDownloadButton = ({
                     );
 
                     try {
-                        const trailers =
-                            await refreshMinitigerLocalTrailerRegistration(
+                        const detection =
+                            await detectMinitigerLocalTrailer(
                                 apiClient,
-                                item
+                                item.Id
                             );
 
                         if (cancelled) {
                             return;
                         }
 
-                        setMessage(
-                            trailers.length
-                                ? '✓ Trailer gespeichert & eingelesen.'
-                                : '✓ Trailer gespeichert · Jellyfin hat ihn noch nicht registriert.'
-                        );
+                        if (
+                            detection.status
+                            === 'activated'
+                        ) {
+                            notifyMinitigerLocalTrailerChanged(
+                                apiClient,
+                                item.Id
+                            );
+
+                            setMessage(
+                                '✓ Trailer gespeichert & eingelesen.'
+                            );
+                        } else if (
+                            detection.status
+                            === 'not_found'
+                        ) {
+                            setMessage(
+                                '✓ Download fertig · Trailer-Datei wurde danach nicht gefunden.'
+                            );
+                        } else {
+                            setMessage(
+                                '✓ Download fertig · ' + (
+                                    detection.message
+                                    || 'Trailer konnte nicht aktiviert werden.'
+                                )
+                            );
+                        }
                     } catch (error) {
                         if (!cancelled) {
                             const detail = error instanceof Error
