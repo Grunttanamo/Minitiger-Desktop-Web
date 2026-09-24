@@ -1475,6 +1475,25 @@ const onUpdate = (
                                         </span>
                                     </label>
 
+                                    {isAdmin && (
+                                        <label className='minitigerSettingsToggle'>
+                                            <input
+                                                type='checkbox'
+                                                checked={settings.trailerDownloadEnabled}
+                                                onChange={event =>
+                                                    onUpdate({
+                                                        trailerDownloadEnabled:
+                                                            event.currentTarget.checked
+                                                    })
+                                                }
+                                            />
+                                            <span>
+                                                <strong>Lokalen Trailer-Download anbieten</strong>
+                                                <small>Blendet für Administratoren bei YouTube-Trailern einen Download-Button im Banner und in großen Vorschaukarten ein. Der Companion speichert den Trailer als trailer.mp4 direkt im Medienordner.</small>
+                                            </span>
+                                        </label>
+                                    )}
+
                                     <label className='minitigerSettingsField'>
                                         <span>Automatischer Wechsel</span>
                                         <select
