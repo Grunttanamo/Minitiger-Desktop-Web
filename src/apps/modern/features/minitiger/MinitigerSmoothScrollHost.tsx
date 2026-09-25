@@ -30,7 +30,7 @@ const isScrollableY = (
 
 const findScrollContainer = (
     scope: HTMLElement
-) => {
+): HTMLElement | null => {
     let current:
         HTMLElement
         | null = scope;
@@ -44,8 +44,13 @@ const findScrollContainer = (
             current.parentElement;
     }
 
-    return document.scrollingElement
-        as HTMLElement | null;
+    const scrollingElement =
+        document.scrollingElement;
+
+    return scrollingElement
+        instanceof HTMLElement
+        ? scrollingElement
+        : document.documentElement;
 };
 
 const shouldIgnoreTarget = (
