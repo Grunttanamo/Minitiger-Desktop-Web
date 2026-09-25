@@ -62,6 +62,7 @@ interface DetailPerson {
     Role?: string | null;
     Type?: string | null;
     PrimaryImageTag?: string | null;
+    __minitigerImageRevision?: number;
 }
 
 interface DetailMediaSource {
@@ -84,7 +85,8 @@ const getMissingPersonImageCacheKey = (
     MISSING_PERSON_IMAGE_CACHE_PREFIX,
     apiClient?.serverId() ?? 'server',
     person.Id ?? '',
-    person.PrimaryImageTag ?? ''
+    person.PrimaryImageTag ?? '',
+    person.__minitigerImageRevision ?? 0
 ].join(':');
 
 const isPersonImageTemporarilyMissing = (
@@ -168,15 +170,29 @@ const getPersonImageUrl = (
         return undefined;
     }
 
-    return apiClient.getImageUrl(
-        person.Id,
-        {
-            type: 'Primary',
-            tag: person.PrimaryImageTag,
-            maxWidth: 320,
-            quality: 90
-        }
-    ) || undefined;
+    const url =
+        apiClient.getImageUrl(
+            person.Id,
+            {
+                type: 'Primary',
+                tag: person.PrimaryImageTag,
+                maxWidth: 320,
+                quality: 90
+            }
+        ) || undefined;
+
+    if (
+        !url
+        || !person.__minitigerImageRevision
+    ) {
+        return url;
+    }
+
+    return `${url}${
+        url.includes('?')
+            ? '&'
+            : '?'
+    }minitigerRevision=${person.__minitigerImageRevision}`;
 };
 
 const MinitigerVideoDetails = () => {
