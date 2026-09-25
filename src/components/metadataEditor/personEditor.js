@@ -75,7 +75,11 @@ function show(person) {
         dlg.querySelector('.selectPersonType').addEventListener('change', function () {
             dlg.querySelector('.fldRole').classList.toggle(
                 'hide',
-                ![ PersonKind.Actor, PersonKind.GuestStar ].includes(this.value));
+                ![
+                    PersonKind.Actor,
+                    PersonKind.GuestStar,
+                    PersonKind.Narrator
+                ].includes(this.value));
         });
 
         dlg.querySelector('.btnCancel').addEventListener('click', function () {
