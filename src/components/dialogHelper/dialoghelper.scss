@@ -156,3 +156,23 @@
 .dialogBackdropOpened {
     opacity: 0.5;
 }
+
+
+/* Minitiger Desktop / Qt WebEngine:
+   Dialog animations are already disabled in JS. Also remove the lingering
+   fixed-backdrop transition/compositor hints, which can briefly blank or
+   flash the transparent WebEngine surface when legacy metadata dialogs open. */
+.minitigerNativeDialog {
+    animation: none !important;
+    transition: none !important;
+    will-change: auto !important;
+}
+
+.minitigerNativeDialogBackdrop {
+    transition: none !important;
+    will-change: auto !important;
+}
+
+.minitigerNativeDialogBackdrop.dialogBackdropOpened {
+    opacity: 0.5;
+}
