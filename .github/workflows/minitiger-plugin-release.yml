@@ -1,34 +1,37 @@
-name: Release Minitiger Virtual Sync Plugin
+name: Release Minitiger Desktop Companion
 
 on:
+  push:
+    branches:
+      - minitiger-desktop-v12.1
+    paths:
+      - 'tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csproj'
+      - '.github/workflows/minitiger-plugin-release.yml'
+      - '.github/scripts/update_plugin_manifest.py'
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Plugin version (four parts, e.g. 1.0.3.0)'
-        required: true
-        default: '1.0.3.0'
-        type: string
       changelog:
-        description: 'Short changelog shown in the Jellyfin plugin catalog'
-        required: true
-        default: 'Initial public Minitiger plugin repository release for Jellyfin 12.1.'
+        description: 'Optional changelog shown in the Jellyfin plugin catalog'
+        required: false
+        default: ''
         type: string
 
 permissions:
   contents: write
 
 concurrency:
-  group: minitiger-plugin-release
+  group: minitiger-desktop-companion-release
   cancel-in-progress: false
 
 jobs:
   release:
-    if: github.ref == 'refs/heads/minitiger-v12.1'
+    if: github.ref == 'refs/heads/minitiger-desktop-v12.1'
     runs-on: ubuntu-latest
     env:
       PROJECT: tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csproj
       TARGET_ABI: 12.0.0.0
       MANIFEST: plugin-repository/manifest.json
+      CHANGELOG_INPUT: ${{ inputs.changelog }}
 
     steps:
       - name: Checkout
@@ -41,39 +44,75 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Validate release version
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION='${{ inputs.version }}'
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Version must use four numeric parts, for example 1.0.3.0" >&2
-            exit 1
-          fi
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "TAG=plugin-v$VERSION" >> "$GITHUB_ENV"
-          echo "ARCHIVE_NAME=Minitiger.VirtualSync_$VERSION.zip" >> "$GITHUB_ENV"
-
-      - name: Refuse duplicate release tag
+      - name: Determine Desktop companion version
+        id: meta
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists. Choose a new plugin version." >&2
+
+          SOURCE_VERSION="$(python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse("tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csproj").getroot()
+          version = root.findtext(".//Version")
+          if not version:
+              raise SystemExit("Plugin <Version> is missing.")
+          print(version.strip())
+          PY
+          )"
+
+          if [[ "$SOURCE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            VERSION="$SOURCE_VERSION.0"
+          elif [[ "$SOURCE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            VERSION="$SOURCE_VERSION"
+          else
+            echo "Unsupported plugin version: $SOURCE_VERSION" >&2
             exit 1
           fi
 
+          TAG="desktop-plugin-v$VERSION"
+          ARCHIVE_NAME="Minitiger.VirtualSync_$VERSION.zip"
+
+          if [[ -n "${CHANGELOG_INPUT:-}" ]]; then
+            CHANGELOG="$CHANGELOG_INPUT"
+          else
+            CHANGELOG="Minitiger Desktop companion release built from Desktop-Web plugin source $SOURCE_VERSION. Includes the current server-side Minitiger profile, virtual-library, background-service, image-maintenance and local-trailer features."
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            EXISTS=true
+          else
+            EXISTS=false
+          fi
+
+          {
+            echo "SOURCE_VERSION=$SOURCE_VERSION"
+            echo "VERSION=$VERSION"
+            echo "TAG=$TAG"
+            echo "ARCHIVE_NAME=$ARCHIVE_NAME"
+            echo "EXISTS=$EXISTS"
+            echo "CHANGELOG<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+          echo "exists=$EXISTS" >> "$GITHUB_OUTPUT"
+
       - name: Restore plugin
+        if: steps.meta.outputs.exists != 'true'
         run: dotnet restore "$PROJECT"
 
       - name: Publish plugin
+        if: steps.meta.outputs.exists != 'true'
         shell: bash
         run: |
           set -euo pipefail
           OUT="$RUNNER_TEMP/minitiger-plugin"
-          rm -rf "$OUT"
+          PKG="$RUNNER_TEMP/minitiger-package"
+          rm -rf "$OUT" "$PKG"
+          mkdir -p "$PKG"
+
           dotnet publish "$PROJECT" \
             --configuration Release \
             --no-restore \
@@ -84,40 +123,43 @@ jobs:
 
           DLL="$OUT/Jellyfin.Plugin.MinitigerVirtualSync.dll"
           test -f "$DLL"
-
-          PKG="$RUNNER_TEMP/minitiger-package"
-          rm -rf "$PKG"
-          mkdir -p "$PKG"
           cp "$DLL" "$PKG/"
-          (cd "$PKG" && zip -9 "$RUNNER_TEMP/$ARCHIVE_NAME" Jellyfin.Plugin.MinitigerVirtualSync.dll)
+
+          (
+            cd "$PKG"
+            zip -9 "$RUNNER_TEMP/$ARCHIVE_NAME" Jellyfin.Plugin.MinitigerVirtualSync.dll
+          )
           test -s "$RUNNER_TEMP/$ARCHIVE_NAME"
 
-      - name: Calculate Jellyfin catalog checksum
+      - name: Calculate Jellyfin catalog metadata
+        if: steps.meta.outputs.exists != 'true'
         shell: bash
         run: |
           set -euo pipefail
           CHECKSUM="$(md5sum "$RUNNER_TEMP/$ARCHIVE_NAME" | awk '{print $1}')"
           TIMESTAMP="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           SOURCE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${ARCHIVE_NAME}"
-          echo "CHECKSUM=$CHECKSUM" >> "$GITHUB_ENV"
-          echo "TIMESTAMP=$TIMESTAMP" >> "$GITHUB_ENV"
-          echo "SOURCE_URL=$SOURCE_URL" >> "$GITHUB_ENV"
 
-      - name: Create GitHub release
+          {
+            echo "CHECKSUM=$CHECKSUM"
+            echo "TIMESTAMP=$TIMESTAMP"
+            echo "SOURCE_URL=$SOURCE_URL"
+          } >> "$GITHUB_ENV"
+
+      - name: Create Desktop companion GitHub release
+        if: steps.meta.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHANGELOG: ${{ inputs.changelog }}
         shell: bash
         run: |
           set -euo pipefail
           gh release create "$TAG" "$RUNNER_TEMP/$ARCHIVE_NAME" \
             --target "$GITHUB_SHA" \
-            --title "Minitiger Virtual Sync $VERSION" \
+            --title "Minitiger Virtual Sync $VERSION · Desktop" \
             --notes "$CHANGELOG"
 
-      - name: Update Jellyfin plugin repository manifest
-        env:
-          CHANGELOG: ${{ inputs.changelog }}
+      - name: Update Desktop Jellyfin plugin manifest
+        if: steps.meta.outputs.exists != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -130,29 +172,36 @@ jobs:
             --timestamp "$TIMESTAMP" \
             --changelog "$CHANGELOG"
 
-      - name: Commit updated manifest
+      - name: Commit updated Desktop manifest
+        if: steps.meta.outputs.exists != 'true'
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$MANIFEST"
+
           if git diff --cached --quiet; then
             echo "Manifest already up to date."
           else
-            git commit -m "Publish Minitiger Virtual Sync $VERSION"
-            git push origin HEAD:minitiger-v12.1
+            git commit -m "Publish Desktop companion $VERSION"
+            git push origin HEAD:minitiger-desktop-v12.1
           fi
 
       - name: Release summary
         shell: bash
         run: |
           {
-            echo '## Minitiger Virtual Sync released'
+            echo '## Minitiger Desktop companion'
             echo
-            echo "- Version: \`$VERSION\`"
-            echo "- Jellyfin plugin ABI: \`$TARGET_ABI\`"
-            echo "- ZIP: \`$ARCHIVE_NAME\`"
-            echo "- MD5: \`$CHECKSUM\`"
-            echo "- Repository manifest: \`plugin-repository/manifest.json\`"
+            echo "- Source version: `$SOURCE_VERSION`"
+            echo "- Jellyfin catalog version: `$VERSION`"
+            echo "- Jellyfin plugin ABI: `$TARGET_ABI`"
+            if [[ "$EXISTS" == "true" ]]; then
+              echo "- Status: release already existed; nothing was rebuilt."
+            else
+              echo "- ZIP: `$ARCHIVE_NAME`"
+              echo "- MD5: `$CHECKSUM`"
+              echo "- Manifest: `$MANIFEST`"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
