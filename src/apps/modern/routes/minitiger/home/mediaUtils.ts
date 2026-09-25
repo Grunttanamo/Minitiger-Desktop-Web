@@ -4,17 +4,47 @@ import type { ItemDto } from 'types/base/models/item-dto';
 
 import { getEmbeddedFlagUrl } from './embeddedFlags';
 
+const getMinitigerImageRevision = (
+    item: ItemDto
+) => Number(
+    (
+        item as ItemDto & {
+            __minitigerImageRevision?: number;
+        }
+    ).__minitigerImageRevision
+    ?? 0
+);
+
 const safeImageUrl = (
     apiClient: ApiClient | undefined,
     itemId: string | null | undefined,
-    options: Record<string, unknown>
+    options: Record<string, unknown>,
+    revision = 0
 ) => {
     if (!apiClient || !itemId) {
         return undefined;
     }
 
     try {
-        return apiClient.getImageUrl(itemId, options) || undefined;
+        const url =
+            apiClient.getImageUrl(
+                itemId,
+                options
+            );
+
+        if (!url) {
+            return undefined;
+        }
+
+        if (!revision) {
+            return url;
+        }
+
+        return `${url}${
+            url.includes('?')
+                ? '&'
+                : '?'
+        }minitigerRevision=${revision}`;
     } catch {
         return undefined;
     }
@@ -30,12 +60,17 @@ export const getPrimaryImageUrl = (
         return undefined;
     }
 
-    return safeImageUrl(apiClient, item.Id, {
-        type: 'Primary',
-        tag,
-        maxWidth: 420,
-        quality: 90
-    });
+    return safeImageUrl(
+        apiClient,
+        item.Id,
+        {
+            type: 'Primary',
+            tag,
+            maxWidth: 420,
+            quality: 90
+        },
+        getMinitigerImageRevision(item)
+    );
 };
 
 export const getLandscapeImageUrl = (
@@ -45,24 +80,34 @@ export const getLandscapeImageUrl = (
     const thumbTag = item.ImageTags?.Thumb;
 
     if (thumbTag) {
-        return safeImageUrl(apiClient, item.Id, {
-            type: 'Thumb',
-            tag: thumbTag,
-            maxWidth: 720,
-            quality: 90
-        });
+        return safeImageUrl(
+            apiClient,
+            item.Id,
+            {
+                type: 'Thumb',
+                tag: thumbTag,
+                maxWidth: 720,
+                quality: 90
+            },
+            getMinitigerImageRevision(item)
+        );
     }
 
     const backdropTag = item.BackdropImageTags?.[0];
 
     if (backdropTag) {
-        return safeImageUrl(apiClient, item.Id, {
-            type: 'Backdrop',
-            tag: backdropTag,
-            index: 0,
-            maxWidth: 720,
-            quality: 90
-        });
+        return safeImageUrl(
+            apiClient,
+            item.Id,
+            {
+                type: 'Backdrop',
+                tag: backdropTag,
+                index: 0,
+                maxWidth: 720,
+                quality: 90
+            },
+            getMinitigerImageRevision(item)
+        );
     }
 
     return getPrimaryImageUrl(apiClient, item);
@@ -133,24 +178,34 @@ export const getBackdropImageUrl = (
     const backdropTag = item.BackdropImageTags?.[0];
 
     if (backdropTag) {
-        return safeImageUrl(apiClient, item.Id, {
-            type: 'Backdrop',
-            tag: backdropTag,
-            index: 0,
-            maxWidth: 1920,
-            quality: 92
-        });
+        return safeImageUrl(
+            apiClient,
+            item.Id,
+            {
+                type: 'Backdrop',
+                tag: backdropTag,
+                index: 0,
+                maxWidth: 1920,
+                quality: 92
+            },
+            getMinitigerImageRevision(item)
+        );
     }
 
     const primaryTag = item.ImageTags?.Primary;
 
     if (primaryTag) {
-        return safeImageUrl(apiClient, item.Id, {
-            type: 'Primary',
-            tag: primaryTag,
-            maxWidth: 1600,
-            quality: 90
-        });
+        return safeImageUrl(
+            apiClient,
+            item.Id,
+            {
+                type: 'Primary',
+                tag: primaryTag,
+                maxWidth: 1600,
+                quality: 90
+            },
+            getMinitigerImageRevision(item)
+        );
     }
 
     return undefined;
@@ -166,12 +221,17 @@ export const getLogoImageUrl = (
         return undefined;
     }
 
-    return safeImageUrl(apiClient, item.Id, {
-        type: 'Logo',
-        tag: logoTag,
-        maxWidth: 800,
-        quality: 92
-    });
+    return safeImageUrl(
+        apiClient,
+        item.Id,
+        {
+            type: 'Logo',
+            tag: logoTag,
+            maxWidth: 800,
+            quality: 92
+        },
+        getMinitigerImageRevision(item)
+    );
 };
 
 export const getMediaTypeName = (type?: string | null) => {
