@@ -153,6 +153,9 @@ const canScrollInDirection = (
         : current > 0.5;
 };
 
+const WHEEL_SPEED_MULTIPLIER = 1.55;
+const SMOOTHING_FACTOR = 0.3;
+
 const MinitigerSmoothScrollHost = () => {
     useEffect(() => {
         if (!isNativeMinitigerDesktop()) {
@@ -199,7 +202,7 @@ const MinitigerSmoothScrollHost = () => {
             setScrollTop(
                 activeScroller,
                 current
-                + distance * 0.22
+                + distance * SMOOTHING_FACTOR
             );
 
             frame =
@@ -280,7 +283,9 @@ const MinitigerSmoothScrollHost = () => {
                     Math.min(
                         maxTop,
                         targetTop
-                        + event.deltaY * scale
+                        + event.deltaY
+                            * scale
+                            * WHEEL_SPEED_MULTIPLIER
                     )
                 );
 
@@ -294,6 +299,23 @@ const MinitigerSmoothScrollHost = () => {
             }
         };
 
+        const stopForNativeAutoscroll = (
+            event: MouseEvent
+        ) => {
+            if (event.button !== 1) {
+                return;
+            }
+
+            /*
+             * Chromium's middle-button autoscroll owns scrollTop itself.
+             * Cancel any pending interpolated target so we never snap back
+             * to an old wheel position when native autoscroll stops.
+             */
+            stopAnimation();
+            activeScroller = null;
+            targetTop = 0;
+        };
+
         document.addEventListener(
             'wheel',
             onWheel,
@@ -302,12 +324,32 @@ const MinitigerSmoothScrollHost = () => {
                 passive: false
             }
         );
+        document.addEventListener(
+            'mousedown',
+            stopForNativeAutoscroll,
+            true
+        );
+        document.addEventListener(
+            'auxclick',
+            stopForNativeAutoscroll,
+            true
+        );
 
         return () => {
             stopAnimation();
             document.removeEventListener(
                 'wheel',
                 onWheel,
+                true
+            );
+            document.removeEventListener(
+                'mousedown',
+                stopForNativeAutoscroll,
+                true
+            );
+            document.removeEventListener(
+                'auxclick',
+                stopForNativeAutoscroll,
                 true
             );
         };
