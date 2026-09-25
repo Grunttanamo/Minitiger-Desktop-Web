@@ -19,8 +19,20 @@
     background-position: center 18%;
     background-size: cover;
     background-repeat: no-repeat;
-    filter: brightness(0.62);
-    transform: scale(1.01);
+
+    /* A full-screen CSS filter on a fixed background forces Qt WebEngine to
+       repaint/composite a large filtered surface while scrolling. Opacity over
+       the page's black base produces the same darkening much more cheaply. */
+    opacity: 0.62;
+    transform: translateZ(0) scale(1.01);
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+.minitigerDetailsShade {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
 }
 
 .minitigerDetailsShade {
