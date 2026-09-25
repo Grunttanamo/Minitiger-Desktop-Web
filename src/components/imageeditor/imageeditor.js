@@ -26,6 +26,20 @@ const enableFocusTransform = !browser.slow && !browser.edge;
 let currentItem;
 let hasChanges = false;
 
+function notifyMinitigerImageUpdated(item) {
+    if (!hasChanges || !item?.Id) {
+        return;
+    }
+
+    document.dispatchEvent(new CustomEvent('minitiger:image-updated', {
+        detail: {
+            itemId: item.Id,
+            item: item,
+            revision: Date.now()
+        }
+    }));
+}
+
 function getBaseRemoteOptions() {
     return { itemId: currentItem.Id };
 }
@@ -50,6 +64,7 @@ function addListeners(container, className, eventName, fn) {
 
 function reloadItem(page, item, apiClient, focusContext) {
     currentItem = item;
+    notifyMinitigerImageUpdated(item);
 
     apiClient.getRemoteImageProviders(getBaseRemoteOptions()).then(function (providers) {
         const btnBrowseAllImages = page.querySelectorAll('.btnBrowseAllImages');
