@@ -28,10 +28,10 @@ def plugin_template() -> dict:
         "guid": PLUGIN_GUID,
         "name": PLUGIN_NAME,
         "description": (
-            "Server-side companion for Minitiger Web. Stores and serves Minitiger "
-            "virtual-library configuration and custom virtual-library media."
+            "Server-side companion for Minitiger Desktop. Provides Minitiger profile sync, "
+            "virtual-library services, background helpers, image maintenance and local trailer support."
         ),
-        "overview": "Server-side virtual-library sync companion for Minitiger Web.",
+        "overview": "Server-side companion plugin for Minitiger Desktop.",
         "owner": "Grunttanamo",
         "category": "General",
         "versions": [],
