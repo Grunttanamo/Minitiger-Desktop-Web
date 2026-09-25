@@ -697,8 +697,7 @@ const MinitigerVideoDetails = () => {
 
     const cast = people
         .filter(person => (
-            !person.Type
-            || person.Type === 'Actor'
+            person.Type === 'Actor'
             || person.Type === 'GuestStar'
         ))
         .slice(0, 24);
