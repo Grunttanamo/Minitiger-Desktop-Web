@@ -33,15 +33,19 @@ Compatibility:
 - .NET target: net10.0
 - Jellyfin plugin ABI line: 12.0.0.0
 
-## Public plugin repository
+## Desktop plugin repository
 
-Existing public plugin releases are still referenced through the original Minitiger plugin repository:
+Minitiger Desktop uses its own companion-plugin release channel. It is independent from the older Minitiger Web / Sidecar plugin repository.
+
+Add this repository in **Jellyfin Dashboard → Plugins → Repositories**:
 
 ```text
-https://raw.githubusercontent.com/Grunttanamo/Minitiger/minitiger-v12.1/plugin-repository/manifest.json
+https://raw.githubusercontent.com/Grunttanamo/Minitiger-Desktop-Web/minitiger-desktop-v12.1/plugin-repository/manifest.json
 ```
 
-Install it through **Jellyfin Dashboard → Plugins → Repositories**, then install **Minitiger Virtual Sync** from the catalog and restart Jellyfin.
+Use the name **Minitiger Desktop**, save the repository, open **Plugins → Catalog**, install **Minitiger Virtual Sync**, and restart Jellyfin.
+
+The plugin source stays in this repository under `tools/MinitigerVirtualSync/`. Published Desktop companion releases are built from this source and attached to GitHub Releases in **Grunttanamo/Minitiger-Desktop-Web**.
 
 ## Development build
 
