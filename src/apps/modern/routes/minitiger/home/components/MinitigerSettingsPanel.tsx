@@ -2535,7 +2535,7 @@ const onUpdate = (
                                     </label>
 
                                     <label className='minitigerRangeField'>
-                                        <span>Besetzung &amp; Mitwirkende-Größe</span>
+                                        <span>Besetzung &amp; Synchronsprecher-Größe</span>
                                         <div>
                                             <input
                                                 type='range'
@@ -2556,7 +2556,7 @@ const onUpdate = (
                                     </label>
 
                                     <label className='minitigerSettingsField'>
-                                        <span>Besetzung &amp; Mitwirkende-Form</span>
+                                        <span>Besetzung &amp; Synchronsprecher-Form</span>
                                         <select
                                             value={detailSettings.castShape}
                                             onChange={event =>
