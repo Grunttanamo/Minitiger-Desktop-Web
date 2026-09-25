@@ -13,22 +13,23 @@ import '../../styles/scrollstyles.scss';
 
 let globalOnOpenCallback;
 
-function enableAnimation() {
-    // Dialog/action-sheet animations are cheap in a normal browser, but the
-    // native Minitiger QtWebEngine shell can spend seconds in animation /
-    // microtask processing before dispatching animationend. Every burger-menu
-    // editor waits on those close events before the selected command can
-    // continue, so use the synchronous dialog path in the native shell.
-    const isMinitigerDesktop =
-        typeof window !== 'undefined'
+function isMinitigerDesktop() {
+    return typeof window !== 'undefined'
         && Boolean(
             window.NativeShell
             || /QtWebEngine|Jellyfin(?:\\s+Desktop|MediaPlayer)/i.test(
                 navigator.userAgent
             )
         );
+}
 
-    if (browser.tv || isMinitigerDesktop) {
+function enableAnimation() {
+    // Dialog/action-sheet animations are cheap in a normal browser, but the
+    // native Minitiger QtWebEngine shell can spend seconds in animation /
+    // microtask processing before dispatching animationend. Every burger-menu
+    // editor waits on those close events before the selected command can
+    // continue, so use the synchronous dialog path in the native shell.
+    if (browser.tv || isMinitigerDesktop()) {
         return false;
     }
 
@@ -213,12 +214,21 @@ function addBackdropOverlay(dlg) {
     const backdrop = document.createElement('div');
     backdrop.classList.add('dialogBackdrop');
 
+    if (isMinitigerDesktop()) {
+        backdrop.classList.add(
+            'minitigerNativeDialogBackdrop'
+        );
+    }
+
     const backdropParent = dlg.dialogContainer || dlg;
     backdropParent.parentNode.insertBefore(backdrop, backdropParent);
     dlg.backdrop = backdrop;
 
-    // trigger reflow or the backdrop will not animate
-    void backdrop.offsetWidth;
+    if (!isMinitigerDesktop()) {
+        // trigger reflow or the backdrop will not animate
+        void backdrop.offsetWidth;
+    }
+
     backdrop.classList.add('dialogBackdropOpened');
 
     let clickedElement;
@@ -477,6 +487,12 @@ export function createDialog(options = {}) {
     };
 
     dlg.classList.add('dialog');
+
+    if (isMinitigerDesktop()) {
+        dlg.classList.add(
+            'minitigerNativeDialog'
+        );
+    }
 
     if (options.scrollX) {
         dlg.classList.add('scrollX');
