@@ -206,7 +206,26 @@ function showNativeShellDropdown(select, bubbleChange = false) {
         }
     };
 
-    const onViewportChange = () => {
+    const onViewportChange = event => {
+        /*
+         * Scroll events bubble/capture through window even when only the
+         * dropdown's own overflow area is moving. Keep the menu open for
+         * wheel scrolling and scrollbar dragging inside itself; only close
+         * when the surrounding page/viewport moves.
+         */
+        const target =
+            event?.target;
+
+        if (
+            target instanceof Node
+            && (
+                target === menu
+                || menu.contains(target)
+            )
+        ) {
+            return;
+        }
+
         closeNativeShellDropdown();
     };
 
