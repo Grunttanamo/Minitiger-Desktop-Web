@@ -703,6 +703,17 @@ const MinitigerVideoDetails = () => {
         ))
         .slice(0, 24);
 
+    /*
+     * Jellyfin 12 exposes spoken/voice credits as PersonKind.Narrator.
+     * Keep them out of the normal actor row and render them in their own
+     * Minitiger rail with the same card/menu/hover/settings behavior.
+     */
+    const voiceCast = people
+        .filter(person =>
+            person.Type === 'Narrator'
+        )
+        .slice(0, 24);
+
     const seriesTotalTicks = isSeries
         ? allSeriesEpisodes.reduce(
             (sum, episode) => sum + (episode.RunTimeTicks ?? 0),
@@ -1374,6 +1385,118 @@ const MinitigerVideoDetails = () => {
                                         key={
                                             person.Id
                                             ?? `${person.Name}-${index}`
+                                        }
+                                        to={
+                                            person.Id
+                                                ? `/minitigerdetails?id=${encodeURIComponent(person.Id)}`
+                                                : '#'
+                                        }
+                                        className='minitigerDetailsCastCard'
+                                    >
+                                        <div>
+                                            <MinitigerItemMenuButton
+                                                apiClient={apiClient}
+                                                item={{
+                                                    Id: person.Id,
+                                                    Name: person.Name,
+                                                    Type: 'Person'
+                                                }}
+                                                title='Personen-Menü'
+                                            />
+
+                                            {imageUrl
+                                                && !imageTemporarilyMissing
+                                                && (
+                                                    <img
+                                                        src={imageUrl}
+                                                        alt=''
+                                                        onError={event => {
+                                                            rememberMissingPersonImage(
+                                                                apiClient,
+                                                                person
+                                                            );
+
+                                                            event.currentTarget.style.display =
+                                                                'none';
+
+                                                            const fallback =
+                                                                event.currentTarget
+                                                                    .nextElementSibling;
+
+                                                            if (
+                                                                fallback
+                                                                instanceof HTMLElement
+                                                            ) {
+                                                                fallback.style.display =
+                                                                    'flex';
+                                                            }
+                                                        }}
+                                                    />
+                                                )}
+
+                                            <span
+                                                style={{
+                                                    display:
+                                                        imageUrl
+                                                        && !imageTemporarilyMissing
+                                                            ? 'none'
+                                                            : 'flex'
+                                                }}
+                                            >
+                                                👤
+                                            </span>
+                                        </div>
+
+                                        <strong>
+                                            {
+                                                person.Name
+                                                ?? 'Unbekannt'
+                                            }
+                                        </strong>
+
+                                        {person.Role && (
+                                            <small>
+                                                als {person.Role}
+                                            </small>
+                                        )}
+                                    </Link>
+                                );
+                            })}
+                        </MinitigerRail>
+                    </section>
+                )}
+
+                {voiceCast.length > 0 && (
+                    <section className='minitigerDetailsSection'>
+                        <div className='minitigerDetailsSectionHead'>
+                            <div>
+                                <h2>
+                                    Synchronsprecher
+                                </h2>
+                            </div>
+                        </div>
+
+                        <MinitigerRail
+                            className='minitigerDetailsCastRow'
+                            ariaLabel='Synchronsprecher'
+                        >
+                            {voiceCast.map((person, index) => {
+                                const imageUrl =
+                                    getPersonImageUrl(
+                                        apiClient,
+                                        person
+                                    );
+                                const imageTemporarilyMissing =
+                                    isPersonImageTemporarilyMissing(
+                                        apiClient,
+                                        person
+                                    );
+
+                                return (
+                                    <Link
+                                        key={
+                                            person.Id
+                                            ?? `voice-${person.Name}-${index}`
                                         }
                                         to={
                                             person.Id
