@@ -3,7 +3,7 @@ name: Build Minitiger Virtual Sync Plugin
 on:
   push:
     branches:
-      - minitiger-v12.1
+      - minitiger-desktop-v12.1
     paths:
       - 'tools/MinitigerVirtualSync/**'
       - '.github/workflows/minitiger-plugin-build.yml'
@@ -11,7 +11,7 @@ on:
       - '.github/scripts/update_plugin_manifest.py'
   pull_request:
     branches:
-      - minitiger-v12.1
+      - minitiger-desktop-v12.1
     paths:
       - 'tools/MinitigerVirtualSync/**'
       - '.github/workflows/minitiger-plugin-build.yml'
