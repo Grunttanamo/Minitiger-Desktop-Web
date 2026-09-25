@@ -83,16 +83,14 @@ interface MinitigerCustomRowDataCache {
 const getCustomRowDataCacheKey = (
     apiClient: ApiClient | undefined,
     userId: string,
-    row: MinitigerCustomRow,
-    slot: 'library1' | 'library2',
-    libraryId?: string | null
+    row: MinitigerCustomRow
 ) => [
     CUSTOM_ROW_DATA_CACHE_PREFIX,
     apiClient?.serverId() ?? 'server',
     userId || 'user',
     row.key,
-    slot,
-    libraryId ?? '',
+    row.library1 ?? '',
+    row.library2 ?? '',
     row.sortMode,
     row.count
 ].join(':');
@@ -748,59 +746,25 @@ const MinitigerCustomRow = ({
         && secondLibrary?.Id !== firstLibrary?.Id
     );
 
-    const firstCacheKey = useMemo(
+    const persistentCacheKey = useMemo(
         () => getCustomRowDataCacheKey(
             apiClient,
             userId,
-            row,
-            'library1',
-            firstLibrary?.Id
+            row
         ),
         [
             apiClient,
-            firstLibrary?.Id,
             row,
             userId
         ]
     );
 
-    const secondCacheKey = useMemo(
-        () => getCustomRowDataCacheKey(
-            apiClient,
-            userId,
-            row,
-            'library2',
-            secondLibrary?.Id
-        ),
+    const cachedItems = useMemo(
+        () => readCustomRowDataCache(
+            persistentCacheKey
+        ) ?? [],
         [
-            apiClient,
-            row,
-            secondLibrary?.Id,
-            userId
-        ]
-    );
-
-    const firstInitialData = useMemo(
-        () => firstEnabled
-            ? readCustomRowDataCache(
-                firstCacheKey
-            )
-            : undefined,
-        [
-            firstCacheKey,
-            firstEnabled
-        ]
-    );
-
-    const secondInitialData = useMemo(
-        () => secondEnabled
-            ? readCustomRowDataCache(
-                secondCacheKey
-            )
-            : undefined,
-        [
-            secondCacheKey,
-            secondEnabled
+            persistentCacheKey
         ]
     );
 
@@ -820,12 +784,7 @@ const MinitigerCustomRow = ({
             firstLibrary!,
             row
         ),
-        enabled: firstEnabled,
-        initialData: firstInitialData,
-        initialDataUpdatedAt:
-            firstInitialData
-                ? 0
-                : undefined
+        enabled: firstEnabled
     });
 
     const secondQuery = useQuery({
@@ -844,51 +803,10 @@ const MinitigerCustomRow = ({
             secondLibrary!,
             row
         ),
-        enabled: secondEnabled,
-        initialData: secondInitialData,
-        initialDataUpdatedAt:
-            secondInitialData
-                ? 0
-                : undefined
+        enabled: secondEnabled
     });
 
-    useEffect(() => {
-        if (
-            firstEnabled
-            && firstQuery.data
-            && firstQuery.dataUpdatedAt > 0
-        ) {
-            writeCustomRowDataCache(
-                firstCacheKey,
-                firstQuery.data
-            );
-        }
-    }, [
-        firstCacheKey,
-        firstEnabled,
-        firstQuery.data,
-        firstQuery.dataUpdatedAt
-    ]);
-
-    useEffect(() => {
-        if (
-            secondEnabled
-            && secondQuery.data
-            && secondQuery.dataUpdatedAt > 0
-        ) {
-            writeCustomRowDataCache(
-                secondCacheKey,
-                secondQuery.data
-            );
-        }
-    }, [
-        secondCacheKey,
-        secondEnabled,
-        secondQuery.data,
-        secondQuery.dataUpdatedAt
-    ]);
-
-    const items = useMemo(
+    const liveItems = useMemo(
         () => uniqueById([
             ...(firstQuery.data ?? []),
             ...(secondQuery.data ?? [])
@@ -901,6 +819,50 @@ const MinitigerCustomRow = ({
             secondQuery.data
         ]
     );
+
+    const configuredLibrariesResolved = (
+        (!row.library1 || Boolean(firstLibrary?.Id))
+        && (!row.library2 || Boolean(secondLibrary?.Id))
+    );
+
+    const liveQueriesSettled = (
+        configuredLibrariesResolved
+        && (!firstEnabled || firstQuery.isFetched)
+        && (!secondEnabled || secondQuery.isFetched)
+    );
+
+    const liveQueriesSucceeded = (
+        liveQueriesSettled
+        && (!firstEnabled || !firstQuery.isError)
+        && (!secondEnabled || !secondQuery.isError)
+    );
+
+    useEffect(() => {
+        if (!liveQueriesSucceeded) {
+            return;
+        }
+
+        writeCustomRowDataCache(
+            persistentCacheKey,
+            liveItems
+        );
+    }, [
+        liveItems,
+        liveQueriesSucceeded,
+        persistentCacheKey
+    ]);
+
+    /*
+     * Keep the persisted final row completely separate from React Query.
+     * On desktop restart the cached row is painted immediately, while the
+     * normal queries refresh in the background. Once all configured sources
+     * have answered, switch atomically to the fresh merged result.
+     */
+    const items = liveQueriesSettled
+        ? liveItems
+        : cachedItems.length > 0
+            ? cachedItems
+            : liveItems;
 
     if (!row.library1 && !row.library2) {
         return null;
