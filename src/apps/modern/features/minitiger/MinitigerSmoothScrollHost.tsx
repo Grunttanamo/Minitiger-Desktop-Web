@@ -10,49 +10,6 @@ const isNativeMinitigerDesktop = () => (
     )
 );
 
-const isScrollableY = (
-    element: HTMLElement
-) => {
-    if (
-        element.scrollHeight
-        <= element.clientHeight + 1
-    ) {
-        return false;
-    }
-
-    const style =
-        window.getComputedStyle(element);
-
-    return /auto|scroll|overlay/i.test(
-        style.overflowY
-    );
-};
-
-const findScrollContainer = (
-    scope: HTMLElement
-): HTMLElement | null => {
-    let current:
-        HTMLElement
-        | null = scope;
-
-    while (current) {
-        if (isScrollableY(current)) {
-            return current;
-        }
-
-        current =
-            current.parentElement;
-    }
-
-    const scrollingElement =
-        document.scrollingElement;
-
-    return scrollingElement
-        instanceof HTMLElement
-        ? scrollingElement
-        : document.documentElement;
-};
-
 const shouldIgnoreTarget = (
     target: EventTarget | null
 ) => {
@@ -74,6 +31,126 @@ const shouldIgnoreTarget = (
             ].join(',')
         )
     );
+};
+
+const isScrollableY = (
+    element: HTMLElement
+) => {
+    if (
+        element.scrollHeight
+        <= element.clientHeight + 1
+    ) {
+        return false;
+    }
+
+    if (
+        element === document.body
+        || element === document.documentElement
+        || element === document.scrollingElement
+    ) {
+        return true;
+    }
+
+    const style =
+        window.getComputedStyle(element);
+
+    return /auto|scroll|overlay/i.test(
+        style.overflowY
+    );
+};
+
+const findScrollContainer = (
+    target: EventTarget | null
+): HTMLElement | null => {
+    let current =
+        target instanceof HTMLElement
+            ? target
+            : target instanceof Element
+                ? target.parentElement
+                : null;
+
+    while (current) {
+        if (isScrollableY(current)) {
+            return current;
+        }
+
+        current =
+            current.parentElement;
+    }
+
+    const scrollingElement =
+        document.scrollingElement;
+
+    if (
+        scrollingElement
+        instanceof HTMLElement
+        && isScrollableY(
+            scrollingElement
+        )
+    ) {
+        return scrollingElement;
+    }
+
+    return null;
+};
+
+const getScrollTop = (
+    scroller: HTMLElement
+) => {
+    if (
+        scroller === document.body
+        || scroller === document.documentElement
+        || scroller === document.scrollingElement
+    ) {
+        return window.scrollY
+            || document.documentElement.scrollTop
+            || document.body.scrollTop
+            || 0;
+    }
+
+    return scroller.scrollTop;
+};
+
+const getMaxScrollTop = (
+    scroller: HTMLElement
+) => Math.max(
+    0,
+    scroller.scrollHeight
+    - scroller.clientHeight
+);
+
+const setScrollTop = (
+    scroller: HTMLElement,
+    value: number
+) => {
+    if (
+        scroller === document.body
+        || scroller === document.documentElement
+        || scroller === document.scrollingElement
+    ) {
+        window.scrollTo(
+            window.scrollX,
+            value
+        );
+        return;
+    }
+
+    scroller.scrollTop =
+        value;
+};
+
+const canScrollInDirection = (
+    scroller: HTMLElement,
+    deltaY: number
+) => {
+    const current =
+        getScrollTop(scroller);
+    const maxTop =
+        getMaxScrollTop(scroller);
+
+    return deltaY > 0
+        ? current < maxTop - 0.5
+        : current > 0.5;
 };
 
 const MinitigerSmoothScrollHost = () => {
@@ -104,19 +181,26 @@ const MinitigerSmoothScrollHost = () => {
             }
 
             const current =
-                activeScroller.scrollTop;
+                getScrollTop(
+                    activeScroller
+                );
             const distance =
                 targetTop - current;
 
             if (Math.abs(distance) < 0.6) {
-                activeScroller.scrollTop =
-                    targetTop;
+                setScrollTop(
+                    activeScroller,
+                    targetTop
+                );
                 frame = 0;
                 return;
             }
 
-            activeScroller.scrollTop =
-                current + distance * 0.22;
+            setScrollTop(
+                activeScroller,
+                current
+                + distance * 0.22
+            );
 
             frame =
                 window.requestAnimationFrame(
@@ -136,30 +220,29 @@ const MinitigerSmoothScrollHost = () => {
                 )
                 || Math.abs(event.deltaY)
                     <= Math.abs(event.deltaX)
+                || event.deltaY === 0
             ) {
-                return;
-            }
-
-            const target =
-                event.target instanceof Element
-                    ? event.target
-                    : null;
-
-            const scope =
-                target?.closest(
-                    '.minitigerVideoDetailsPage, .minitigerHome'
-                ) as HTMLElement | null;
-
-            if (!scope) {
                 return;
             }
 
             const scroller =
                 findScrollContainer(
-                    scope
+                    event.target
                 );
 
-            if (!scroller) {
+            /*
+             * Critical safety rule: if there is no real scroll container, or
+             * this container has reached its edge, do not cancel the wheel
+             * event. Jellyfin/Qt can then use its normal native scrolling or
+             * bubble into a parent scroller.
+             */
+            if (
+                !scroller
+                || !canScrollInDirection(
+                    scroller,
+                    event.deltaY
+                )
+            ) {
                 return;
             }
 
@@ -178,16 +261,17 @@ const MinitigerSmoothScrollHost = () => {
                 !== scroller
             ) {
                 stopAnimation();
-                activeScroller = scroller;
+                activeScroller =
+                    scroller;
                 targetTop =
-                    scroller.scrollTop;
+                    getScrollTop(
+                        scroller
+                    );
             }
 
             const maxTop =
-                Math.max(
-                    0,
-                    scroller.scrollHeight
-                    - scroller.clientHeight
+                getMaxScrollTop(
+                    scroller
                 );
 
             targetTop =
