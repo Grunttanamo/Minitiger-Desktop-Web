@@ -72,6 +72,20 @@ const patchCachedItem = (
         return {
             ...source,
             ...freshItem,
+            // Cast entries use Type=Actor/GuestStar while the underlying
+            // person item itself is Type=Person. Preserve the container
+            // metadata or the cast filter would remove the person entirely
+            // after a live image edit.
+            Type:
+                source.Type
+                ?? freshItem.Type,
+            Role:
+                source.Role
+                ?? (
+                    freshItem as ItemDto & {
+                        Role?: string | null;
+                    }
+                ).Role,
             ...((
                 'PrimaryImageTag' in source
                 || freshPrimaryTag
