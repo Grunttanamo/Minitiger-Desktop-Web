@@ -19,7 +19,8 @@ interface MinitigerImageUpdatedDetail {
 const patchCachedItem = (
     value: unknown,
     itemId: string,
-    freshItem: ItemDto
+    freshItem: ItemDto,
+    revision: number
 ): unknown => {
     if (Array.isArray(value)) {
         let changed = false;
@@ -29,7 +30,8 @@ const patchCachedItem = (
                 patchCachedItem(
                     entry,
                     itemId,
-                    freshItem
+                    freshItem,
+                    revision
                 );
 
             if (patched !== entry) {
@@ -58,9 +60,30 @@ const patchCachedItem = (
         String(source.Id ?? '')
         === itemId
     ) {
+        const freshPrimaryTag =
+            freshItem.ImageTags?.Primary
+            ?? (
+                freshItem as ItemDto & {
+                    PrimaryImageTag?: string | null;
+                }
+            ).PrimaryImageTag
+            ?? undefined;
+
         return {
             ...source,
-            ...freshItem
+            ...freshItem,
+            ...((
+                'PrimaryImageTag' in source
+                || freshPrimaryTag
+            )
+                ? {
+                    PrimaryImageTag:
+                        freshPrimaryTag
+                        ?? source.PrimaryImageTag
+                }
+                : {}),
+            __minitigerImageRevision:
+                revision
         };
     }
 
@@ -83,7 +106,8 @@ const patchCachedItem = (
             patchCachedItem(
                 child,
                 itemId,
-                freshItem
+                freshItem,
+                revision
             );
 
         if (patched !== child) {
@@ -127,6 +151,11 @@ const QueryClientEventHandler: FC = () => {
 
             const freshItem =
                 detail?.item;
+            const revision =
+                Number(
+                    detail?.revision
+                    ?? Date.now()
+                );
 
             if (
                 !itemId
@@ -153,7 +182,8 @@ const QueryClientEventHandler: FC = () => {
                     patchCachedItem(
                         current,
                         itemId,
-                        freshItem
+                        freshItem,
+                        revision
                     )
             );
         };
