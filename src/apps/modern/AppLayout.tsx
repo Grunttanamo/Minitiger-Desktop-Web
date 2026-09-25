@@ -18,6 +18,7 @@ import { isLibraryPath } from './features/libraries/utils/path';
 import MinitigerAdminMessageHost from './features/minitiger/MinitigerAdminMessageHost';
 import MinitigerGlobalSettingsHost from './features/minitiger/MinitigerGlobalSettingsHost';
 import MinitigerProfileSelectionHost from './features/minitiger/MinitigerProfileSelectionHost';
+import MinitigerSmoothScrollHost from './features/minitiger/MinitigerSmoothScrollHost';
 import useMinitigerHomeSettings from './routes/minitiger/home/hooks/useMinitigerHomeSettings';
 
 import './AppOverrides.scss';
@@ -110,6 +111,7 @@ export const Component = () => {
             <MinitigerAdminMessageHost />
             <MinitigerGlobalSettingsHost />
             <MinitigerProfileSelectionHost />
+            <MinitigerSmoothScrollHost />
             <ThemeCss />
             <CustomCss />
         </LibraryProvider>
