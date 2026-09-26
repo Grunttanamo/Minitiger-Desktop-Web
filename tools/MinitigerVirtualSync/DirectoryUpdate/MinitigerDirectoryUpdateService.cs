@@ -2,6 +2,7 @@ using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using Microsoft.Extensions.Logging;
 
@@ -771,7 +772,7 @@ public sealed class MinitigerDirectoryUpdateService
                         StringComparison.OrdinalIgnoreCase));
     }
 
-    private object? FindVirtualFolder(
+    private VirtualFolderInfo? FindVirtualFolder(
         Guid libraryId)
         => _libraryManager
             .GetVirtualFolders()
