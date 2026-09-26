@@ -37,6 +37,56 @@ const ERROR_STATES = [
     ConnectionState.Unavailable
 ];
 
+type MinitigerDesktopWindow = Window & {
+    jmpInfo?: {
+        bundledMinitigerWeb?: boolean;
+        settings?: {
+            main?: {
+                userWebClient?: string;
+            };
+        };
+    };
+};
+
+const getNativeMinitigerServerAddress = () => {
+    const nativeWindow = window as MinitigerDesktopWindow;
+
+    if (!nativeWindow.jmpInfo?.bundledMinitigerWeb) {
+        return '';
+    }
+
+    return nativeWindow.jmpInfo.settings?.main?.userWebClient?.trim() ?? '';
+};
+
+const connectInitialServer = async (): Promise<ConnectResponse> => {
+    const savedServers = ServerConnections.getSavedServers();
+
+    if (savedServers.length === 0) {
+        const nativeServerAddress = getNativeMinitigerServerAddress();
+
+        if (nativeServerAddress) {
+            console.info(
+                '[ConnectionRequired] importing native Minitiger Desktop server',
+                nativeServerAddress
+            );
+
+            const nativeResult = await ServerConnections.connectToAddress(
+                nativeServerAddress
+            );
+
+            if (nativeResult.State !== ConnectionState.Unavailable) {
+                return nativeResult;
+            }
+
+            console.warn(
+                '[ConnectionRequired] native Minitiger Desktop server was unavailable; falling back to normal server discovery'
+            );
+        }
+    }
+
+    return ServerConnections.connect();
+};
+
 const fetchPublicSystemInfo = async (apiClient: ApiClient) => {
     const infoResponse = await fetch(
         `${apiClient.serverAddress()}/System/Info/Public`,
@@ -185,7 +235,11 @@ const ConnectionRequired: FunctionComponent<ConnectionRequiredProps> = ({
     useEffect(() => {
         // Check connection status on initial page load
         const apiClient = ServerConnections.currentApiClient();
-        const connection = Promise.resolve(ServerConnections.firstConnection ? null : ServerConnections.connect());
+        const connection = Promise.resolve(
+            ServerConnections.firstConnection
+                ? null
+                : connectInitialServer()
+        );
         connection.then(firstConnection => {
             console.debug('[ConnectionRequired] connection state', firstConnection?.State);
             ServerConnections.firstConnection = true;

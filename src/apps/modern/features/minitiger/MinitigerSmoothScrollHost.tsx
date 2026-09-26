@@ -24,6 +24,9 @@ const shouldIgnoreTarget = (
                 '[role="dialog"]',
                 '.formDialog',
                 '.minitigerNativeSelectMenu',
+                // Settings owns wheel routing itself. The global smooth-scroll
+                // capture handler must never select the page behind it.
+                '.minitigerAdminSettings',
                 'textarea',
                 'input[type="number"]',
                 'input[type="range"]',
