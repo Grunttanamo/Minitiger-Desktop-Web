@@ -577,37 +577,8 @@ const MinitigerSettingsPanel = ({
     const [ activeTab, setActiveTab ] = useState<SettingsTab>('general');
     const [ importMessage, setImportMessage ] = useState('');
     const [ virtualMediaMessage, setVirtualMediaMessage ] = useState('');
+    const settingsPanelRef = useRef<HTMLElement | null>(null);
     const settingsContentRef = useRef<HTMLElement | null>(null);
-
-    const handleSettingsWheel = (
-        event: React.WheelEvent<HTMLElement>
-    ) => {
-        const content = settingsContentRef.current;
-
-        if (!content) {
-            return;
-        }
-
-        // Wheel input inside the settings window must never bubble through
-        // to the page behind the overlay.
-        event.stopPropagation();
-
-        const target = event.target as Node;
-
-        // The content pane is already the native vertical scroll container.
-        // Let the browser scroll it normally; CSS overscroll containment keeps
-        // the background page still when the pane reaches either edge.
-        if (content.contains(target)) {
-            return;
-        }
-
-        // When the pointer is over the header/sidebar, route vertical wheel
-        // input to the settings content instead of the page in the background.
-        if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-            event.preventDefault();
-            content.scrollTop += event.deltaY;
-        }
-    };
 
     const activeColorTheme =
         COLOR_THEME_PRESETS.find(preset =>
@@ -712,6 +683,46 @@ const onUpdate = (
             window.removeEventListener('keydown', onKeyDown);
         };
     }, [onClose]);
+
+    useEffect(() => {
+        const panel = settingsPanelRef.current;
+        const content = settingsContentRef.current;
+
+        if (!panel || !content) {
+            return;
+        }
+
+        const onWheel = (event: WheelEvent) => {
+            const target = event.target;
+
+            if (!(target instanceof Node)) {
+                return;
+            }
+
+            // Never let wheel input from inside the settings window reach
+            // the page behind the overlay.
+            event.stopPropagation();
+
+            // The content pane scrolls natively. Its CSS overscroll containment
+            // prevents scroll chaining when it reaches the top or bottom.
+            if (content.contains(target)) {
+                return;
+            }
+
+            // Header/sidebar are not vertical scroll containers. Route vertical
+            // wheel input from those areas to the active settings content.
+            if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+                event.preventDefault();
+                content.scrollTop += event.deltaY;
+            }
+        };
+
+        panel.addEventListener('wheel', onWheel, { passive: false });
+
+        return () => {
+            panel.removeEventListener('wheel', onWheel);
+        };
+    }, []);
 
     useEffect(() => {
         const host = settingsContentRef.current;
@@ -890,9 +901,9 @@ const onUpdate = (
             }}
         >
             <section
+                ref={settingsPanelRef}
                 className='minitigerAdminSettings'
                 aria-label='Minitiger Design Einstellungen'
-                onWheel={handleSettingsWheel}
             >
                 <header className='minitigerAdminSettingsHeader'>
                     <div>
