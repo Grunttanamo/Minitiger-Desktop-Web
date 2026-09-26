@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import type { ItemDto } from 'types/base/models/item-dto';
 
@@ -577,6 +577,37 @@ const MinitigerSettingsPanel = ({
     const [ activeTab, setActiveTab ] = useState<SettingsTab>('general');
     const [ importMessage, setImportMessage ] = useState('');
     const [ virtualMediaMessage, setVirtualMediaMessage ] = useState('');
+    const settingsContentRef = useRef<HTMLElement | null>(null);
+
+    const handleSettingsWheel = (
+        event: React.WheelEvent<HTMLElement>
+    ) => {
+        const content = settingsContentRef.current;
+
+        if (!content) {
+            return;
+        }
+
+        // Wheel input inside the settings window must never bubble through
+        // to the page behind the overlay.
+        event.stopPropagation();
+
+        const target = event.target as Node;
+
+        // The content pane is already the native vertical scroll container.
+        // Let the browser scroll it normally; CSS overscroll containment keeps
+        // the background page still when the pane reaches either edge.
+        if (content.contains(target)) {
+            return;
+        }
+
+        // When the pointer is over the header/sidebar, route vertical wheel
+        // input to the settings content instead of the page in the background.
+        if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+            event.preventDefault();
+            content.scrollTop += event.deltaY;
+        }
+    };
 
     const activeColorTheme =
         COLOR_THEME_PRESETS.find(preset =>
@@ -683,9 +714,7 @@ const onUpdate = (
     }, [onClose]);
 
     useEffect(() => {
-        const host = document.querySelector<HTMLElement>(
-            '.minitigerAdminSettingsContent'
-        );
+        const host = settingsContentRef.current;
 
         if (!host) {
             return;
@@ -863,6 +892,7 @@ const onUpdate = (
             <section
                 className='minitigerAdminSettings'
                 aria-label='Minitiger Design Einstellungen'
+                onWheel={handleSettingsWheel}
             >
                 <header className='minitigerAdminSettingsHeader'>
                     <div>
@@ -923,7 +953,10 @@ const onUpdate = (
                         </div>
                     </nav>
 
-                    <main className='minitigerAdminSettingsContent'>
+                    <main
+                        ref={settingsContentRef}
+                        className='minitigerAdminSettingsContent'
+                    >
                         {activeTab === 'profiles' && (
                             <MinitigerProfilesSettings />
                         )}
