@@ -20,6 +20,27 @@ public sealed class MinitigerDirectoryUpdateController
         _service = service;
     }
 
+    [HttpGet("Libraries")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult GetLibraries()
+        => Ok(
+            _service.GetLibraries());
+
+    [HttpPost("Prefix/Start")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult StartPrefixScan(
+        [FromBody] MinitigerLibraryPrefixScanRequest request)
+        => Ok(
+            _service.StartPrefixScan(
+                request.LibraryId,
+                request.Prefix));
+
+    [HttpGet("Prefix/Status")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult GetPrefixScanStatus()
+        => Ok(
+            _service.GetPrefixScanStatus());
+
     [HttpPost("Run")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> Run(
@@ -40,4 +61,11 @@ public sealed class MinitigerDirectoryUpdateController
 public sealed class MinitigerDirectoryUpdateRequest
 {
     public Guid ItemId { get; set; }
+}
+
+public sealed class MinitigerLibraryPrefixScanRequest
+{
+    public Guid LibraryId { get; set; }
+
+    public string Prefix { get; set; } = string.Empty;
 }

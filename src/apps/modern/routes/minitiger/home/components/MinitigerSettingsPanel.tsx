@@ -42,6 +42,7 @@ import MinitigerAvatarGallerySettings from './MinitigerAvatarGallerySettings';
 import MinitigerAdminMessagesSettings from './MinitigerAdminMessagesSettings';
 import MinitigerSeasonFixSettings from './MinitigerSeasonFixSettings';
 import MinitigerImageFixSettings from './MinitigerImageFixSettings';
+import MinitigerLibraryPrefixScanSettings from './MinitigerLibraryPrefixScanSettings';
 
 interface MinitigerSettingsPanelProps {
     settings: MinitigerHomeSettings;
@@ -2229,6 +2230,8 @@ const onUpdate = (
                                         </select>
                                     </label>
                                 </section>
+
+                                <MinitigerLibraryPrefixScanSettings />
 
                                 {virtualConfig
                                     && onSetVirtualPagePosterWidth

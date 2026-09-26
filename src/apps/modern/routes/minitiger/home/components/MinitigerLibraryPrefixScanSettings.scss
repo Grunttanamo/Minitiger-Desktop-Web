@@ -1,0 +1,86 @@
+.minitigerPrefixScanSettings {
+    .minitigerPrefixScanControls {
+        display: grid;
+        grid-template-columns:
+            minmax(240px, 1.5fr)
+            minmax(110px, 0.5fr)
+            auto;
+        gap: 0.85rem;
+        align-items: end;
+    }
+
+    .minitigerPrefixScanStart {
+        min-height: 2.85rem;
+        padding: 0.65rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 0.55rem;
+        background: rgba(255, 255, 255, 0.08);
+        color: inherit;
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        &:disabled {
+            cursor: default;
+            opacity: 0.55;
+        }
+    }
+
+    .minitigerPrefixScanLocation {
+        display: block;
+        margin-top: 0.65rem;
+        opacity: 0.66;
+        overflow-wrap: anywhere;
+    }
+
+    .minitigerPrefixScanStatus,
+    .minitigerPrefixScanResults,
+    .minitigerPrefixScanErrors {
+        margin-top: 1rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 0.65rem;
+        background: rgba(0, 0, 0, 0.18);
+    }
+
+    .minitigerPrefixScanStatusHeader {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    progress {
+        width: 100%;
+        margin: 0.7rem 0 0.35rem;
+    }
+
+    .minitigerPrefixScanStatus p {
+        margin: 0.55rem 0 0;
+    }
+
+    .minitigerPrefixScanResults ul,
+    .minitigerPrefixScanErrors ul {
+        margin: 0.55rem 0 0;
+        padding-left: 1.25rem;
+    }
+
+    .minitigerPrefixScanResults li,
+    .minitigerPrefixScanErrors li {
+        margin: 0.25rem 0;
+        overflow-wrap: anywhere;
+    }
+
+    .minitigerPrefixScanErrors {
+        border-color: rgba(255, 152, 152, 0.24);
+    }
+
+    @media (max-width: 840px) {
+        .minitigerPrefixScanControls {
+            grid-template-columns: 1fr;
+        }
+    }
+}
