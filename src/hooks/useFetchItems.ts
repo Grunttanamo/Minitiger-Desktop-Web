@@ -19,6 +19,7 @@ import { getLiveTvApi } from '@jellyfin/sdk/lib/utils/api/live-tv-api';
 import { getUserDataApi } from '@jellyfin/sdk/lib/utils/api/user-data-api';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import datetime from 'scripts/datetime';
+import * as userSettings from 'scripts/settings/userSettings';
 
 import { type JellyfinApiContext, useApi } from './useApi';
 import { getAlphaPickerQuery, getFieldsQuery, getFiltersQuery, getLimitQuery } from 'utils/items';
