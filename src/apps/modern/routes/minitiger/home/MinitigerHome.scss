@@ -2618,6 +2618,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    overscroll-behavior: contain;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     background: #0e0f11;
@@ -2688,6 +2689,7 @@
 .minitigerAdminSettingsContent {
     min-width: 0;
     overflow-y: auto;
+    overscroll-behavior-y: contain;
     padding: 1.25rem 1.4rem 2rem;
 }
 
