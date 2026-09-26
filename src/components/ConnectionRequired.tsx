@@ -37,6 +37,18 @@ const ERROR_STATES = [
     ConnectionState.Unavailable
 ];
 
+type MinitigerNativeSettingsBridge = {
+    value?: (
+        section: string,
+        key: string,
+        callback: (value: unknown) => void
+    ) => void;
+};
+
+type MinitigerNativeApi = {
+    settings?: MinitigerNativeSettingsBridge;
+};
+
 type MinitigerDesktopWindow = Window & {
     jmpInfo?: {
         bundledMinitigerWeb?: boolean;
@@ -46,42 +58,120 @@ type MinitigerDesktopWindow = Window & {
             };
         };
     };
+    api?: MinitigerNativeApi;
+    apiPromise?: Promise<MinitigerNativeApi>;
+    initCompleted?: Promise<void>;
 };
 
-const getNativeMinitigerServerAddress = () => {
+const getNativeMinitigerServerAddress = async () => {
     const nativeWindow = window as MinitigerDesktopWindow;
 
     if (!nativeWindow.jmpInfo?.bundledMinitigerWeb) {
         return '';
     }
 
-    return nativeWindow.jmpInfo.settings?.main?.userWebClient?.trim() ?? '';
+    try {
+        if (nativeWindow.initCompleted) {
+            await nativeWindow.initCompleted;
+        }
+
+        let nativeApi =
+            nativeWindow.api;
+
+        if (
+            !nativeApi
+            && nativeWindow.apiPromise
+        ) {
+            nativeApi =
+                await nativeWindow.apiPromise;
+        }
+
+        const settings =
+            nativeApi?.settings;
+
+        if (
+            settings
+            && typeof settings.value === 'function'
+        ) {
+            const liveValue =
+                await new Promise<string>(resolve => {
+                    let settled = false;
+
+                    const finish = (
+                        value: unknown
+                    ) => {
+                        if (settled) {
+                            return;
+                        }
+
+                        settled = true;
+                        resolve(
+                            typeof value === 'string'
+                                ? value.trim()
+                                : ''
+                        );
+                    };
+
+                    const timeout =
+                        window.setTimeout(
+                            () => finish(''),
+                            1_500
+                        );
+
+                    try {
+                        settings.value?.(
+                            'main',
+                            'userWebClient',
+                            value => {
+                                window.clearTimeout(
+                                    timeout
+                                );
+                                finish(value);
+                            }
+                        );
+                    } catch (error) {
+                        window.clearTimeout(
+                            timeout
+                        );
+                        console.warn(
+                            '[ConnectionRequired] failed to read live native server setting',
+                            error
+                        );
+                        finish('');
+                    }
+                });
+
+            if (liveValue) {
+                return liveValue;
+            }
+        }
+    } catch (error) {
+        console.warn(
+            '[ConnectionRequired] native settings bridge was unavailable',
+            error
+        );
+    }
+
+    return nativeWindow.jmpInfo.settings
+        ?.main
+        ?.userWebClient
+        ?.trim()
+        ?? '';
 };
 
 const connectInitialServer = async (): Promise<ConnectResponse> => {
-    const savedServers = ServerConnections.getSavedServers();
+    const nativeServerAddress =
+        await getNativeMinitigerServerAddress();
 
-    if (savedServers.length === 0) {
-        const nativeServerAddress = getNativeMinitigerServerAddress();
+    if (nativeServerAddress) {
+        console.info(
+            '[ConnectionRequired] connecting to explicit Minitiger Desktop server',
+            nativeServerAddress
+        );
 
-        if (nativeServerAddress) {
-            console.info(
-                '[ConnectionRequired] importing native Minitiger Desktop server',
-                nativeServerAddress
-            );
-
-            const nativeResult = await ServerConnections.connectToAddress(
-                nativeServerAddress
-            );
-
-            if (nativeResult.State !== ConnectionState.Unavailable) {
-                return nativeResult;
-            }
-
-            console.warn(
-                '[ConnectionRequired] native Minitiger Desktop server was unavailable; falling back to normal server discovery'
-            );
-        }
+        return ServerConnections.connectToAddress(
+            nativeServerAddress
+        );
     }
 
     return ServerConnections.connect();

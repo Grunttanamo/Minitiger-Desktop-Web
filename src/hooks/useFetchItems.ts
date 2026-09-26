@@ -31,6 +31,180 @@ import { ItemKind } from 'types/base/models/item-kind';
 import type { ItemDtoQueryResult } from 'types/base/models/item-dto-query-result';
 import type { ItemDto } from 'types/base/models/item-dto';
 
+const isLiteralTitleSort = (
+    libraryViewSettings: LibraryViewSettings
+) => (
+    libraryViewSettings.SortBy.length > 0
+    && libraryViewSettings.SortBy[0]
+        === ItemSortBy.SortName
+);
+
+const getLiteralTitleInitial = (
+    name: string
+) => {
+    const trimmed =
+        name.trim();
+
+    if (!trimmed) {
+        return '';
+    }
+
+    if (trimmed[0] === 'ß') {
+        return 'S';
+    }
+
+    return trimmed[0]
+        .normalize('NFD')
+        .replace(
+            /[\u0300-\u036f]/g,
+            ''
+        )
+        .toUpperCase();
+};
+
+const matchesLiteralAlphabet = (
+    item: ItemDto,
+    alphabet?: string | null
+) => {
+    if (!alphabet) {
+        return true;
+    }
+
+    const initial =
+        getLiteralTitleInitial(
+            String(item.Name ?? '')
+        );
+
+    if (alphabet === '#') {
+        return !/^[A-Z]$/.test(initial);
+    }
+
+    return initial
+        === alphabet.toUpperCase();
+};
+
+const literalTitleCollator =
+    new Intl.Collator(
+        'de-DE',
+        {
+            sensitivity: 'base',
+            numeric: true
+        }
+    );
+
+const applyLiteralTitleView = (
+    result: ItemDtoQueryResult,
+    libraryViewSettings: LibraryViewSettings
+): ItemDtoQueryResult => {
+    if (
+        !isLiteralTitleSort(
+            libraryViewSettings
+        )
+    ) {
+        return result;
+    }
+
+    const items =
+        [ ...(result.Items ?? []) ]
+            .filter(item =>
+                matchesLiteralAlphabet(
+                    item,
+                    libraryViewSettings.Alphabet
+                )
+            )
+            .sort((left, right) => {
+                const compared =
+                    literalTitleCollator.compare(
+                        String(left.Name ?? '').trim(),
+                        String(right.Name ?? '').trim()
+                    );
+
+                if (compared !== 0) {
+                    return libraryViewSettings.SortOrder
+                        === SortOrder.Descending
+                        ? -compared
+                        : compared;
+                }
+
+                return String(left.Id ?? '')
+                    .localeCompare(
+                        String(right.Id ?? '')
+                    );
+            });
+
+    const total =
+        items.length;
+
+    const startIndex =
+        Math.max(
+            0,
+            libraryViewSettings.StartIndex
+            ?? 0
+        );
+
+    const pageSize =
+        userSettings.libraryPageSize(
+            undefined
+        )
+        || 0;
+
+    return {
+        ...result,
+        Items:
+            pageSize > 0
+                ? items.slice(
+                    startIndex,
+                    startIndex + pageSize
+                )
+                : items.slice(
+                    startIndex
+                ),
+        TotalRecordCount: total,
+        StartIndex: startIndex
+    };
+};
+
+const getLibraryPagingQuery = (
+    libraryViewSettings: LibraryViewSettings
+) => (
+    isLiteralTitleSort(
+        libraryViewSettings
+    )
+        ? {
+            limit: undefined,
+            startIndex: undefined,
+            nameLessThan: undefined,
+            nameStartsWith: undefined
+        }
+        : {
+            ...getLimitQuery(),
+            ...getAlphaPickerQuery(
+                libraryViewSettings
+            ),
+            startIndex:
+                libraryViewSettings.StartIndex
+        }
+);
+
+const getLibrarySortQuery = (
+    libraryViewSettings: LibraryViewSettings
+) => (
+    isLiteralTitleSort(
+        libraryViewSettings
+    )
+        ? {
+            sortBy: undefined,
+            sortOrder: undefined
+        }
+        : {
+            sortBy:
+                libraryViewSettings.SortBy,
+            sortOrder: [
+                libraryViewSettings.SortOrder
+            ]
+        }
+);
+
 const fetchGetItems = async (
     currentApi: JellyfinApiContext,
     parametersOptions: LibraryApiGetItemsRequest,
@@ -210,12 +384,13 @@ const fetchGetItemsViewByType = async (
                         enableImageTypes: [libraryViewSettings.ImageType, ImageType.Backdrop],
                         ...getFieldsQuery(viewType, libraryViewSettings),
                         ...getFiltersQuery(viewType, libraryViewSettings),
-                        ...getLimitQuery(),
-                        ...getAlphaPickerQuery(libraryViewSettings),
-                        sortBy: libraryViewSettings.SortBy,
-                        sortOrder: [libraryViewSettings.SortOrder],
-                        includeItemTypes: itemType,
-                        startIndex: libraryViewSettings.StartIndex
+                        ...getLibraryPagingQuery(
+                            libraryViewSettings
+                        ),
+                        ...getLibrarySortQuery(
+                            libraryViewSettings
+                        ),
+                        includeItemTypes: itemType
                     },
                     {
                         signal: options?.signal
@@ -231,12 +406,13 @@ const fetchGetItemsViewByType = async (
                         enableImageTypes: [libraryViewSettings.ImageType, ImageType.Backdrop],
                         ...getFieldsQuery(viewType, libraryViewSettings),
                         ...getFiltersQuery(viewType, libraryViewSettings),
-                        ...getLimitQuery(),
-                        ...getAlphaPickerQuery(libraryViewSettings),
-                        sortBy: libraryViewSettings.SortBy,
-                        sortOrder: [libraryViewSettings.SortOrder],
-                        includeItemTypes: itemType,
-                        startIndex: libraryViewSettings.StartIndex
+                        ...getLibraryPagingQuery(
+                            libraryViewSettings
+                        ),
+                        ...getLibrarySortQuery(
+                            libraryViewSettings
+                        ),
+                        includeItemTypes: itemType
                     },
                     {
                         signal: options?.signal
@@ -252,10 +428,10 @@ const fetchGetItemsViewByType = async (
                         enableImageTypes: [libraryViewSettings.ImageType, ImageType.Backdrop],
                         fields: [ItemFields.PrimaryImageAspectRatio],
                         filters: libraryViewSettings?.Filters?.Status,
-                        ...getLimitQuery(),
-                        ...getAlphaPickerQuery(libraryViewSettings),
-                        personTypes: [PersonKind.Author],
-                        startIndex: libraryViewSettings.StartIndex
+                        ...getLibraryPagingQuery(
+                            libraryViewSettings
+                        ),
+                        personTypes: [PersonKind.Author]
                     },
                     {
                         signal: options?.signal
@@ -269,12 +445,12 @@ const fetchGetItemsViewByType = async (
                         userId: user.Id,
                         parentId: parentId ?? undefined,
                         ...getFieldsQuery(viewType, libraryViewSettings),
-                        ...getLimitQuery(),
-                        ...getAlphaPickerQuery(libraryViewSettings),
+                        ...getLibraryPagingQuery(
+                            libraryViewSettings
+                        ),
                         includeItemTypes: itemType,
                         isFavorite,
-                        enableImageTypes: [ImageType.Thumb],
-                        startIndex: libraryViewSettings.StartIndex
+                        enableImageTypes: [ImageType.Thumb]
                     },
                     {
                         signal: options?.signal
@@ -306,12 +482,13 @@ const fetchGetItemsViewByType = async (
                         enableImageTypes: [libraryViewSettings.ImageType, ImageType.Backdrop],
                         ...getFieldsQuery(viewType, libraryViewSettings),
                         ...getFiltersQuery(viewType, libraryViewSettings),
-                        ...getLimitQuery(),
-                        ...getAlphaPickerQuery(libraryViewSettings),
-                        sortBy: libraryViewSettings.SortBy,
-                        sortOrder: [libraryViewSettings.SortOrder],
-                        includeItemTypes: itemType,
-                        startIndex: libraryViewSettings.StartIndex
+                        ...getLibraryPagingQuery(
+                            libraryViewSettings
+                        ),
+                        ...getLibrarySortQuery(
+                            libraryViewSettings
+                        ),
+                        includeItemTypes: itemType
                     },
                     {
                         signal: options?.signal
@@ -340,13 +517,14 @@ const fetchGetItemsViewByType = async (
                         enableImageTypes: [libraryViewSettings.ImageType, ImageType.Backdrop],
                         ...getFieldsQuery(viewType, libraryViewSettings),
                         ...getFiltersQuery(viewType, libraryViewSettings),
-                        ...getLimitQuery(),
-                        ...getAlphaPickerQuery(libraryViewSettings),
+                        ...getLibraryPagingQuery(
+                            libraryViewSettings
+                        ),
                         isFavorite: viewType === LibraryTab.Favorites ? true : undefined,
-                        sortBy: libraryViewSettings.SortBy,
-                        sortOrder: [libraryViewSettings.SortOrder],
-                        includeItemTypes: itemType,
-                        startIndex: libraryViewSettings.StartIndex
+                        ...getLibrarySortQuery(
+                            libraryViewSettings
+                        ),
+                        includeItemTypes: itemType
                     },
                     {
                         signal: options?.signal
@@ -355,7 +533,20 @@ const fetchGetItemsViewByType = async (
                 break;
             }
         }
-        return response.data as ItemDtoQueryResult;
+        const result =
+            response.data as ItemDtoQueryResult;
+
+        if (
+            viewType === LibraryTab.Channels
+            || viewType === LibraryTab.SeriesTimers
+        ) {
+            return result;
+        }
+
+        return applyLiteralTitleView(
+            result,
+            libraryViewSettings
+        );
     }
 
     return {};
