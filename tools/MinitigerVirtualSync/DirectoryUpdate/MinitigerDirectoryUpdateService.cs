@@ -666,17 +666,48 @@ public sealed class MinitigerDirectoryUpdateService
                     "Jellyfin konnte diesen Datei-/Ordnernamen keinem Medientyp zuordnen.");
             }
 
-            missing.AddRange(
-                resolvedRoots);
+            var missingPaths =
+                new List<string>();
+
+            foreach (
+                var resolvedRoot
+                in resolvedRoots)
+            {
+                resolvedRoot.SetParent(
+                    parent);
+
+                missing.Add(
+                    resolvedRoot);
+
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        resolvedRoot.Path)
+                )
+                {
+                    missingPaths.Add(
+                        resolvedRoot.Path);
+                }
+
+                if (resolvedRoot is Folder missingFolder)
+                {
+                    DiscoverMissingSubtreeForCount(
+                        missingFolder,
+                        collectionType,
+                        missing,
+                        visitedDirectories);
+                }
+            }
 
             /*
-             * The whole root is missing. One watcher notification for that
-             * root is sufficient; Jellyfin will discover its children through
-             * the normal library pipeline.
+             * The whole root is missing. Only the root path is handed to
+             * Jellyfin's watcher, but the read-only traversal above is allowed
+             * to inspect its children so the UI can already report the number
+             * of missing episodes/books before Jellyfin imports anything.
              */
             return BuildDiscoveryResult(
                 resolvedRoots[0],
                 missing,
+                missingPaths,
                 libraryType);
         }
 
@@ -692,6 +723,11 @@ public sealed class MinitigerDirectoryUpdateService
         return BuildDiscoveryResult(
             existingRoot,
             missing,
+            missing
+                .Select(item => item.Path)
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Cast<string>()
+                .ToArray(),
             libraryType);
     }
 
@@ -772,14 +808,27 @@ public sealed class MinitigerDirectoryUpdateService
 
             if (existing is null)
             {
+                candidate.SetParent(
+                    parent);
+
                 missing.Add(
                     candidate);
 
                 /*
-                 * Do not descend into an unknown folder. The missing folder
-                 * itself is the smallest safe notification target; Jellyfin's
-                 * own watcher refresh will discover everything below it.
+                 * The missing folder itself remains the smallest safe watcher
+                 * target. For display/counting only, inspect its descendants
+                 * entirely in memory so "0 neue Folgen" becomes the actual
+                 * episode count without writing anything to Jellyfin.
                  */
+                if (candidate is Folder missingFolder)
+                {
+                    DiscoverMissingSubtreeForCount(
+                        missingFolder,
+                        collectionType,
+                        missing,
+                        visitedDirectories);
+                }
+
                 continue;
             }
 
@@ -794,9 +843,100 @@ public sealed class MinitigerDirectoryUpdateService
         }
     }
 
+    private void DiscoverMissingSubtreeForCount(
+        Folder parent,
+        CollectionType? collectionType,
+        List<BaseItem> missing,
+        HashSet<string> visitedDirectories)
+    {
+        var directoryPath =
+            !string.IsNullOrWhiteSpace(
+                parent.Path)
+                ? parent.Path
+                : parent.ContainingFolderPath;
+
+        if (
+            string.IsNullOrWhiteSpace(
+                directoryPath)
+            || !Directory.Exists(
+                directoryPath)
+        )
+        {
+            return;
+        }
+
+        var normalizedPath =
+            Path.GetFullPath(
+                    directoryPath)
+                .TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar);
+
+        if (
+            !visitedDirectories.Add(
+                normalizedPath)
+        )
+        {
+            return;
+        }
+
+        _directoryService.Invalidate(
+            directoryPath);
+
+        FileSystemMetadata[] entries;
+
+        try
+        {
+            entries =
+                _directoryService
+                    .GetFileSystemEntries(
+                        directoryPath)
+                    .ToArray();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Minitiger prefix count could not enumerate missing subtree {Path}.",
+                directoryPath);
+            return;
+        }
+
+        var resolved =
+            _libraryManager
+                .ResolvePaths(
+                    entries,
+                    _directoryService,
+                    parent,
+                    _libraryManager.GetLibraryOptions(parent),
+                    collectionType)
+                .ToArray();
+
+        foreach (
+            var candidate
+            in resolved)
+        {
+            candidate.SetParent(
+                parent);
+
+            missing.Add(
+                candidate);
+
+            if (candidate is Folder childFolder)
+            {
+                DiscoverMissingSubtreeForCount(
+                    childFolder,
+                    collectionType,
+                    missing,
+                    visitedDirectories);
+            }
+        }
+    }
+
     private MinitigerPrefixDiscoveryResult BuildDiscoveryResult(
         BaseItem root,
         IReadOnlyList<BaseItem> missing,
+        IReadOnlyList<string> missingPaths,
         string libraryType)
     {
         if (missing.Count == 0)
@@ -805,17 +945,6 @@ public sealed class MinitigerDirectoryUpdateService
                 null,
                 Array.Empty<string>());
         }
-
-        var missingPaths =
-            missing
-                .Select(item =>
-                    item.Path)
-                .Where(path =>
-                    !string.IsNullOrWhiteSpace(path))
-                .Cast<string>()
-                .Distinct(
-                    StringComparer.OrdinalIgnoreCase)
-                .ToArray();
 
         var newEpisodes =
             missing.Count(item =>
@@ -863,7 +992,10 @@ public sealed class MinitigerDirectoryUpdateService
 
         return new MinitigerPrefixDiscoveryResult(
             foundItem,
-            missingPaths);
+            missingPaths
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray());
     }
 
     private BaseItem? FindExistingResolvedItem(
