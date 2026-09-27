@@ -36,6 +36,7 @@ type MinitigerUpdateWindow = Window & {
     jmpInfo?: {
         bundledMinitigerWeb?: boolean;
         updateBuild?: number | string;
+        updateFailedBuild?: number | string;
         portable?: boolean;
         version?: string;
     };
@@ -233,18 +234,36 @@ const MinitigerDesktopUpdateHost = () => {
                                 await response.json()
                             );
 
+                        const failedBuild =
+                            Number(
+                                nativeWindow.jmpInfo
+                                    ?.updateFailedBuild
+                                ?? 0
+                            );
+
                         if (
                             cancelled
                             || !status.enabled
                             || !status.available
                             || status.latestBuild
                                 <= currentBuild
+                            || status.latestBuild
+                                === failedBuild
                             || !status.downloadPath
                             || !/^[a-f0-9]{64}$/i.test(
                                 status.sha256
                             )
                         ) {
                             if (
+                                status.latestBuild
+                                === failedBuild
+                                && failedBuild > 0
+                            ) {
+                                console.warn(
+                                    '[Minitiger Update] Dieser Build ist zuvor fehlgeschlagen und wird nicht automatisch erneut versucht:',
+                                    failedBuild
+                                );
+                            } else if (
                                 status.message
                                 && status.enabled
                             ) {
