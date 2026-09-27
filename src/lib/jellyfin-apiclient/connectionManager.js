@@ -645,7 +645,7 @@ export default class ConnectionManager {
         function tryConnectToAddress(address, options) {
             const normalizedAddress =
                 normalizeAddress(address)
-                    .replace(/\\/+$/, '')
+                    .replace(/\/+$/, '')
                     .toLowerCase();
 
             const savedServers =
@@ -660,7 +660,7 @@ export default class ConnectionManager {
                     ].some(savedAddress =>
                         typeof savedAddress === 'string'
                         && normalizeAddress(savedAddress)
-                            .replace(/\\/+$/, '')
+                            .replace(/\/+$/, '')
                             .toLowerCase()
                             === normalizedAddress
                     )
