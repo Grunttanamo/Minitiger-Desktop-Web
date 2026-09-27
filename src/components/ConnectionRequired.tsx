@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import type { ApiClient, ConnectResponse } from 'jellyfin-apiclient';
 
 import { ConnectionState, ServerConnections } from 'lib/jellyfin-apiclient';
+import appSettings from 'scripts/settings/appSettings';
 
 import ConnectionErrorPage from './ConnectionErrorPage';
 import Loading from './loading/LoadingComponent';
@@ -170,7 +171,11 @@ const connectInitialServer = async (): Promise<ConnectResponse> => {
         );
 
         return ServerConnections.connectToAddress(
-            nativeServerAddress
+            nativeServerAddress,
+            {
+                enableAutoLogin:
+                    appSettings.enableAutoLogin()
+            }
         );
     }
 

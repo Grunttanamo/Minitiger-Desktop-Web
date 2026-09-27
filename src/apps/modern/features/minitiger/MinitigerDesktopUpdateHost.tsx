@@ -138,6 +138,7 @@ type UpdateOverlayState =
 
 const MinitigerDesktopUpdateHost = () => {
     const {
+        user,
         __legacyApiClient__: apiClient
     } = useApi();
 
@@ -298,9 +299,31 @@ const MinitigerDesktopUpdateHost = () => {
                     return;
                 }
 
+                if (!status.enabled) {
+                    console.warn(
+                        '[Minitiger Update]',
+                        status.message
+                        || 'Der private Update-Kanal ist nicht verfügbar.'
+                    );
+
+                    setOverlay({
+                        phase: 'error',
+                        message:
+                            status.message
+                            || 'Der private Update-Kanal ist derzeit nicht verfügbar. Minitiger startet normal weiter.'
+                    });
+
+                    await wait(1_800);
+
+                    if (!cancelled) {
+                        setOverlay(null);
+                    }
+
+                    return;
+                }
+
                 if (
-                    !status.enabled
-                    || !status.available
+                    !status.available
                     || status.latestBuild
                         <= currentBuild
                 ) {
@@ -477,7 +500,8 @@ const MinitigerDesktopUpdateHost = () => {
             cancelled = true;
         };
     }, [
-        apiClient
+        apiClient,
+        user?.Id
     ]);
 
     if (!overlay) {
