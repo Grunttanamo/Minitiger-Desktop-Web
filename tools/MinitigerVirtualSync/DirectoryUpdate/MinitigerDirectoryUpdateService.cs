@@ -639,6 +639,9 @@ public sealed class MinitigerDirectoryUpdateService
         var missing =
             new List<BaseItem>();
 
+        var notificationPaths =
+            new List<string>();
+
         var visitedDirectories =
             new HashSet<string>(
                 StringComparer.OrdinalIgnoreCase);
@@ -666,9 +669,6 @@ public sealed class MinitigerDirectoryUpdateService
                     "Jellyfin konnte diesen Datei-/Ordnernamen keinem Medientyp zuordnen.");
             }
 
-            var missingPaths =
-                new List<string>();
-
             foreach (
                 var resolvedRoot
                 in resolvedRoots)
@@ -684,7 +684,7 @@ public sealed class MinitigerDirectoryUpdateService
                         resolvedRoot.Path)
                 )
                 {
-                    missingPaths.Add(
+                    notificationPaths.Add(
                         resolvedRoot.Path);
                 }
 
@@ -707,7 +707,7 @@ public sealed class MinitigerDirectoryUpdateService
             return BuildDiscoveryResult(
                 resolvedRoots[0],
                 missing,
-                missingPaths,
+                notificationPaths,
                 libraryType);
         }
 
@@ -717,17 +717,14 @@ public sealed class MinitigerDirectoryUpdateService
                 existingFolder,
                 collectionType,
                 missing,
+                notificationPaths,
                 visitedDirectories);
         }
 
         return BuildDiscoveryResult(
             existingRoot,
             missing,
-            missing
-                .Select(item => item.Path)
-                .Where(path => !string.IsNullOrWhiteSpace(path))
-                .Cast<string>()
-                .ToArray(),
+            notificationPaths,
             libraryType);
     }
 
@@ -735,6 +732,7 @@ public sealed class MinitigerDirectoryUpdateService
         Folder parent,
         CollectionType? collectionType,
         List<BaseItem> missing,
+        List<string> notificationPaths,
         HashSet<string> visitedDirectories)
     {
         var directoryPath =
@@ -814,6 +812,15 @@ public sealed class MinitigerDirectoryUpdateService
                 missing.Add(
                     candidate);
 
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        candidate.Path)
+                )
+                {
+                    notificationPaths.Add(
+                        candidate.Path);
+                }
+
                 /*
                  * The missing folder itself remains the smallest safe watcher
                  * target. For display/counting only, inspect its descendants
@@ -838,6 +845,7 @@ public sealed class MinitigerDirectoryUpdateService
                     childFolder,
                     collectionType,
                     missing,
+                    notificationPaths,
                     visitedDirectories);
             }
         }
