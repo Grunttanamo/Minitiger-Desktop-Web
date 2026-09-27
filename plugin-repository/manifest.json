@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "1.6.11.0",
+        "changelog": "Minitiger Desktop companion release built from Desktop-Web plugin source 1.6.11. Includes the current server-side Minitiger profile, virtual-library, background-service, image-maintenance and local-trailer features.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/Grunttanamo/Minitiger-Desktop-Web/releases/download/desktop-plugin-v1.6.11.0/Minitiger.VirtualSync_1.6.11.0.zip",
+        "checksum": "9c0f0949c5d4ad9d5460d953324f95ab",
+        "timestamp": "2026-09-27T16:30:04Z"
+      },
+      {
         "version": "1.6.10.0",
         "changelog": "Minitiger Desktop companion release built from Desktop-Web plugin source 1.6.10. Includes the current server-side Minitiger profile, virtual-library, background-service, image-maintenance and local-trailer features.",
         "targetAbi": "12.0.0.0",
