@@ -15,7 +15,8 @@ interface DisplayPreferencesLike {
 }
 
 type PreferenceUpdater = (
-    currentValue: unknown
+    currentValue: unknown,
+    preferences: DisplayPreferencesLike
 ) => unknown;
 
 const pendingReads =
@@ -209,7 +210,10 @@ const mutateMinitigerServerPreference = async (
                     key
                 );
             const nextValue =
-                updater(currentValue);
+                updater(
+                    currentValue,
+                    existing
+                );
             const nextRaw =
                 JSON.stringify(nextValue);
 
@@ -293,6 +297,51 @@ export const writeMinitigerServerPreference = async (
     );
 };
 
+const normalizeOverrideKeys = (
+    value: unknown
+) => Array.isArray(value)
+    ? Array.from(
+        new Set(
+            value
+                .filter(
+                    (entry): entry is string =>
+                        typeof entry === 'string'
+                        && entry.trim().length > 0
+                )
+                .map(entry => entry.trim())
+        )
+    ).slice(0, 256)
+    : [];
+
+export const addMinitigerServerPreferenceOverrides = async (
+    apiClient: ApiClient,
+    userId: string,
+    overridePreferenceKey: string,
+    keys: readonly string[]
+) => {
+    const requested =
+        keys
+            .map(key => key.trim())
+            .filter(Boolean);
+
+    if (!requested.length) {
+        return;
+    }
+
+    await mutateMinitigerServerPreference(
+        apiClient,
+        userId,
+        overridePreferenceKey,
+        currentValue => Array.from(
+            new Set([
+                ...normalizeOverrideKeys(currentValue),
+                ...requested
+            ])
+        ).slice(0, 256)
+    );
+};
+
+
 const runWithConcurrency = async (
     items: string[],
     worker: (item: string) => Promise<void>
@@ -343,7 +392,8 @@ export const broadcastMinitigerServerPreference = async (
     apiClient: ApiClient,
     key: string,
     value: unknown,
-    preserveObjectKeys: readonly string[] = []
+    preserveObjectKeys: readonly string[] = [],
+    overridePreferenceKey = ''
 ) => {
     let users: Array<{ Id?: string | null }> = [];
 
@@ -388,10 +438,28 @@ export const broadcastMinitigerServerPreference = async (
                 apiClient,
                 userId,
                 key,
-                currentValue => {
+                (currentValue, preferences) => {
+                    const dynamicOverrides =
+                        overridePreferenceKey
+                            ? normalizeOverrideKeys(
+                                parsePreference(
+                                    preferences,
+                                    overridePreferenceKey
+                                )
+                            )
+                            : [];
+
+                    const keysToPreserve =
+                        Array.from(
+                            new Set([
+                                ...preserveObjectKeys,
+                                ...dynamicOverrides
+                            ])
+                        );
+
                     if (
                         userId === sourceUserId
-                        || preserveObjectKeys.length === 0
+                        || keysToPreserve.length === 0
                         || !value
                         || typeof value !== 'object'
                         || Array.isArray(value)
@@ -406,7 +474,7 @@ export const broadcastMinitigerServerPreference = async (
                         currentValue as Record<string, unknown>;
                     const preserved =
                         Object.fromEntries(
-                            preserveObjectKeys
+                            keysToPreserve
                                 .filter(preserveKey =>
                                     Object.prototype.hasOwnProperty.call(
                                         current,
