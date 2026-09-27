@@ -31,12 +31,6 @@ const SERVER_PREF_KEY = 'homeSettings';
 const SERVER_OVERRIDE_PREF_KEY = 'homeSettingsOverrides.v1';
 const SYNC_EVENT = 'minitiger:home-settings-changed';
 
-const TOOLBAR_BRANDING_SETTING_KEYS: Array<keyof MinitigerHomeSettings> = [
-    'toolbarBrandLogoEnabled',
-    'toolbarBrandLogoUrl',
-    'toolbarBrandLogoSize'
-];
-
 const cloneDefaults = (): MinitigerHomeSettings => ({
     ...DEFAULT_HOME_SETTINGS,
     sectionOrder: [
