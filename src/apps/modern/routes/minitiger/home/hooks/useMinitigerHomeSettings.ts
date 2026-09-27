@@ -16,6 +16,7 @@ import {
     normalizeHomeSettings
 } from '../config/homeSettings';
 import {
+    addMinitigerServerPreferenceOverrides,
     broadcastMinitigerServerPreference,
     readMinitigerServerPreference,
     writeMinitigerServerPreference
@@ -27,63 +28,14 @@ import {
 
 const STORAGE_PREFIX = 'Minitiger.NativeHomeSettings.v1';
 const SERVER_PREF_KEY = 'homeSettings';
+const SERVER_OVERRIDE_PREF_KEY = 'homeSettingsOverrides.v1';
 const SYNC_EVENT = 'minitiger:home-settings-changed';
-
-const PERSONAL_HOME_SETTING_KEYS: Array<keyof MinitigerHomeSettings> = [
-    'accentColor',
-    'primaryHoverColor',
-    'secondaryColor',
-    'secondaryHoverColor',
-    'libraryBarColor',
-    'libraryBarTextColor',
-    'bannerMetaColor',
-    'glowColor',
-    'arrowColor',
-    'genreTagColor',
-    'glowStrength',
-    'glowSize',
-    'toolbarTransparency',
-    'toolbarGlassBlur',
-    'toolbarBrandTextEnabled',
-    'toolbarBrandText',
-    'bannerFskVisible',
-    'showAudioFlags',
-    'showFskBadges',
-    'showPlayedIndicators',
-    'playedIndicatorSize',
-    'playedIndicatorFontSize',
-    'playedIndicatorShape',
-    'hoverEnabled',
-    'glowEnabled',
-    'previewEnabled',
-    'previewSeriesEnabled',
-    'previewMovieEnabled',
-    'previewMangaEnabled'
-];
 
 const TOOLBAR_BRANDING_SETTING_KEYS: Array<keyof MinitigerHomeSettings> = [
     'toolbarBrandLogoEnabled',
     'toolbarBrandLogoUrl',
     'toolbarBrandLogoSize'
 ];
-
-const isNonBroadcastHomePatch = (
-    patch: Partial<MinitigerHomeSettings>
-) => {
-    const keys =
-        Object.keys(
-            patch
-        ) as Array<keyof MinitigerHomeSettings>;
-
-    if (!keys.length) {
-        return true;
-    }
-
-    return keys.every(key =>
-        PERSONAL_HOME_SETTING_KEYS.includes(key)
-        || TOOLBAR_BRANDING_SETTING_KEYS.includes(key)
-    );
-};
 
 const cloneDefaults = (): MinitigerHomeSettings => ({
     ...DEFAULT_HOME_SETTINGS,
@@ -230,7 +182,8 @@ const useMinitigerHomeSettings = () => {
                     apiClient,
                     SERVER_PREF_KEY,
                     localValue,
-                    PERSONAL_HOME_SETTING_KEYS
+                    [],
+                    SERVER_OVERRIDE_PREF_KEY
                 ).catch(error => {
                     console.warn(
                         '[Minitiger Settings] Initiale Server-Synchronisierung ist fehlgeschlagen.',
@@ -425,7 +378,8 @@ const useMinitigerHomeSettings = () => {
                         apiClient,
                         SERVER_PREF_KEY,
                         pending,
-                        PERSONAL_HOME_SETTING_KEYS
+                        [],
+                        SERVER_OVERRIDE_PREF_KEY
                     )
                     : writeMinitigerServerPreference(
                         apiClient,
@@ -508,14 +462,29 @@ const useMinitigerHomeSettings = () => {
                 ...patch
             });
 
-            const broadcastForAdmin =
-                !isNonBroadcastHomePatch(patch);
-
             saveLocal(
                 next,
                 '[Minitiger Settings] Einstellungen konnten nicht gespeichert werden',
-                broadcastForAdmin
+                true
             );
+
+            if (
+                !isAdmin
+                && apiClient
+                && user?.Id
+            ) {
+                void addMinitigerServerPreferenceOverrides(
+                    apiClient,
+                    user.Id,
+                    SERVER_OVERRIDE_PREF_KEY,
+                    Object.keys(patch)
+                ).catch(error => {
+                    console.warn(
+                        '[Minitiger Settings] Persönliche Overrides konnten nicht gespeichert werden.',
+                        error
+                    );
+                });
+            }
 
             const toolbarBrandingChanged =
                 Object.prototype.hasOwnProperty.call(
@@ -561,7 +530,8 @@ const useMinitigerHomeSettings = () => {
     }, [
         apiClient,
         isAdmin,
-        saveLocal
+        saveLocal,
+        user?.Id
     ]);
 
     const toggleSection = useCallback((
