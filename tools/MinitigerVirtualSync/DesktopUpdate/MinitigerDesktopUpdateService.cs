@@ -102,6 +102,11 @@ public sealed class MinitigerDesktopUpdateService
         string? packageType,
         CancellationToken cancellationToken)
     {
+        _logger.LogInformation(
+            "Minitiger Desktop update check received: current build {CurrentBuild}, package {PackageType}.",
+            currentBuild,
+            packageType ?? string.Empty);
+
         var normalizedPackage =
             NormalizePackageType(
                 packageType);
@@ -154,6 +159,11 @@ public sealed class MinitigerDesktopUpdateService
                 || manifest.Build <= 0
             )
             {
+                _logger.LogInformation(
+                    "Minitiger Desktop update check: client build {CurrentBuild} is current; latest private build is {LatestBuild}.",
+                    currentBuild,
+                    manifest.Build);
+
                 return new MinitigerDesktopUpdateStatus(
                     Enabled: true,
                     Available: false,
@@ -200,6 +210,12 @@ public sealed class MinitigerDesktopUpdateService
                     asset.FileName,
                     asset.Sha256,
                     expiresAt);
+
+            _logger.LogInformation(
+                "Minitiger Desktop update available: client build {CurrentBuild} -> private build {LatestBuild} ({PackageType}).",
+                currentBuild,
+                manifest.Build,
+                normalizedPackage);
 
             return new MinitigerDesktopUpdateStatus(
                 Enabled: true,
