@@ -249,11 +249,11 @@ const MinitigerLibraryPrefixScanSettings = () => {
             <h4>Gezielter Bibliotheks-Scan</h4>
 
             <p className='minitigerSettingsHint'>
-                Prüft den gewählten Buchstaben zuerst nur lesend:
-                Dateisystem und Jellyfin-Bestand werden verglichen, ohne
-                vorhandene Inhalte neu zu laden. Nur wenn wirklich fehlende
-                Medien gefunden werden, fügt Minitiger genau diese Inhalte
-                gezielt hinzu.
+                Prüft den gewählten Buchstaben vollständig nur lesend.
+                Erst nachdem der gesamte Bereich geprüft wurde, werden
+                ausschließlich gefundene fehlende Pfade an Jellyfins eigenen
+                Dateisystem-Watcher übergeben. Minitiger schreibt dabei keine
+                Medien-, Metadaten- oder Bild-Datensätze direkt in die Datenbank.
             </p>
 
             <div className='minitigerPrefixScanControls'>
