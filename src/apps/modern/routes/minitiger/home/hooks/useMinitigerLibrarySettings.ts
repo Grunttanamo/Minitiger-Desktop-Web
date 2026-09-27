@@ -137,6 +137,22 @@ const useMinitigerLibrarySettings = () => {
 
                 setSettings(normalized);
                 cache(normalized);
+
+                if (isAdmin) {
+                    void broadcastMinitigerServerPreference(
+                        apiClient,
+                        SERVER_PREF_KEY,
+                        normalized,
+                        [],
+                        SERVER_OVERRIDE_PREF_KEY
+                    ).catch(error => {
+                        console.warn(
+                            '[Minitiger Library Settings] Admin-Standards konnten nicht an alle Benutzer verteilt werden.',
+                            error
+                        );
+                    });
+                }
+
                 return;
             }
 
