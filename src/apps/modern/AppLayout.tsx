@@ -16,6 +16,7 @@ import LibraryToolbar from './features/libraries/components/LibraryToolbar';
 import { LibraryProvider } from './features/libraries/hooks/useLibrary';
 import { isLibraryPath } from './features/libraries/utils/path';
 import MinitigerAdminMessageHost from './features/minitiger/MinitigerAdminMessageHost';
+import MinitigerDesktopUpdateHost from './features/minitiger/MinitigerDesktopUpdateHost';
 import MinitigerGlobalSettingsHost from './features/minitiger/MinitigerGlobalSettingsHost';
 import MinitigerProfileSelectionHost from './features/minitiger/MinitigerProfileSelectionHost';
 import MinitigerSmoothScrollHost from './features/minitiger/MinitigerSmoothScrollHost';
@@ -109,6 +110,7 @@ export const Component = () => {
                 </Box>
             </Box>
             <MinitigerAdminMessageHost />
+            <MinitigerDesktopUpdateHost />
             <MinitigerGlobalSettingsHost />
             <MinitigerProfileSelectionHost />
             <MinitigerSmoothScrollHost />
