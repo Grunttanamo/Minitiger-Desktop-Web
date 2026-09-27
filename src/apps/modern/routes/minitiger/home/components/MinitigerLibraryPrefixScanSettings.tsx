@@ -249,10 +249,11 @@ const MinitigerLibraryPrefixScanSettings = () => {
             <h4>Gezielter Bibliotheks-Scan</h4>
 
             <p className='minitigerSettingsHint'>
-                Prüft nur Root-Inhalte der ausgewählten Medien-Bibliothek,
-                deren Name mit dem gewählten Buchstaben beginnt. So lässt
-                sich z. B. ausschließlich der Bereich „S“ neu einlesen,
-                ohne die komplette Bibliothek zu scannen.
+                Prüft den gewählten Buchstaben zuerst nur lesend:
+                Dateisystem und Jellyfin-Bestand werden verglichen, ohne
+                vorhandene Inhalte neu zu laden. Nur wenn wirklich fehlende
+                Medien gefunden werden, fügt Minitiger genau diese Inhalte
+                gezielt hinzu.
             </p>
 
             <div className='minitigerPrefixScanControls'>

@@ -551,6 +551,20 @@ public sealed class MinitigerDirectoryUpdateService
         CollectionType? collectionType,
         string libraryType)
     {
+        /*
+         * IMPORTANT:
+         * The prefix scan is intentionally discovery-first.
+         *
+         * Older versions called ValidateChildren(recursive: true) for EVERY
+         * matching root. Jellyfin 12 updates repository/image state for
+         * already-known children while validating them, which can generate a
+         * large amount of SQLite traffic even when there is nothing new.
+         *
+         * Here we only resolve the current filesystem tree in memory and
+         * compare it with Jellyfin's existing items. Existing items are never
+         * refreshed by this scan. Only missing items are created, and only
+         * those newly-created items receive a metadata refresh.
+         */
         _directoryService.Invalidate(
             entry.FullName);
 
@@ -559,24 +573,18 @@ public sealed class MinitigerDirectoryUpdateService
                 entry.FullName,
                 entry.IsDirectory);
 
-        var before =
-            existing is null
-                ? new Dictionary<Guid, BaseItem>()
-                : CaptureTree(existing);
+        var added =
+            new List<BaseItem>();
 
-        List<BaseItem> roots;
+        BaseItem root;
 
         if (existing is not null)
         {
-            roots =
-                new List<BaseItem>
-                {
-                    existing
-                };
+            root = existing;
         }
         else
         {
-            var resolved =
+            var resolvedRoots =
                 _libraryManager
                     .ResolvePaths(
                         new[] { entry },
@@ -586,7 +594,7 @@ public sealed class MinitigerDirectoryUpdateService
                         collectionType)
                     .ToList();
 
-            if (resolved.Count == 0)
+            if (resolvedRoots.Count == 0)
             {
                 throw new InvalidOperationException(
                     "Jellyfin konnte diesen Datei-/Ordnernamen keinem Medientyp zuordnen.");
@@ -594,80 +602,80 @@ public sealed class MinitigerDirectoryUpdateService
 
             foreach (
                 var child
-                in resolved)
+                in resolvedRoots)
             {
                 child.SetParent(parent);
             }
 
             _libraryManager.CreateItems(
-                resolved,
+                resolvedRoots,
                 parent,
                 CancellationToken.None);
 
-            roots = resolved;
+            added.AddRange(
+                resolvedRoots);
+
+            root =
+                FindExistingResolvedItem(
+                    resolvedRoots[0])
+                ?? resolvedRoots[0];
         }
 
-        var after =
-            new Dictionary<Guid, BaseItem>();
-
-        foreach (
-            var root
-            in roots)
+        if (root is Folder rootFolder)
         {
-            if (root is Folder folder)
-            {
-                await folder
-                    .ValidateChildren(
-                        new Progress<double>(),
-                        CreateRefreshOptions(),
-                        recursive: true,
-                        allowRemoveRoot: false,
-                        cancellationToken: CancellationToken.None)
-                    .ConfigureAwait(false);
-            }
-            else
-            {
-                await root
-                    .RefreshMetadata(
-                        CreateRefreshOptions(),
-                        CancellationToken.None)
-                    .ConfigureAwait(false);
-            }
-
-            var refreshed =
-                _libraryManager.GetItemById(
-                    root.Id)
-                ?? _libraryManager.FindByPath(
-                    root.Path,
-                    root is Folder)
-                ?? root;
-
-            foreach (
-                var pair
-                in CaptureTree(
-                    refreshed))
-            {
-                after[pair.Key] =
-                    pair.Value;
-            }
+            DiscoverAndCreateMissingChildren(
+                rootFolder,
+                collectionType,
+                added,
+                new HashSet<string>(
+                    StringComparer.OrdinalIgnoreCase));
         }
 
-        var added =
-            after
-                .Where(pair =>
-                    !before.ContainsKey(
-                        pair.Key))
-                .Select(pair =>
-                    pair.Value)
-                .ToArray();
-
-        if (added.Length == 0)
+        if (added.Count == 0)
         {
+            /*
+             * Pure read-only hit: this is the normal/cheap path.
+             * No ValidateChildren, RefreshMetadata, CreateItems or image DB
+             * update has been executed for already-known content.
+             */
             return null;
         }
 
-        var top =
-            roots[0];
+        _logger.LogInformation(
+            "Minitiger prefix discovery found {Count} missing item(s) below {Path}; refreshing only newly-created items.",
+            added.Count,
+            entry.FullName);
+
+        /*
+         * Metadata is refreshed only for newly-created items. Image refresh
+         * stays disabled here on purpose: the prefix scan is for fast
+         * discovery, while normal Jellyfin maintenance may enrich artwork
+         * later. This also avoids the BaseItemImageInfos write storm seen on
+         * constrained SQLite servers.
+         */
+        foreach (
+            var item
+            in added)
+        {
+            var current =
+                _libraryManager.GetItemById(
+                    item.Id)
+                ?? item;
+
+            await current
+                .RefreshMetadata(
+                    CreatePrefixRefreshOptions(),
+                    CancellationToken.None)
+                .ConfigureAwait(false);
+
+            /*
+             * Give Jellyfin/SQLite a small breather when several genuinely
+             * new items are imported in one root.
+             */
+            await Task.Delay(
+                    75)
+                .ConfigureAwait(false);
+        }
 
         var newEpisodes =
             added.Count(item =>
@@ -693,14 +701,14 @@ public sealed class MinitigerDirectoryUpdateService
         return new MinitigerLibraryPrefixScanFoundItem(
             LibraryKind(
                 libraryType),
-            top.Name
+            root.Name
                 ?? EntryName(entry),
             meaningfulCount,
             newEpisodes,
             newBooks,
             FoundSummary(
                 libraryType,
-                top.Name
+                root.Name
                     ?? EntryName(entry),
                 meaningfulCount,
                 newEpisodes,
@@ -708,38 +716,159 @@ public sealed class MinitigerDirectoryUpdateService
             entry.FullName);
     }
 
-    private Dictionary<Guid, BaseItem> CaptureTree(
-        BaseItem root)
+    private void DiscoverAndCreateMissingChildren(
+        Folder parent,
+        CollectionType? collectionType,
+        List<BaseItem> added,
+        HashSet<string> visitedDirectories)
     {
-        var result =
-            new Dictionary<Guid, BaseItem>
-            {
-                [root.Id] = root
-            };
+        var directoryPath =
+            !string.IsNullOrWhiteSpace(
+                parent.Path)
+                ? parent.Path
+                : parent.ContainingFolderPath;
 
-        if (root is not Folder)
+        if (
+            string.IsNullOrWhiteSpace(
+                directoryPath)
+            || !Directory.Exists(
+                directoryPath)
+        )
         {
-            return result;
+            return;
         }
 
-        var descendants =
-            _libraryManager.GetItemList(
-                new InternalItemsQuery
-                {
-                    AncestorIds =
-                        new[] { root.Id },
-                    Recursive = true
-                });
+        var normalizedPath =
+            Path.GetFullPath(
+                    directoryPath)
+                .TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar);
+
+        if (
+            !visitedDirectories.Add(
+                normalizedPath)
+        )
+        {
+            return;
+        }
+
+        _directoryService.Invalidate(
+            directoryPath);
+
+        FileSystemMetadata[] entries;
+
+        try
+        {
+            entries =
+                _directoryService
+                    .GetFileSystemEntries(
+                        directoryPath)
+                    .ToArray();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                $"Dateisystem-Prüfung für „{directoryPath}“ fehlgeschlagen: {ex.Message}",
+                ex);
+        }
+
+        var resolved =
+            _libraryManager
+                .ResolvePaths(
+                    entries,
+                    _directoryService,
+                    parent,
+                    _libraryManager.GetLibraryOptions(parent),
+                    collectionType)
+                .ToList();
+
+        var missing =
+            new List<BaseItem>();
 
         foreach (
-            var item
-            in descendants)
+            var candidate
+            in resolved)
         {
-            result[item.Id] =
-                item;
+            if (
+                FindExistingResolvedItem(
+                    candidate)
+                is not null
+            )
+            {
+                continue;
+            }
+
+            candidate.SetParent(
+                parent);
+
+            missing.Add(
+                candidate);
         }
 
-        return result;
+        if (missing.Count > 0)
+        {
+            /*
+             * Add only the missing direct children. Unlike ValidateChildren,
+             * CreateItems does not revisit/update all existing siblings.
+             */
+            _libraryManager.CreateItems(
+                missing,
+                parent,
+                CancellationToken.None);
+
+            added.AddRange(
+                missing);
+        }
+
+        foreach (
+            var candidate
+            in resolved)
+        {
+            var current =
+                FindExistingResolvedItem(
+                    candidate)
+                ?? candidate;
+
+            if (
+                current is Folder childFolder
+                && !ReferenceEquals(
+                    childFolder,
+                    parent)
+            )
+            {
+                DiscoverAndCreateMissingChildren(
+                    childFolder,
+                    collectionType,
+                    added,
+                    visitedDirectories);
+            }
+        }
+    }
+
+    private BaseItem? FindExistingResolvedItem(
+        BaseItem candidate)
+    {
+        var byId =
+            _libraryManager.GetItemById(
+                candidate.Id);
+
+        if (byId is not null)
+        {
+            return byId;
+        }
+
+        if (
+            string.IsNullOrWhiteSpace(
+                candidate.Path)
+        )
+        {
+            return null;
+        }
+
+        return _libraryManager.FindByPath(
+            candidate.Path,
+            candidate is Folder);
     }
 
     private Folder? ResolvePhysicalRoot(
@@ -966,6 +1095,20 @@ public sealed class MinitigerDirectoryUpdateService
 
         return $"Inhalt: {name} | {meaningfulCount} neu gefunden";
     }
+
+    private MetadataRefreshOptions CreatePrefixRefreshOptions()
+        => new(
+            _directoryService)
+        {
+            MetadataRefreshMode =
+                MetadataRefreshMode.Default,
+            ImageRefreshMode =
+                MetadataRefreshMode.None,
+            ReplaceAllMetadata = false,
+            ReplaceAllImages = false,
+            RemoveOldMetadata = false,
+            IsAutomated = false
+        };
 
     private MetadataRefreshOptions CreateRefreshOptions()
         => new(
