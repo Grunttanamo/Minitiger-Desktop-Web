@@ -163,33 +163,6 @@ const MinitigerDesktopUpdateHost = () => {
                                 ? 'portable'
                                 : 'installer';
 
-                        const guardKey = [
-                            'minitiger.desktop-update-check.v1',
-                            apiClient.serverId?.()
-                                ?? 'server',
-                            currentBuild
-                        ].join(':');
-
-                        try {
-                            if (
-                                window.sessionStorage
-                                    .getItem(
-                                        guardKey
-                                    )
-                                === 'done'
-                            ) {
-                                return;
-                            }
-
-                            window.sessionStorage
-                                .setItem(
-                                    guardKey,
-                                    'done'
-                                );
-                        } catch {
-                            // A failed sessionStorage write must never block updates.
-                        }
-
                         const accessToken =
                             getMinitigerAccessToken(
                                 apiClient
@@ -202,6 +175,14 @@ const MinitigerDesktopUpdateHost = () => {
                             return;
                         }
 
+                        console.info(
+                            '[Minitiger Update] Prüfe privaten Update-Kanal:',
+                            {
+                                currentBuild,
+                                packageType
+                            }
+                        );
+
                         const statusUrl =
                             apiClient.getUrl(
                                 'Minitiger/DesktopUpdate/Status',
@@ -212,7 +193,7 @@ const MinitigerDesktopUpdateHost = () => {
                                 }
                             );
 
-                        const response =
+                        let response =
                             await fetch(
                                 statusUrl,
                                 {
@@ -223,7 +204,27 @@ const MinitigerDesktopUpdateHost = () => {
 
                         if (!response.ok) {
                             console.warn(
-                                '[Minitiger Update] Status-Check fehlgeschlagen:',
+                                '[Minitiger Update] Erster Status-Check fehlgeschlagen, wiederhole einmal:',
+                                response.status
+                            );
+
+                            await new Promise(resolve =>
+                                window.setTimeout(resolve, 2_000)
+                            );
+
+                            response =
+                                await fetch(
+                                    statusUrl,
+                                    {
+                                        method: 'GET',
+                                        cache: 'no-store'
+                                    }
+                                );
+                        }
+
+                        if (!response.ok) {
+                            console.warn(
+                                '[Minitiger Update] Status-Check endgültig fehlgeschlagen:',
                                 response.status
                             );
                             return;
