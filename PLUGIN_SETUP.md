@@ -106,3 +106,25 @@ The endpoint does not accept an arbitrary download URL from the browser. It only
 The normal `INSTALL_MINITIGER_VIRTUAL_SYNC.sh` helper installs the standalone `yt-dlp` binary automatically on supported Linux x86_64 and aarch64 systems when it is missing. Jellyfin's packaged ffmpeg at `/usr/lib/jellyfin-ffmpeg/ffmpeg` is used for MP4 remuxing when available.
 
 The Jellyfin service account must have write permission for the media folder. Existing `trailer.mp4` files are never overwritten automatically.
+
+
+## Private Minitiger Desktop updates
+
+Minitiger Desktop can use the companion plugin as a private update relay. The Desktop client never receives a GitHub access token and does not need direct access to the private build repository.
+
+The Jellyfin service may be configured with these environment variables:
+
+```text
+MINITIGER_UPDATE_REPOSITORY=Grunttanamo/Minitiger-Desktop-Updates
+MINITIGER_UPDATE_GITHUB_TOKEN=<read-only token for the private update repository>
+```
+
+The token should have read-only access to repository contents/releases of the private update repository only. Do not reuse a broad personal token.
+
+When configured, authenticated Minitiger Desktop clients can query:
+
+```text
+/Minitiger/DesktopUpdate/Status
+```
+
+If an update exists, the companion returns a short-lived Minitiger download grant. The actual GitHub token remains server-side. The download grant expires automatically and proxies only the selected release asset.
