@@ -643,7 +643,36 @@ export default class ConnectionManager {
         };
 
         function tryConnectToAddress(address, options) {
+            const normalizedAddress =
+                normalizeAddress(address)
+                    .replace(/\\/+$/, '')
+                    .toLowerCase();
+
+            const savedServers =
+                credentialProvider.credentials().Servers || [];
+
+            const savedServer =
+                savedServers.find(candidate =>
+                    [
+                        candidate.ManualAddress,
+                        candidate.LocalAddress,
+                        candidate.RemoteAddress
+                    ].some(savedAddress =>
+                        typeof savedAddress === 'string'
+                        && normalizeAddress(savedAddress)
+                            .replace(/\\/+$/, '')
+                            .toLowerCase()
+                            === normalizedAddress
+                    )
+                );
+
+            // The bundled Minitiger client connects to one explicit server
+            // address. Reuse that server's persisted Jellyfin UserId and
+            // AccessToken instead of creating a credential-less server object
+            // on every application start. enableAutoLogin still decides
+            // whether those credentials may be used.
             const server = {
+                ...(savedServer || {}),
                 ManualAddress: address,
                 LastConnectionMode: ConnectionMode.Manual
             };
