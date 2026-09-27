@@ -396,12 +396,21 @@ export const captureMinitigerOwnerSession = (
         && user.Id !== existing.activeJellyfinUserId
     ) {
         /*
-         * A full Jellyfin identity switch can update useApi().user before
-         * every Minitiger consumer has observed the matching runtime update.
-         * Once a household exists, never reinterpret an unknown transient
-         * Jellyfin user as a brand-new owner.
+         * A real Minitiger subprofile switch is PRE-ARMED before Jellyfin's
+         * authentication lifecycle changes useApi().user, so that identity
+         * is already present as activeJellyfinUserId here.
+         *
+         * An unknown Jellyfin user therefore means a genuine account change
+         * (for example: manual logout -> login as another server account).
+         * The old household runtime must not leak into that new account.
          */
-        return existing;
+        try {
+            window.sessionStorage.removeItem(
+                getRuntimeKey(serverId)
+            );
+        } catch {
+            // The fresh owner runtime below still replaces the in-memory view.
+        }
     }
 
     if (existing && user.Id === existing.ownerUserId) {

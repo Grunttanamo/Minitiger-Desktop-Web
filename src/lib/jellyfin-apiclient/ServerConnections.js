@@ -10,6 +10,37 @@ import { createApiClient } from 'utils/jellyfin-apiclient/createApiClient';
 
 import ConnectionManager from './connectionManager';
 
+const MINITIGER_PROFILE_SESSION_PREFIXES = [
+    'minitiger.profile-runtime.v1:',
+    'minitiger.profile-selection.v1:'
+];
+
+const clearMinitigerProfileSessionState = () => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        for (let index = window.sessionStorage.length - 1; index >= 0; index--) {
+            const key = window.sessionStorage.key(index);
+
+            if (
+                key
+                && MINITIGER_PROFILE_SESSION_PREFIXES.some(
+                    prefix => key.startsWith(prefix)
+                )
+            ) {
+                window.sessionStorage.removeItem(key);
+            }
+        }
+    } catch (error) {
+        console.warn(
+            '[Minitiger Profiles] Logout-Session konnte nicht vollständig bereinigt werden.',
+            error
+        );
+    }
+};
+
 const normalizeImageOptions = options => {
     if (!options.quality && (options.maxWidth || options.width || options.maxHeight || options.height || options.fillWidth || options.fillHeight)) {
         options.quality = 90;
@@ -39,6 +70,7 @@ class ServerConnections extends ConnectionManager {
         this.firstConnection = null;
 
         Events.on(this, 'localusersignedout', (_e, logoutInfo) => {
+            clearMinitigerProfileSessionState();
             setUserInfo(null, null);
             // Ensure the updated credentials are persisted to storage
             credentialProvider.credentials(credentialProvider.credentials());
