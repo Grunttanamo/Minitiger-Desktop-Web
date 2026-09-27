@@ -36,11 +36,11 @@ export interface MinitigerVirtualLibrariesConfig {
 export const DEFAULT_VIRTUAL_LIBRARIES: MinitigerVirtualLibrariesConfig = {
     libraries: [],
     homeOrder: [],
-    homeCardWidth: 280,
-    homeGap: 12,
-    pagePosterWidth: 155,
-    pageLandscapeWidth: 270,
-    pageGap: 12,
+    homeCardWidth: 300,
+    homeGap: 80,
+    pagePosterWidth: 320,
+    pageLandscapeWidth: 520,
+    pageGap: 23,
     rowEnabled: {
         virtual1: true,
         virtual2: true,

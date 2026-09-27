@@ -31,12 +31,12 @@ export const DEFAULT_DETAIL_SETTINGS: MinitigerDetailSettings = {
     layoutMode: 'compact',
     showStudios: true,
     showGenres: true,
-    trailerButtonEnabled: true,
-    trailerDetectButtonEnabled: true,
+    trailerButtonEnabled: false,
+    trailerDetectButtonEnabled: false,
     directoryUpdateButtonEnabled: true,
     posterWidth: 460,
     seasonPosterWidth: 260,
-    seasonWrapEnabled: false,
+    seasonWrapEnabled: true,
     contentWidth: 380,
     mangaPosterWidth: 460,
     mangaVolumeWidth: 260,
@@ -114,9 +114,13 @@ export const normalizeDetailSettings = (
         showStudios: source.showStudios !== false,
         showGenres: source.showGenres !== false,
         trailerButtonEnabled:
-            source.trailerButtonEnabled !== false,
+            typeof source.trailerButtonEnabled === 'boolean'
+                ? source.trailerButtonEnabled
+                : DEFAULT_DETAIL_SETTINGS.trailerButtonEnabled,
         trailerDetectButtonEnabled:
-            source.trailerDetectButtonEnabled !== false,
+            typeof source.trailerDetectButtonEnabled === 'boolean'
+                ? source.trailerDetectButtonEnabled
+                : DEFAULT_DETAIL_SETTINGS.trailerDetectButtonEnabled,
         directoryUpdateButtonEnabled:
             source.directoryUpdateButtonEnabled !== false,
         posterWidth: clamp(
@@ -132,7 +136,9 @@ export const normalizeDetailSettings = (
             360
         ),
         seasonWrapEnabled:
-            source.seasonWrapEnabled === true,
+            typeof source.seasonWrapEnabled === 'boolean'
+                ? source.seasonWrapEnabled
+                : DEFAULT_DETAIL_SETTINGS.seasonWrapEnabled,
         contentWidth: clamp(
             source.contentWidth,
             DEFAULT_DETAIL_SETTINGS.contentWidth,

@@ -308,6 +308,448 @@ export const COLOR_THEME_PRESETS:
                 arrowColor: '#b96fd1',
                 genreTagColor: '#7d4c91'
             }
+        },
+        {
+            id: 'sunset',
+            name: 'Sunset',
+            description: 'Orange, Koralle und warme Abendtöne.',
+            colors: {
+                accentColor: '#ff7a18',
+                primaryHoverColor: '#ffb15c',
+                secondaryColor: '#4a2a2a',
+                secondaryHoverColor: '#6b3b32',
+                libraryBarColor: '#c2410c',
+                libraryBarTextColor: '#fff7ed',
+                bannerMetaColor: '#fdba74',
+                glowColor: '#f97316',
+                arrowColor: '#fb923c',
+                genreTagColor: '#ea580c'
+            }
+        },
+        {
+            id: 'crimson',
+            name: 'Crimson',
+            description: 'Kräftiges Rot mit dunklem Weinrot.',
+            colors: {
+                accentColor: '#dc2626',
+                primaryHoverColor: '#f87171',
+                secondaryColor: '#3b1f24',
+                secondaryHoverColor: '#5a2931',
+                libraryBarColor: '#991b1b',
+                libraryBarTextColor: '#fff1f2',
+                bannerMetaColor: '#fca5a5',
+                glowColor: '#ef4444',
+                arrowColor: '#f87171',
+                genreTagColor: '#b91c1c'
+            }
+        },
+        {
+            id: 'ruby',
+            name: 'Ruby',
+            description: 'Rubinrot mit eleganten Beerentönen.',
+            colors: {
+                accentColor: '#e11d48',
+                primaryHoverColor: '#fb7185',
+                secondaryColor: '#401f2a',
+                secondaryHoverColor: '#5f2b3b',
+                libraryBarColor: '#9f1239',
+                libraryBarTextColor: '#fff1f2',
+                bannerMetaColor: '#fda4af',
+                glowColor: '#f43f5e',
+                arrowColor: '#fb7185',
+                genreTagColor: '#be123c'
+            }
+        },
+        {
+            id: 'rose',
+            name: 'Rose',
+            description: 'Sanftes Rosa mit satten Rosétönen.',
+            colors: {
+                accentColor: '#f43f5e',
+                primaryHoverColor: '#fda4af',
+                secondaryColor: '#44242e',
+                secondaryHoverColor: '#633443',
+                libraryBarColor: '#be123c',
+                libraryBarTextColor: '#fff1f2',
+                bannerMetaColor: '#fecdd3',
+                glowColor: '#fb7185',
+                arrowColor: '#fda4af',
+                genreTagColor: '#e11d48'
+            }
+        },
+        {
+            id: 'peach',
+            name: 'Peach',
+            description: 'Pfirsich, Apricot und warme Cremefarben.',
+            colors: {
+                accentColor: '#fb8b5b',
+                primaryHoverColor: '#ffc09f',
+                secondaryColor: '#4a302b',
+                secondaryHoverColor: '#68443b',
+                libraryBarColor: '#e76f51',
+                libraryBarTextColor: '#fff8f2',
+                bannerMetaColor: '#ffd1b8',
+                glowColor: '#ff8a5b',
+                arrowColor: '#ffa27a',
+                genreTagColor: '#d65f43'
+            }
+        },
+        {
+            id: 'amber',
+            name: 'Amber',
+            description: 'Honiggelb, Bernstein und dunkles Gold.',
+            colors: {
+                accentColor: '#f59e0b',
+                primaryHoverColor: '#fcd34d',
+                secondaryColor: '#3f321d',
+                secondaryHoverColor: '#594728',
+                libraryBarColor: '#b45309',
+                libraryBarTextColor: '#fffbeb',
+                bannerMetaColor: '#fde68a',
+                glowColor: '#f59e0b',
+                arrowColor: '#fbbf24',
+                genreTagColor: '#d97706'
+            }
+        },
+        {
+            id: 'lime',
+            name: 'Lime',
+            description: 'Frisches Limettengrün mit dunkler Olive.',
+            colors: {
+                accentColor: '#84cc16',
+                primaryHoverColor: '#bef264',
+                secondaryColor: '#2f3b1e',
+                secondaryHoverColor: '#45552b',
+                libraryBarColor: '#4d7c0f',
+                libraryBarTextColor: '#f7fee7',
+                bannerMetaColor: '#d9f99d',
+                glowColor: '#84cc16',
+                arrowColor: '#a3e635',
+                genreTagColor: '#65a30d'
+            }
+        },
+        {
+            id: 'forest',
+            name: 'Forest',
+            description: 'Tiefes Waldgrün mit natürlichen Akzenten.',
+            colors: {
+                accentColor: '#16a34a',
+                primaryHoverColor: '#4ade80',
+                secondaryColor: '#183528',
+                secondaryHoverColor: '#24503a',
+                libraryBarColor: '#166534',
+                libraryBarTextColor: '#f0fdf4',
+                bannerMetaColor: '#86efac',
+                glowColor: '#22c55e',
+                arrowColor: '#4ade80',
+                genreTagColor: '#15803d'
+            }
+        },
+        {
+            id: 'mint',
+            name: 'Mint',
+            description: 'Helles Mint mit kühlen Aquatönen.',
+            colors: {
+                accentColor: '#2dd4bf',
+                primaryHoverColor: '#99f6e4',
+                secondaryColor: '#1d3b39',
+                secondaryHoverColor: '#285650',
+                libraryBarColor: '#0f766e',
+                libraryBarTextColor: '#f0fdfa',
+                bannerMetaColor: '#99f6e4',
+                glowColor: '#14b8a6',
+                arrowColor: '#5eead4',
+                genreTagColor: '#0d9488'
+            }
+        },
+        {
+            id: 'teal',
+            name: 'Teal',
+            description: 'Dunkles Türkis mit klaren Cyan-Akzenten.',
+            colors: {
+                accentColor: '#14b8a6',
+                primaryHoverColor: '#5eead4',
+                secondaryColor: '#173b3d',
+                secondaryHoverColor: '#205458',
+                libraryBarColor: '#0f766e',
+                libraryBarTextColor: '#f0fdfa',
+                bannerMetaColor: '#99f6e4',
+                glowColor: '#0d9488',
+                arrowColor: '#2dd4bf',
+                genreTagColor: '#115e59'
+            }
+        },
+        {
+            id: 'arctic',
+            name: 'Arctic',
+            description: 'Eisblau und helle Frosttöne.',
+            colors: {
+                accentColor: '#38bdf8',
+                primaryHoverColor: '#bae6fd',
+                secondaryColor: '#203544',
+                secondaryHoverColor: '#2d4b60',
+                libraryBarColor: '#0369a1',
+                libraryBarTextColor: '#f0f9ff',
+                bannerMetaColor: '#bae6fd',
+                glowColor: '#0ea5e9',
+                arrowColor: '#7dd3fc',
+                genreTagColor: '#0284c7'
+            }
+        },
+        {
+            id: 'azure',
+            name: 'Azure',
+            description: 'Klares Himmelblau mit tiefem Azur.',
+            colors: {
+                accentColor: '#0ea5e9',
+                primaryHoverColor: '#7dd3fc',
+                secondaryColor: '#1e3445',
+                secondaryHoverColor: '#294a61',
+                libraryBarColor: '#0369a1',
+                libraryBarTextColor: '#f0f9ff',
+                bannerMetaColor: '#7dd3fc',
+                glowColor: '#0284c7',
+                arrowColor: '#38bdf8',
+                genreTagColor: '#075985'
+            }
+        },
+        {
+            id: 'cobalt',
+            name: 'Cobalt',
+            description: 'Kräftiges Kobaltblau mit dunklem Navy.',
+            colors: {
+                accentColor: '#2563eb',
+                primaryHoverColor: '#60a5fa',
+                secondaryColor: '#202c46',
+                secondaryHoverColor: '#2d3f64',
+                libraryBarColor: '#1d4ed8',
+                libraryBarTextColor: '#eff6ff',
+                bannerMetaColor: '#93c5fd',
+                glowColor: '#3b82f6',
+                arrowColor: '#60a5fa',
+                genreTagColor: '#1e40af'
+            }
+        },
+        {
+            id: 'royal',
+            name: 'Royal',
+            description: 'Königsblau und Indigo mit kühler Tiefe.',
+            colors: {
+                accentColor: '#4f46e5',
+                primaryHoverColor: '#818cf8',
+                secondaryColor: '#29294a',
+                secondaryHoverColor: '#3b3b68',
+                libraryBarColor: '#3730a3',
+                libraryBarTextColor: '#eef2ff',
+                bannerMetaColor: '#a5b4fc',
+                glowColor: '#6366f1',
+                arrowColor: '#818cf8',
+                genreTagColor: '#4338ca'
+            }
+        },
+        {
+            id: 'lavender',
+            name: 'Lavender',
+            description: 'Sanftes Lavendel mit dunklem Flieder.',
+            colors: {
+                accentColor: '#a78bfa',
+                primaryHoverColor: '#c4b5fd',
+                secondaryColor: '#382f4a',
+                secondaryHoverColor: '#504368',
+                libraryBarColor: '#7c3aed',
+                libraryBarTextColor: '#faf5ff',
+                bannerMetaColor: '#ddd6fe',
+                glowColor: '#8b5cf6',
+                arrowColor: '#c4b5fd',
+                genreTagColor: '#6d28d9'
+            }
+        },
+        {
+            id: 'amethyst',
+            name: 'Amethyst',
+            description: 'Sattes Violett mit leuchtendem Amethyst.',
+            colors: {
+                accentColor: '#9333ea',
+                primaryHoverColor: '#c084fc',
+                secondaryColor: '#35223f',
+                secondaryHoverColor: '#4d315c',
+                libraryBarColor: '#6b21a8',
+                libraryBarTextColor: '#faf5ff',
+                bannerMetaColor: '#d8b4fe',
+                glowColor: '#a855f7',
+                arrowColor: '#c084fc',
+                genreTagColor: '#7e22ce'
+            }
+        },
+        {
+            id: 'grape',
+            name: 'Grape',
+            description: 'Dunkle Traube mit kräftigem Purpur.',
+            colors: {
+                accentColor: '#7e22ce',
+                primaryHoverColor: '#a855f7',
+                secondaryColor: '#31203b',
+                secondaryHoverColor: '#482d56',
+                libraryBarColor: '#581c87',
+                libraryBarTextColor: '#faf5ff',
+                bannerMetaColor: '#d8b4fe',
+                glowColor: '#9333ea',
+                arrowColor: '#a855f7',
+                genreTagColor: '#6b21a8'
+            }
+        },
+        {
+            id: 'neon',
+            name: 'Neon',
+            description: 'Leuchtendes Grün und Cyan auf dunklem Grund.',
+            colors: {
+                accentColor: '#22c55e',
+                primaryHoverColor: '#86efac',
+                secondaryColor: '#172b2a',
+                secondaryHoverColor: '#21423f',
+                libraryBarColor: '#0891b2',
+                libraryBarTextColor: '#ecfeff',
+                bannerMetaColor: '#67e8f9',
+                glowColor: '#22d3ee',
+                arrowColor: '#4ade80',
+                genreTagColor: '#06b6d4'
+            }
+        },
+        {
+            id: 'cyberpunk',
+            name: 'Cyberpunk',
+            description: 'Neongelb, Pink und dunkles Violett.',
+            colors: {
+                accentColor: '#facc15',
+                primaryHoverColor: '#fde047',
+                secondaryColor: '#351d46',
+                secondaryHoverColor: '#51285f',
+                libraryBarColor: '#db2777',
+                libraryBarTextColor: '#fff7ed',
+                bannerMetaColor: '#f9a8d4',
+                glowColor: '#ec4899',
+                arrowColor: '#facc15',
+                genreTagColor: '#a21caf'
+            }
+        },
+        {
+            id: 'monochrome',
+            name: 'Monochrom',
+            description: 'Schwarz, Weiß und klare Grauabstufungen.',
+            colors: {
+                accentColor: '#e5e7eb',
+                primaryHoverColor: '#ffffff',
+                secondaryColor: '#27272a',
+                secondaryHoverColor: '#3f3f46',
+                libraryBarColor: '#52525b',
+                libraryBarTextColor: '#ffffff',
+                bannerMetaColor: '#d4d4d8',
+                glowColor: '#a1a1aa',
+                arrowColor: '#e4e4e7',
+                genreTagColor: '#71717a'
+            }
+        },
+        {
+            id: 'silver',
+            name: 'Silver',
+            description: 'Kühles Silber mit blaugrauen Akzenten.',
+            colors: {
+                accentColor: '#94a3b8',
+                primaryHoverColor: '#cbd5e1',
+                secondaryColor: '#27303d',
+                secondaryHoverColor: '#3b4656',
+                libraryBarColor: '#475569',
+                libraryBarTextColor: '#f8fafc',
+                bannerMetaColor: '#cbd5e1',
+                glowColor: '#64748b',
+                arrowColor: '#94a3b8',
+                genreTagColor: '#475569'
+            }
+        },
+        {
+            id: 'coffee',
+            name: 'Coffee',
+            description: 'Kaffee, Karamell und warme Brauntöne.',
+            colors: {
+                accentColor: '#b7793f',
+                primaryHoverColor: '#d9a066',
+                secondaryColor: '#3a2b26',
+                secondaryHoverColor: '#554039',
+                libraryBarColor: '#7c4a2d',
+                libraryBarTextColor: '#fff7ed',
+                bannerMetaColor: '#e7b98b',
+                glowColor: '#a86636',
+                arrowColor: '#c58b55',
+                genreTagColor: '#8a5634'
+            }
+        },
+        {
+            id: 'halloween',
+            name: 'Halloween',
+            description: 'Kürbisorange, Violett und tiefe Nachttöne.',
+            colors: {
+                accentColor: '#f97316',
+                primaryHoverColor: '#fb923c',
+                secondaryColor: '#2f213b',
+                secondaryHoverColor: '#49305c',
+                libraryBarColor: '#7e22ce',
+                libraryBarTextColor: '#fff7ed',
+                bannerMetaColor: '#fdba74',
+                glowColor: '#a855f7',
+                arrowColor: '#f97316',
+                genreTagColor: '#9333ea'
+            }
+        },
+        {
+            id: 'cherry',
+            name: 'Cherry',
+            description: 'Kirschrot mit dunkler Schokolade.',
+            colors: {
+                accentColor: '#be123c',
+                primaryHoverColor: '#fb7185',
+                secondaryColor: '#351f25',
+                secondaryHoverColor: '#50303a',
+                libraryBarColor: '#881337',
+                libraryBarTextColor: '#fff1f2',
+                bannerMetaColor: '#fda4af',
+                glowColor: '#e11d48',
+                arrowColor: '#fb7185',
+                genreTagColor: '#9f1239'
+            }
+        },
+        {
+            id: 'candy',
+            name: 'Candy',
+            description: 'Verspieltes Pink, Türkis und Violett.',
+            colors: {
+                accentColor: '#ec4899',
+                primaryHoverColor: '#f9a8d4',
+                secondaryColor: '#3b2946',
+                secondaryHoverColor: '#563b64',
+                libraryBarColor: '#8b5cf6',
+                libraryBarTextColor: '#fff7fb',
+                bannerMetaColor: '#67e8f9',
+                glowColor: '#22d3ee',
+                arrowColor: '#f472b6',
+                genreTagColor: '#a855f7'
+            }
+        },
+        {
+            id: 'solar',
+            name: 'Solar',
+            description: 'Sonnengelb mit kräftigem Orange.',
+            colors: {
+                accentColor: '#fbbf24',
+                primaryHoverColor: '#fde68a',
+                secondaryColor: '#40321d',
+                secondaryHoverColor: '#5d4828',
+                libraryBarColor: '#ea580c',
+                libraryBarTextColor: '#fff7ed',
+                bannerMetaColor: '#fed7aa',
+                glowColor: '#f59e0b',
+                arrowColor: '#fbbf24',
+                genreTagColor: '#d97706'
+            }
         }
     ];
 
@@ -329,23 +771,23 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     toolbarBrandLogoEnabled: false,
     toolbarBrandLogoUrl: '',
     toolbarBrandLogoSize: 44,
-    toolbarTransparency: 0,
-    toolbarGlassBlur: 0,
+    toolbarTransparency: 90,
+    toolbarGlassBlur: 5,
     toolbarBrandTextEnabled: false,
     toolbarBrandText: 'Minitiger',
     customHomeRowsEnabled: true,
     bannerEnabled: true,
-    bannerHeightOffset: 0,
-    bannerOverlayOffset: 0,
-    bannerFadeSize: 110,
-    bannerFadeStrength: 92,
+    bannerHeightOffset: 280,
+    bannerOverlayOffset: 70,
+    bannerFadeSize: 320,
+    bannerFadeStrength: 100,
     bannerNavigationVisible: true,
-    bannerFskVisible: true,
+    bannerFskVisible: false,
     bannerRotationEnabled: true,
-    bannerRotationSeconds: 12,
+    bannerRotationSeconds: 60,
     bannerItemLimit: 10,
     cardSize: 'normal',
-    rowGap: 40,
+    rowGap: 12,
     systemRowCardScale: {
         resume: 100,
         nextUp: 100,
@@ -360,18 +802,18 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     },
     libraryCardWidth: 280,
     libraryCardGap: 16,
-    libraryVirtualGap: 64,
+    libraryVirtualGap: -120,
     showLibraryNames: false,
     showAudioFlags: true,
     showFskBadges: true,
     showPlayedIndicators: true,
-    playedIndicatorSize: 40,
-    playedIndicatorFontSize: 15,
-    playedIndicatorShape: 'round',
-    trailerDebugEnabled: true,
+    playedIndicatorSize: 32,
+    playedIndicatorFontSize: 13,
+    playedIndicatorShape: 'circle',
+    trailerDebugEnabled: false,
     youtubeTrailersEnabled: true,
-    localTrailersEnabled: true,
-    bannerTrailerButtonEnabled: true,
+    localTrailersEnabled: false,
+    bannerTrailerButtonEnabled: false,
     trailerDownloadEnabled: false,
     sideRowTitlesEnabled: false,
     hoverEnabled: true,
@@ -380,7 +822,7 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     previewSeriesEnabled: true,
     previewMovieEnabled: true,
     previewMangaEnabled: true,
-    cardTextCentered: false,
+    cardTextCentered: true,
     sectionOrder: [ ...HOME_SECTION_IDS ],
     homeRowOrder: [ ...DEFAULT_HOME_ROW_ORDER ],
     visibleSections: {
@@ -725,7 +1167,10 @@ export const normalizeHomeSettings = (
             100
         ),
         bannerNavigationVisible: source.bannerNavigationVisible !== false,
-        bannerFskVisible: source.bannerFskVisible !== false,
+        bannerFskVisible:
+            typeof source.bannerFskVisible === 'boolean'
+                ? source.bannerFskVisible
+                : DEFAULT_HOME_SETTINGS.bannerFskVisible,
         bannerRotationEnabled:
             typeof source.bannerRotationEnabled === 'boolean'
                 ? source.bannerRotationEnabled
@@ -787,11 +1232,19 @@ export const normalizeHomeSettings = (
             isPlayedIndicatorShape(source.playedIndicatorShape)
                 ? source.playedIndicatorShape
                 : DEFAULT_HOME_SETTINGS.playedIndicatorShape,
-        trailerDebugEnabled: source.trailerDebugEnabled !== false,
+        trailerDebugEnabled:
+            typeof source.trailerDebugEnabled === 'boolean'
+                ? source.trailerDebugEnabled
+                : DEFAULT_HOME_SETTINGS.trailerDebugEnabled,
         youtubeTrailersEnabled: source.youtubeTrailersEnabled !== false,
-        localTrailersEnabled: source.localTrailersEnabled !== false,
+        localTrailersEnabled:
+            typeof source.localTrailersEnabled === 'boolean'
+                ? source.localTrailersEnabled
+                : DEFAULT_HOME_SETTINGS.localTrailersEnabled,
         bannerTrailerButtonEnabled:
-            source.bannerTrailerButtonEnabled !== false,
+            typeof source.bannerTrailerButtonEnabled === 'boolean'
+                ? source.bannerTrailerButtonEnabled
+                : DEFAULT_HOME_SETTINGS.bannerTrailerButtonEnabled,
         trailerDownloadEnabled: source.trailerDownloadEnabled === true,
         sideRowTitlesEnabled: source.sideRowTitlesEnabled === true,
         hoverEnabled: source.hoverEnabled !== false,
@@ -801,7 +1254,9 @@ export const normalizeHomeSettings = (
         previewMovieEnabled: source.previewMovieEnabled !== false,
         previewMangaEnabled: source.previewMangaEnabled !== false,
         cardTextCentered:
-            source.cardTextCentered === true,
+            typeof source.cardTextCentered === 'boolean'
+                ? source.cardTextCentered
+                : DEFAULT_HOME_SETTINGS.cardTextCentered,
         sectionOrder: derivedLegacyOrder,
         homeRowOrder,
         visibleSections: HOME_SECTION_IDS.reduce(
