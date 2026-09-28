@@ -33,6 +33,7 @@ type MinitigerNativeUpdateSystem = {
 };
 
 type MinitigerUpdateWindow = Window & {
+    __minitigerDesktopUpdateCheckKey?: string;
     jmpInfo?: {
         bundledMinitigerWeb?: boolean;
         updateBuild?: number | string;
@@ -118,23 +119,10 @@ const wait = (milliseconds: number) =>
         window.setTimeout(resolve, milliseconds)
     );
 
-type UpdateOverlayState =
-    | {
-        phase: 'checking';
-        version: string;
-    }
-    | {
-        phase: 'current';
-        version: string;
-    }
-    | {
-        phase: 'available';
-        status: MinitigerDesktopUpdateStatus;
-    }
-    | {
-        phase: 'error';
-        message: string;
-    };
+interface UpdateNoticeState {
+    status: MinitigerDesktopUpdateStatus;
+    secondsRemaining: number;
+}
 
 const MinitigerDesktopUpdateHost = () => {
     const {
@@ -143,9 +131,9 @@ const MinitigerDesktopUpdateHost = () => {
     } = useApi();
 
     const [
-        overlay,
-        setOverlay
-    ] = useState<UpdateOverlayState | null>(
+        notice,
+        setNotice
+    ] = useState<UpdateNoticeState | null>(
         null
     );
 
@@ -171,63 +159,66 @@ const MinitigerDesktopUpdateHost = () => {
                 apiClient
             );
 
-        // Before the first remembered login there is no safe credential with
-        // which the private companion endpoint can be queried. Do not block
-        // the login screen in that case; after one successful remembered
-        // login the token is restored on every following Desktop start.
+        // The first login has no token yet. Let the user sign in first; the
+        // user dependency below will run this effect once credentials exist.
         if (!accessToken) {
             return;
+        }
+
+        const currentBuild =
+            Number(
+                nativeWindow.jmpInfo
+                    ?.updateBuild
+                ?? 0
+            );
+
+        const packageType =
+            nativeWindow.jmpInfo
+                ?.portable
+                ? 'portable'
+                : 'installer';
+
+        const checkKey = [
+            'minitiger.desktop-update-check.v2',
+            apiClient.serverId?.()
+                ?? 'server',
+            currentBuild
+        ].join(':');
+
+        // One silent check per running Desktop session. AppLayout can remount
+        // while switching between Home and the admin dashboard; that must not
+        // look like a fresh application start.
+        try {
+            if (
+                nativeWindow
+                    .__minitigerDesktopUpdateCheckKey
+                === checkKey
+                || window.sessionStorage
+                    .getItem(checkKey)
+                === 'done'
+            ) {
+                return;
+            }
+
+            nativeWindow
+                .__minitigerDesktopUpdateCheckKey =
+                checkKey;
+
+            window.sessionStorage.setItem(
+                checkKey,
+                'done'
+            );
+        } catch {
+            nativeWindow
+                .__minitigerDesktopUpdateCheckKey =
+                checkKey;
         }
 
         let cancelled = false;
 
         void (async () => {
-            const currentBuild =
-                Number(
-                    nativeWindow.jmpInfo
-                        ?.updateBuild
-                    ?? 0
-                );
-
-            const currentVersion =
-                String(
-                    nativeWindow.jmpInfo
-                        ?.version
-                    ?? ''
-                );
-
-            const packageType =
-                nativeWindow.jmpInfo
-                    ?.portable
-                    ? 'portable'
-                    : 'installer';
-
-            const showForAtLeast = async (
-                startedAt: number,
-                minimumMilliseconds: number
-            ) => {
-                const remaining =
-                    minimumMilliseconds
-                    - (
-                        Date.now()
-                        - startedAt
-                    );
-
-                if (remaining > 0) {
-                    await wait(remaining);
-                }
-            };
-
-            const checkingStartedAt =
-                Date.now();
-
-            setOverlay({
-                phase: 'checking',
-                version: currentVersion
-            });
-
             console.info(
-                '[Minitiger Update] Prüfe privaten Update-Kanal:',
+                '[Minitiger Update] Hintergrundprüfung:',
                 {
                     currentBuild,
                     packageType
@@ -255,12 +246,11 @@ const MinitigerDesktopUpdateHost = () => {
                     );
 
                 if (!response.ok) {
-                    console.warn(
-                        '[Minitiger Update] Erster Status-Check fehlgeschlagen, wiederhole einmal:',
-                        response.status
-                    );
-
                     await wait(2_000);
+
+                    if (cancelled) {
+                        return;
+                    }
 
                     response =
                         await fetch(
@@ -290,62 +280,18 @@ const MinitigerDesktopUpdateHost = () => {
                         ?? 0
                     );
 
-                await showForAtLeast(
-                    checkingStartedAt,
-                    900
-                );
-
-                if (cancelled) {
-                    return;
-                }
-
-                if (!status.enabled) {
-                    console.warn(
-                        '[Minitiger Update]',
-                        status.message
-                        || 'Der private Update-Kanal ist nicht verfügbar.'
-                    );
-
-                    setOverlay({
-                        phase: 'error',
-                        message:
-                            status.message
-                            || 'Der private Update-Kanal ist derzeit nicht verfügbar. Minitiger startet normal weiter.'
-                    });
-
-                    await wait(1_800);
-
-                    if (!cancelled) {
-                        setOverlay(null);
-                    }
-
-                    return;
-                }
-
                 if (
-                    !status.available
+                    cancelled
+                    || !status.enabled
+                    || !status.available
                     || status.latestBuild
                         <= currentBuild
                 ) {
                     console.info(
                         '[Minitiger Update]',
                         status.message
-                        || 'Minitiger Desktop ist aktuell.'
+                        || 'Kein neues Update verfügbar.'
                     );
-
-                    setOverlay({
-                        phase: 'current',
-                        version:
-                            currentVersion
-                            || status.version
-                    });
-
-                    await wait(1_500);
-
-                    if (!cancelled) {
-                        setOverlay(null);
-                    }
-
                     return;
                 }
 
@@ -354,22 +300,9 @@ const MinitigerDesktopUpdateHost = () => {
                         === failedBuild
                 ) {
                     console.warn(
-                        '[Minitiger Update] Dieser Build ist zuvor fehlgeschlagen und wird nicht automatisch erneut versucht:',
+                        '[Minitiger Update] Build wurde zuvor als fehlgeschlagen markiert und wird in dieser Version nicht erneut automatisch versucht:',
                         failedBuild
                     );
-
-                    setOverlay({
-                        phase: 'error',
-                        message:
-                            `Build ${failedBuild} ist zuvor fehlgeschlagen. Minitiger startet ohne erneuten Update-Versuch.`
-                    });
-
-                    await wait(2_500);
-
-                    if (!cancelled) {
-                        setOverlay(null);
-                    }
-
                     return;
                 }
 
@@ -422,30 +355,38 @@ const MinitigerDesktopUpdateHost = () => {
                         status.downloadPath
                     );
 
-                if (cancelled) {
-                    return;
-                }
-
-                setOverlay({
-                    phase: 'available',
-                    status
-                });
-
                 console.info(
-                    '[Minitiger Update] Update gefunden. Übergabe an den nativen Updater erfolgt nach der Hinweisanzeige:',
+                    '[Minitiger Update] Neues Update gefunden:',
                     status.version,
-                    status.latestBuild,
-                    status.packageType
+                    status.latestBuild
                 );
 
-                // Give the user enough time to understand that the application
-                // will close and relaunch itself. The native updater exits the
-                // process quickly once applyMinitigerUpdate() is called.
-                await wait(5_000);
+                for (
+                    let seconds = 10;
+                    seconds >= 1;
+                    seconds -= 1
+                ) {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    setNotice({
+                        status,
+                        secondsRemaining:
+                            seconds
+                    });
+
+                    await wait(1_000);
+                }
 
                 if (cancelled) {
                     return;
                 }
+
+                setNotice({
+                    status,
+                    secondsRemaining: 0
+                });
 
                 const accepted =
                     applyUpdate(
@@ -457,42 +398,18 @@ const MinitigerDesktopUpdateHost = () => {
                     );
 
                 if (accepted === false) {
-                    setOverlay({
-                        phase: 'error',
-                        message:
-                            'Die Übergabe an den nativen Updater wurde abgelehnt. Minitiger läuft normal weiter.'
-                    });
-
-                    await wait(2_500);
-
-                    if (!cancelled) {
-                        setOverlay(null);
-                    }
+                    console.warn(
+                        '[Minitiger Update] Native Update-Übergabe wurde abgelehnt.'
+                    );
+                    setNotice(null);
                 }
             } catch (error) {
+                // Startup must never be blocked just because the private
+                // update channel is temporarily unavailable.
                 console.warn(
-                    '[Minitiger Update] Privater Update-Check fehlgeschlagen.',
+                    '[Minitiger Update] Hintergrundprüfung fehlgeschlagen.',
                     error
                 );
-
-                await showForAtLeast(
-                    checkingStartedAt,
-                    900
-                );
-
-                if (!cancelled) {
-                    setOverlay({
-                        phase: 'error',
-                        message:
-                            'Update-Prüfung derzeit nicht verfügbar. Minitiger startet normal weiter.'
-                    });
-
-                    await wait(1_800);
-
-                    if (!cancelled) {
-                        setOverlay(null);
-                    }
-                }
             }
         })();
 
@@ -504,18 +421,14 @@ const MinitigerDesktopUpdateHost = () => {
         user?.Id
     ]);
 
-    if (!overlay) {
+    if (!notice) {
         return null;
     }
 
-    const title =
-        overlay.phase === 'checking'
-            ? 'Update wird geprüft …'
-            : overlay.phase === 'current'
-                ? 'Minitiger Desktop ist aktuell ✓'
-                : overlay.phase === 'available'
-                    ? 'Update gefunden 🐯'
-                    : 'Update-Hinweis';
+    const countdownText =
+        notice.secondsRemaining > 0
+            ? `In ${notice.secondsRemaining} Sekunde${notice.secondsRemaining === 1 ? '' : 'n'} wird das Update durchgeführt.`
+            : 'Update wird jetzt gestartet …';
 
     return (
         <div
@@ -534,14 +447,18 @@ const MinitigerDesktopUpdateHost = () => {
         >
             <div
                 style={{
-                    width: 'min(36rem, calc(100vw - 3rem))',
-                    padding: '1.65rem 1.9rem',
-                    borderRadius: '1rem',
+                    width:
+                        'min(38rem, calc(100vw - 3rem))',
+                    padding:
+                        '1.75rem 2rem',
+                    borderRadius:
+                        '1rem',
                     border:
                         '1px solid rgba(255, 181, 61, 0.35)',
                     background:
                         'rgba(20, 18, 16, 0.97)',
-                    textAlign: 'center',
+                    textAlign:
+                        'center',
                     boxShadow:
                         '0 1.25rem 4rem rgba(0, 0, 0, 0.45)'
                 }}
@@ -551,53 +468,36 @@ const MinitigerDesktopUpdateHost = () => {
                         margin: 0
                     }}
                 >
-                    {title}
+                    Neues Minitiger-Update verfügbar 🐯
                 </h2>
 
-                {overlay.phase === 'checking' && (
-                    <p>
-                        Minitiger prüft kurz, ob eine neue private
-                        Desktop-Version verfügbar ist.
-                    </p>
-                )}
+                <p>
+                    {'Minitiger Desktop '}
+                    {notice.status.version}
+                    {' · Build '}
+                    {notice.status.latestBuild}
+                    {' ist verfügbar.'}
+                </p>
 
-                {overlay.phase === 'current' && (
-                    <p>
-                        {overlay.version
-                            ? `Version ${overlay.version} ist auf dem neuesten Stand.`
-                            : 'Du verwendest bereits die neueste Version.'}
-                    </p>
-                )}
+                <p
+                    style={{
+                        fontWeight: 700,
+                        fontSize: '1.08rem'
+                    }}
+                >
+                    {countdownText}
+                </p>
 
-                {overlay.phase === 'available' && (
-                    <>
-                        <p>
-                            {'Minitiger Desktop '}
-                            {overlay.status.version}
-                            {' · Build '}
-                            {overlay.status.latestBuild}
-                            {' ist verfügbar.'}
-                        </p>
+                <p>
+                    Minitiger schließt sich dafür automatisch,
+                    installiert die neue Version und startet danach
+                    selbstständig wieder.
+                </p>
 
-                        <p>
-                            Der Client schließt sich gleich automatisch,
-                            installiert das Update und startet danach von
-                            selbst wieder.
-                        </p>
-
-                        <small>
-                            Der Neustart kann einen Moment dauern. Bitte
-                            Minitiger in dieser Zeit nicht manuell erneut
-                            starten.
-                        </small>
-                    </>
-                )}
-
-                {overlay.phase === 'error' && (
-                    <p>
-                        {overlay.message}
-                    </p>
-                )}
+                <small>
+                    Der Neustart kann kurz dauern. Bitte den Client
+                    währenddessen nicht manuell erneut starten.
+                </small>
             </div>
         </div>
     );

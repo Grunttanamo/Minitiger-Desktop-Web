@@ -43,6 +43,10 @@ import useMinitigerLibrarySettings from './hooks/useMinitigerLibrarySettings';
 import useMinitigerProfiles from './hooks/useMinitigerProfiles';
 import useMinitigerThemeVariables from './hooks/useMinitigerThemeVariables';
 import useMinitigerVirtualLibraries from './hooks/useMinitigerVirtualLibraries';
+import {
+    readMinitigerItemCache,
+    writeMinitigerItemCache
+} from './persistentItemCache';
 import { getItemRoute } from './routingUtils';
 import {
     captureMinitigerOwnerSession,
@@ -331,7 +335,8 @@ const MinitigerHome = () => {
     const {
         data: userViewsData,
         isPending: librariesPending,
-        isError: librariesError
+        isError: librariesError,
+        isFetched: librariesFetched
     } = useUserViews({
         userId: user?.Id
     });
@@ -339,7 +344,8 @@ const MinitigerHome = () => {
     const {
         data: resumeData,
         isPending: resumePending,
-        isError: resumeError
+        isError: resumeError,
+        isFetched: resumeFetched
     } = useResumeItems({
         limit: 18,
         fields: [
@@ -357,7 +363,8 @@ const MinitigerHome = () => {
     const {
         data: nextUpData,
         isPending: nextUpPending,
-        isError: nextUpError
+        isError: nextUpError,
+        isFetched: nextUpFetched
     } = useNextUp({
         limit: 18,
         fields: [
@@ -377,7 +384,8 @@ const MinitigerHome = () => {
     const {
         data: watchlistData,
         isPending: watchlistPending,
-        isError: watchlistError
+        isError: watchlistError,
+        isFetched: watchlistFetched
     } = useGetItems({
         recursive: true,
         limit: 18,
@@ -406,7 +414,8 @@ const MinitigerHome = () => {
     const {
         data: rewatchData,
         isPending: rewatchPending,
-        isError: rewatchError
+        isError: rewatchError,
+        isFetched: rewatchFetched
     } = useGetItems({
         recursive: true,
         limit: 18,
@@ -429,12 +438,77 @@ const MinitigerHome = () => {
         clearBackdrop();
     }, []);
 
-    const libraries = (userViewsData?.Items ?? [])
-        .filter(library =>
-            String(library.CollectionType ?? '')
-                .toLowerCase() !== 'playlists'
-        );
-    const resumeItems = (
+    const cacheUserId =
+        user?.Id ?? '';
+
+    const cachedLibraries = useMemo(
+        () => readMinitigerItemCache(
+            apiClient,
+            cacheUserId,
+            'libraries'
+        ),
+        [
+            apiClient,
+            cacheUserId
+        ]
+    );
+    const cachedResumeItems = useMemo(
+        () => readMinitigerItemCache(
+            apiClient,
+            cacheUserId,
+            'resume'
+        ),
+        [
+            apiClient,
+            cacheUserId
+        ]
+    );
+    const cachedNextUpItems = useMemo(
+        () => readMinitigerItemCache(
+            apiClient,
+            cacheUserId,
+            'next-up'
+        ),
+        [
+            apiClient,
+            cacheUserId
+        ]
+    );
+    const cachedWatchlistItems = useMemo(
+        () => readMinitigerItemCache(
+            apiClient,
+            cacheUserId,
+            'watchlist'
+        ),
+        [
+            apiClient,
+            cacheUserId
+        ]
+    );
+    const cachedRewatchItems = useMemo(
+        () => readMinitigerItemCache(
+            apiClient,
+            cacheUserId,
+            'rewatch'
+        ),
+        [
+            apiClient,
+            cacheUserId
+        ]
+    );
+
+    const liveLibraries =
+        ((userViewsData?.Items ?? []) as ItemDto[])
+            .filter(library =>
+                String(
+                    library.CollectionType
+                    ?? ''
+                )
+                    .toLowerCase()
+                    !== 'playlists'
+            );
+
+    const liveResumeItems = (
         (resumeData?.Items ?? []) as ItemDto[]
     ).filter(item => {
         const type =
@@ -450,10 +524,174 @@ const MinitigerHome = () => {
             ].includes(type);
     });
 
-    const nextUpItems =
+    const liveNextUpItems =
         (nextUpData?.Items ?? []) as ItemDto[];
-    const watchlistItems = watchlistData?.Items ?? [];
-    const rewatchItems = rewatchData?.Items ?? [];
+    const liveWatchlistItems =
+        (watchlistData?.Items ?? []) as ItemDto[];
+    const liveRewatchItems =
+        (rewatchData?.Items ?? []) as ItemDto[];
+
+    const libraries =
+        librariesFetched
+            ? liveLibraries
+            : cachedLibraries.length > 0
+                ? cachedLibraries
+                : liveLibraries;
+    const resumeItems =
+        resumeFetched
+            ? liveResumeItems
+            : cachedResumeItems.length > 0
+                ? cachedResumeItems
+                : liveResumeItems;
+    const nextUpItems =
+        nextUpFetched
+            ? liveNextUpItems
+            : cachedNextUpItems.length > 0
+                ? cachedNextUpItems
+                : liveNextUpItems;
+    const watchlistItems =
+        watchlistFetched
+            ? liveWatchlistItems
+            : cachedWatchlistItems.length > 0
+                ? cachedWatchlistItems
+                : liveWatchlistItems;
+    const rewatchItems =
+        rewatchFetched
+            ? liveRewatchItems
+            : cachedRewatchItems.length > 0
+                ? cachedRewatchItems
+                : liveRewatchItems;
+
+    useEffect(() => {
+        if (
+            librariesFetched
+            && !librariesError
+        ) {
+            writeMinitigerItemCache(
+                apiClient,
+                cacheUserId,
+                'libraries',
+                liveLibraries
+            );
+        }
+    }, [
+        apiClient,
+        cacheUserId,
+        librariesError,
+        librariesFetched,
+        userViewsData
+    ]);
+
+    useEffect(() => {
+        if (
+            resumeFetched
+            && !resumeError
+        ) {
+            writeMinitigerItemCache(
+                apiClient,
+                cacheUserId,
+                'resume',
+                liveResumeItems
+            );
+        }
+    }, [
+        apiClient,
+        cacheUserId,
+        resumeData,
+        resumeError,
+        resumeFetched
+    ]);
+
+    useEffect(() => {
+        if (
+            nextUpFetched
+            && !nextUpError
+        ) {
+            writeMinitigerItemCache(
+                apiClient,
+                cacheUserId,
+                'next-up',
+                liveNextUpItems
+            );
+        }
+    }, [
+        apiClient,
+        cacheUserId,
+        nextUpData,
+        nextUpError,
+        nextUpFetched
+    ]);
+
+    useEffect(() => {
+        if (
+            watchlistFetched
+            && !watchlistError
+        ) {
+            writeMinitigerItemCache(
+                apiClient,
+                cacheUserId,
+                'watchlist',
+                liveWatchlistItems
+            );
+        }
+    }, [
+        apiClient,
+        cacheUserId,
+        watchlistData,
+        watchlistError,
+        watchlistFetched
+    ]);
+
+    useEffect(() => {
+        if (
+            rewatchFetched
+            && !rewatchError
+        ) {
+            writeMinitigerItemCache(
+                apiClient,
+                cacheUserId,
+                'rewatch',
+                liveRewatchItems
+            );
+        }
+    }, [
+        apiClient,
+        cacheUserId,
+        rewatchData,
+        rewatchError,
+        rewatchFetched
+    ]);
+
+    const librariesDisplayPending =
+        librariesPending
+        && libraries.length === 0;
+    const librariesDisplayError =
+        librariesError
+        && libraries.length === 0;
+    const resumeDisplayPending =
+        resumePending
+        && resumeItems.length === 0;
+    const resumeDisplayError =
+        resumeError
+        && resumeItems.length === 0;
+    const nextUpDisplayPending =
+        nextUpPending
+        && nextUpItems.length === 0;
+    const nextUpDisplayError =
+        nextUpError
+        && nextUpItems.length === 0;
+    const watchlistDisplayPending =
+        watchlistPending
+        && watchlistItems.length === 0;
+    const watchlistDisplayError =
+        watchlistError
+        && watchlistItems.length === 0;
+    const rewatchDisplayPending =
+        rewatchPending
+        && rewatchItems.length === 0;
+    const rewatchDisplayError =
+        rewatchError
+        && rewatchItems.length === 0;
 
     const virtualLibraryId = searchParams.get('minitigerVirtualLibrary');
     const activeVirtualLibrary = virtualConfig.libraries.find(
@@ -561,20 +799,20 @@ const MinitigerHome = () => {
 
     const librarySection = (
         <section className='minitigerSection minitigerLibrarySection'>
-            {librariesPending && (
+            {librariesDisplayPending && (
                 <div className='minitigerStatusCard'>
                     Bibliotheken werden geladen …
                 </div>
             )}
 
-            {librariesError && (
+            {librariesDisplayError && (
                 <div className='minitigerStatusCard minitigerStatusError'>
                     Die Bibliotheken konnten nicht geladen werden.
                 </div>
             )}
 
-            {!librariesPending
-                && !librariesError
+            {!librariesDisplayPending
+                && !librariesDisplayError
                 && libraries.length > 0
                 && (
                     <div className='minitigerLibraryGrid'>
@@ -665,8 +903,8 @@ const MinitigerHome = () => {
                 title='Weiterschauen'
                 items={resumeItems}
                 apiClient={apiClient}
-                pending={resumePending}
-                error={resumeError}
+                pending={resumeDisplayPending}
+                error={resumeDisplayError}
                 variant='landscape'
                 cardScale={settings.systemRowCardScale.resume}
                 cardGap={settings.systemRowGap.resume}
@@ -685,8 +923,8 @@ const MinitigerHome = () => {
                 title='Als Nächstes'
                 items={nextUpItems}
                 apiClient={apiClient}
-                pending={nextUpPending}
-                error={nextUpError}
+                pending={nextUpDisplayPending}
+                error={nextUpDisplayError}
                 variant='landscape'
                 cardScale={settings.systemRowCardScale.nextUp}
                 cardGap={settings.systemRowGap.nextUp}
@@ -704,8 +942,8 @@ const MinitigerHome = () => {
                 title='Watchlist'
                 items={watchlistItems}
                 apiClient={apiClient}
-                pending={watchlistPending}
-                error={watchlistError}
+                pending={watchlistDisplayPending}
+                error={watchlistDisplayError}
                 variant='poster'
                 cardScale={settings.systemRowCardScale.watchlist}
                 cardGap={settings.systemRowGap.watchlist}
@@ -722,8 +960,8 @@ const MinitigerHome = () => {
                 title='Erneut ansehen'
                 items={rewatchItems}
                 apiClient={apiClient}
-                pending={rewatchPending}
-                error={rewatchError}
+                pending={rewatchDisplayPending}
+                error={rewatchDisplayError}
                 variant='poster'
                 cardScale={settings.systemRowCardScale.recent}
                 cardGap={settings.systemRowGap.recent}
@@ -737,21 +975,21 @@ const MinitigerHome = () => {
         )
     }), [
         apiClient,
-        librariesError,
-        librariesPending,
+        librariesDisplayError,
+        librariesDisplayPending,
         librarySection,
-        nextUpError,
+        nextUpDisplayError,
         nextUpItems,
-        nextUpPending,
-        rewatchError,
+        nextUpDisplayPending,
+        rewatchDisplayError,
         rewatchItems,
-        rewatchPending,
-        resumeError,
+        rewatchDisplayPending,
+        resumeDisplayError,
         resumeItems,
-        resumePending,
-        watchlistError,
+        resumeDisplayPending,
+        watchlistDisplayError,
         watchlistItems,
-        watchlistPending,
+        watchlistDisplayPending,
         isAdmin,
         settings.showAudioFlags,
         settings.showFskBadges,

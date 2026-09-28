@@ -16,6 +16,10 @@ import {
 import type { ItemDto } from 'types/base/models/item-dto';
 
 import type { MinitigerVirtualLibrary } from '../config/virtualLibraries';
+import {
+    readMinitigerItemCache,
+    writeMinitigerItemCache
+} from '../persistentItemCache';
 import useMinitigerHomeSettings from '../hooks/useMinitigerHomeSettings';
 import useMinitigerLibrarySettings from '../hooks/useMinitigerLibrarySettings';
 import useMinitigerRowMediaStreams from '../hooks/useMinitigerRowMediaStreams';
@@ -215,10 +219,56 @@ const MinitigerVirtualLibraryPage = ({
         retry: 1
     });
 
-    const rawItems = useMemo(
+    const cachedRawItems = useMemo(
+        () => readMinitigerItemCache(
+            apiClient,
+            userId,
+            `virtual-library-${library.id}`,
+            idsFingerprint
+        ),
+        [
+            apiClient,
+            idsFingerprint,
+            library.id,
+            userId
+        ]
+    );
+
+    const liveRawItems = useMemo(
         () => [ ...(itemsQuery.data ?? []) ],
         [itemsQuery.data]
     );
+
+    const rawItems =
+        itemsQuery.isFetched
+        && !itemsQuery.isError
+            ? liveRawItems
+            : cachedRawItems.length > 0
+                ? cachedRawItems
+                : liveRawItems;
+
+    useEffect(() => {
+        if (
+            itemsQuery.isFetched
+            && !itemsQuery.isError
+        ) {
+            writeMinitigerItemCache(
+                apiClient,
+                userId,
+                `virtual-library-${library.id}`,
+                liveRawItems,
+                idsFingerprint
+            );
+        }
+    }, [
+        apiClient,
+        idsFingerprint,
+        itemsQuery.isError,
+        itemsQuery.isFetched,
+        library.id,
+        liveRawItems,
+        userId
+    ]);
 
     const streamDetails = useMinitigerRowMediaStreams(
         rawItems,
@@ -251,8 +301,14 @@ const MinitigerVirtualLibraryPage = ({
         [rawItems, streamDetails]
     );
 
-    const isPending = library.itemIds.length > 0 && itemsQuery.isPending;
-    const isError = library.itemIds.length > 0 && itemsQuery.isError;
+    const isPending =
+        library.itemIds.length > 0
+        && itemsQuery.isPending
+        && rawItems.length === 0;
+    const isError =
+        library.itemIds.length > 0
+        && itemsQuery.isError
+        && rawItems.length === 0;
 
     const items = useMemo(() => (
         enhancedItems

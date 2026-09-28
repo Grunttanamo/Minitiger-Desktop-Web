@@ -858,7 +858,7 @@ const MinitigerCustomRow = ({
      * normal queries refresh in the background. Once all configured sources
      * have answered, switch atomically to the fresh merged result.
      */
-    const items = liveQueriesSettled
+    const items = liveQueriesSucceeded
         ? liveItems
         : cachedItems.length > 0
             ? cachedItems
@@ -890,23 +890,29 @@ const MinitigerCustomRow = ({
             items={items}
             apiClient={apiClient}
             pending={
-                (
-                    firstEnabled
-                    && firstQuery.isPending
-                )
-                || (
-                    secondEnabled
-                    && secondQuery.isPending
+                items.length === 0
+                && (
+                    (
+                        firstEnabled
+                        && firstQuery.isPending
+                    )
+                    || (
+                        secondEnabled
+                        && secondQuery.isPending
+                    )
                 )
             }
             error={
-                (
-                    firstEnabled
-                    && firstQuery.isError
-                )
-                || (
-                    secondEnabled
-                    && secondQuery.isError
+                items.length === 0
+                && (
+                    (
+                        firstEnabled
+                        && firstQuery.isError
+                    )
+                    || (
+                        secondEnabled
+                        && secondQuery.isError
+                    )
                 )
             }
             variant={effectiveDisplay}
