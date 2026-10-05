@@ -60,7 +60,14 @@ const LATEST_SEASON_BOOTSTRAP_RECENT_PREMIERE_MS =
 
 const CUSTOM_ROW_DATA_CACHE_VERSION = 1;
 const CUSTOM_ROW_DATA_CACHE_TTL_MS =
-    24 * 60 * 60 * 1000;
+    7 * 24 * 60 * 60 * 1000;
+
+const CUSTOM_ROW_QUERY_STALE_MS =
+    5 * 60 * 1000;
+const CUSTOM_ROW_QUERY_GC_MS =
+    60 * 60 * 1000;
+const LATEST_SEASON_PAGE_SIZE = 72;
+const LATEST_SEASON_MAX_SCAN = 360;
 const CUSTOM_ROW_DATA_CACHE_PREFIX =
     'Minitiger.CustomRowData.v1';
 
@@ -335,6 +342,71 @@ const getItemTypes = (
     }
 };
 
+const fetchLibraryItems = async (
+    apiClient: ApiClient,
+    userId: string,
+    library: ItemDto,
+    itemTypes: string,
+    wantsEpisodes: boolean,
+    isMangaTitles: boolean,
+    limit: number,
+    startIndex = 0
+): Promise<ItemDto[]> => {
+    const url = apiClient.getUrl(
+        `Users/${userId}/Items`,
+        {
+            ParentId: library.Id,
+            Recursive: !isMangaTitles,
+            IncludeItemTypes: itemTypes,
+            ExcludeLocationTypes:
+                wantsEpisodes
+                    ? 'Virtual'
+                    : undefined,
+            // Keep the discovery request intentionally light. Expensive
+            // MediaStreams/MediaSources are resolved only for the handful of
+            // cards that are actually displayed by useMinitigerRowMediaStreams.
+            Fields:
+                'PrimaryImageAspectRatio,DateCreated,ParentId,SeriesId,SeriesName,ParentIndexNumber',
+            EnableImageTypes:
+                'Primary,Thumb,Backdrop',
+            SortBy: 'DateCreated',
+            SortOrder: 'Descending',
+            StartIndex: startIndex,
+            Limit: limit,
+            EnableTotalRecordCount: false
+        }
+    );
+
+    const result = await apiClient.getJSON(
+        url
+    ) as ItemQueryResult;
+
+    return (result.Items ?? []) as ItemDto[];
+};
+
+const filterFutureEpisodes = (
+    items: ItemDto[],
+    wantsEpisodes: boolean
+) => {
+    if (!wantsEpisodes) {
+        return items;
+    }
+
+    const now = Date.now();
+
+    return items.filter(item => {
+        if (!item.PremiereDate) {
+            return true;
+        }
+
+        const timestamp =
+            Date.parse(item.PremiereDate);
+
+        return !Number.isFinite(timestamp)
+            || timestamp <= now;
+    });
+};
+
 const fetchLibraryPart = async (
     apiClient: ApiClient,
     userId: string,
@@ -370,54 +442,97 @@ const fetchLibraryPart = async (
         latestTitles
         && collectionType.toLowerCase() === 'books';
 
-    const queryLimit = wantsEpisodes
-        ? Math.min(
-            500,
-            Math.max(
-                row.count * (latestSeasons ? 20 : 4),
-                row.count + 30
+    let filtered: ItemDto[];
+
+    if (latestSeasons) {
+        // Scan newest episodes progressively and stop as soon as enough
+        // distinct seasons have been discovered. The previous implementation
+        // could pull hundreds of heavy episode objects on every refresh.
+        const collected: ItemDto[] = [];
+        const discoveredSeasons =
+            new Set<string>();
+
+        for (
+            let startIndex = 0;
+            startIndex < LATEST_SEASON_MAX_SCAN;
+            startIndex += LATEST_SEASON_PAGE_SIZE
+        ) {
+            const page = await fetchLibraryItems(
+                apiClient,
+                userId,
+                library,
+                itemTypes,
+                wantsEpisodes,
+                isMangaTitles,
+                Math.min(
+                    LATEST_SEASON_PAGE_SIZE,
+                    LATEST_SEASON_MAX_SCAN
+                        - startIndex
+                ),
+                startIndex
+            );
+
+            const usable =
+                filterFutureEpisodes(
+                    page,
+                    wantsEpisodes
+                );
+
+            collected.push(...usable);
+
+            usable.forEach(item => {
+                const seasonId =
+                    String(
+                        item.ParentId
+                        ?? ''
+                    );
+
+                if (seasonId) {
+                    discoveredSeasons.add(
+                        seasonId
+                    );
+                }
+            });
+
+            if (
+                discoveredSeasons.size
+                    >= row.count
+                || page.length
+                    < LATEST_SEASON_PAGE_SIZE
+            ) {
+                break;
+            }
+        }
+
+        filtered = collected;
+    } else {
+        const queryLimit = wantsEpisodes
+            ? Math.min(
+                180,
+                Math.max(
+                    row.count * 3,
+                    row.count + 24
+                )
             )
-        )
-        : Math.max(row.count, 12);
+            : Math.max(
+                row.count,
+                12
+            );
 
-    const url = apiClient.getUrl(
-        `Users/${userId}/Items`,
-        {
-            ParentId: library.Id,
-            Recursive: !isMangaTitles,
-            IncludeItemTypes: itemTypes,
-            ExcludeLocationTypes:
+        filtered =
+            filterFutureEpisodes(
+                await fetchLibraryItems(
+                    apiClient,
+                    userId,
+                    library,
+                    itemTypes,
+                    wantsEpisodes,
+                    isMangaTitles,
+                    queryLimit
+                ),
                 wantsEpisodes
-                    ? 'Virtual'
-                    : undefined,
-            Fields:
-                'PrimaryImageAspectRatio,DateCreated,Overview,MediaStreams,MediaSources,ParentId,SeriesId,SeriesName,ParentIndexNumber',
-            EnableImageTypes:
-                'Primary,Thumb,Backdrop',
-            SortBy: 'DateCreated',
-            SortOrder: 'Descending',
-            Limit: queryLimit,
-            EnableTotalRecordCount: false
-        }
-    );
-
-    const result = await apiClient.getJSON(
-        url
-    ) as ItemQueryResult;
-
-    const now = Date.now();
-
-    const filtered = (result.Items ?? []).filter(item => {
-        if (!wantsEpisodes || !item.PremiereDate) {
-            return true;
-        }
-
-        const timestamp =
-            Date.parse(item.PremiereDate);
-
-        return !Number.isFinite(timestamp)
-            || timestamp <= now;
-    });
+            );
+    }
 
     if (!latestSeasons) {
         return filtered;
@@ -468,6 +583,7 @@ const fetchLibraryPart = async (
             seasons: {}
         };
 
+    const now = Date.now();
     const latestEpisodeBySeason =
         new Map<string, {
             latestEpisode: ItemDto;
@@ -561,8 +677,17 @@ const fetchLibraryPart = async (
     );
 
     const seasonIds = Array.from(
-        latestEpisodeBySeason.keys()
-    ).slice(0, row.count);
+        latestEpisodeBySeason.entries()
+    )
+        .sort(
+            (left, right) =>
+                right[1].latestTimestamp
+                - left[1].latestTimestamp
+        )
+        .slice(0, row.count)
+        .map(([ seasonId ]) =>
+            seasonId
+        );
 
     const seasons = await Promise.all(
         seasonIds.map(async seasonId => {
@@ -784,7 +909,10 @@ const MinitigerCustomRow = ({
             firstLibrary!,
             row
         ),
-        enabled: firstEnabled
+        enabled: firstEnabled,
+        staleTime: CUSTOM_ROW_QUERY_STALE_MS,
+        gcTime: CUSTOM_ROW_QUERY_GC_MS,
+        refetchOnWindowFocus: false
     });
 
     const secondQuery = useQuery({
@@ -803,7 +931,10 @@ const MinitigerCustomRow = ({
             secondLibrary!,
             row
         ),
-        enabled: secondEnabled
+        enabled: secondEnabled,
+        staleTime: CUSTOM_ROW_QUERY_STALE_MS,
+        gcTime: CUSTOM_ROW_QUERY_GC_MS,
+        refetchOnWindowFocus: false
     });
 
     const liveItems = useMemo(

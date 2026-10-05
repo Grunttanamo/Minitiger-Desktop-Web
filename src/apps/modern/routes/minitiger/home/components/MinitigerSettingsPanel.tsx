@@ -1863,9 +1863,9 @@ const onUpdate = (
                                     && onRemoveVirtualMedia
                                     && (
                                         <section className='minitigerSettingsCard'>
-                                            <h4>Virtuelle Bibliotheken · Bild / Hover-Video</h4>
+                                            <h4>Virtuelle Bibliotheken · Bild / GIF / Hover-Video</h4>
                                             <p className='minitigerSettingsHint'>
-                                                Bild, transparentes PNG/WebP-Logo und MP4 werden bei aktivem Server-Sync zentral im Jellyfin-Plugin gespeichert. Dadurch sehen Browser, Desktop Client und andere Benutzer dieselben Medien. Ohne Plugin bleibt der bisherige lokale Fallback erhalten.
+                                                JPG/PNG/WebP, animierte GIFs, transparentes PNG/WebP-Logo und MP4 werden bei aktivem Server-Sync zentral im Jellyfin-Plugin gespeichert. GIFs laufen direkt als Bild und brauchen keinen Videoplayer. Dadurch sehen Browser, Desktop Client und andere Benutzer dieselben Medien. Ohne Plugin bleibt der bisherige lokale Fallback erhalten.
                                             </p>
 
                                             <div className='minitigerVirtualMediaSettingsList'>
@@ -1877,10 +1877,10 @@ const onUpdate = (
                                                         <strong>{library.name}</strong>
 
                                                         <label>
-                                                            Statisches Bild
+                                                            Bild / GIF
                                                             <input
                                                                 type='file'
-                                                                accept='image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp'
+                                                                accept='image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif'
                                                                 onChange={event => {
                                                                     const file = event.currentTarget.files?.[0];
 
@@ -1889,23 +1889,23 @@ const onUpdate = (
                                                                     }
 
                                                                     if (file.size > 15 * 1024 * 1024) {
-                                                                        setVirtualMediaMessage('Das virtuelle Bild ist größer als 15 MB.');
+                                                                        setVirtualMediaMessage('Das virtuelle Bild/GIF ist größer als 15 MB.');
                                                                         event.currentTarget.value = '';
                                                                         return;
                                                                     }
 
-                                                                    setVirtualMediaMessage(`Bild für „${library.name}“ wird gespeichert …`);
+                                                                    setVirtualMediaMessage(`Bild/GIF für „${library.name}“ wird gespeichert …`);
                                                                     void onUploadVirtualMedia(
                                                                         library.id,
                                                                         'image',
                                                                         file
                                                                     ).then(target => {
                                                                         setVirtualMediaMessage(
-                                                                            `Bild für „${library.name}“ ${target === 'server' ? 'zentral auf dem Server' : 'lokal'} gespeichert.`
+                                                                            `Bild/GIF für „${library.name}“ ${target === 'server' ? 'zentral auf dem Server' : 'lokal'} gespeichert.`
                                                                         );
                                                                     }).catch(error => {
                                                                         console.error('[Minitiger Virtual] Bild-Upload fehlgeschlagen', error);
-                                                                        setVirtualMediaMessage('Bild konnte nicht gespeichert werden' + (error instanceof Error && error.message ? ' · ' + error.message : '.'));
+                                                                        setVirtualMediaMessage('Bild/GIF konnte nicht gespeichert werden' + (error instanceof Error && error.message ? ' · ' + error.message : '.'));
                                                                     });
 
                                                                     event.currentTarget.value = '';
@@ -1998,7 +1998,7 @@ const onUpdate = (
                                                                         ).then(() => setVirtualMediaMessage(`Bild von „${library.name}“ entfernt.`));
                                                                     }}
                                                                 >
-                                                                    Bild entfernen
+                                                                    Bild/GIF entfernen
                                                                 </button>
                                                             )}
 

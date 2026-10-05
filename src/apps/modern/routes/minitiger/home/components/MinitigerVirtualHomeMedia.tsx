@@ -2,7 +2,11 @@ import type { ApiClient } from 'jellyfin-apiclient';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { MinitigerVirtualLibrary } from '../config/virtualLibraries';
-import { getVirtualVideo } from '../virtualMediaStore';
+import {
+    cacheVirtualServerVideo,
+    getCachedVirtualServerVideo,
+    getVirtualVideo
+} from '../virtualMediaStore';
 import { getMinitigerVirtualServerMediaUrl } from '../virtualServerSync';
 
 interface Props {
@@ -69,22 +73,118 @@ const MinitigerVirtualHomeMedia = ({
     useEffect(() => {
         let cancelled = false;
         let objectUrl = '';
+        let cacheTimer:
+            number
+            | undefined;
 
         if (serverMp4Url || serverWebmUrl) {
-            const primary = prefersMp4
-                ? (serverMp4Url || serverWebmUrl)
-                : (serverWebmUrl || serverMp4Url);
-            const fallback = prefersMp4
-                ? (serverWebmUrl || '')
-                : (serverMp4Url || '');
+            const primaryFormat =
+                prefersMp4
+                    ? (serverMp4Url ? 'mp4' : 'webm')
+                    : (serverWebmUrl ? 'webm' : 'mp4');
+            const primary = primaryFormat === 'mp4'
+                ? serverMp4Url
+                : serverWebmUrl;
+            const fallback = primaryFormat === 'mp4'
+                ? serverWebmUrl
+                : serverMp4Url;
+            const serverId =
+                apiClient?.serverId()
+                ?? '';
 
-            setVideoUrl(primary);
             setFallbackVideoUrl(
-                fallback && fallback !== primary
+                fallback
+                && fallback !== primary
                     ? fallback
                     : ''
             );
-            return;
+
+            // Paint immediately from the normal server URL. In parallel try
+            // the persistent IndexedDB cache; from the second visit/start the
+            // video can then play without a fresh server transfer.
+            setVideoUrl(primary);
+
+            void getCachedVirtualServerVideo(
+                serverId,
+                library.id,
+                library.videoRevision ?? 0,
+                primaryFormat
+            ).then(blob => {
+                if (
+                    cancelled
+                    || !blob
+                ) {
+                    return;
+                }
+
+                objectUrl =
+                    URL.createObjectURL(
+                        blob
+                    );
+                setVideoUrl(objectUrl);
+                setFallbackVideoUrl('');
+            }).catch(() => undefined);
+
+            cacheTimer =
+                window.setTimeout(() => {
+                    if (
+                        cancelled
+                        || !primary
+                    ) {
+                        return;
+                    }
+
+                    void fetch(
+                        primary,
+                        {
+                            method: 'GET',
+                            cache: 'force-cache'
+                        }
+                    ).then(async response => {
+                        if (
+                            cancelled
+                            || !response.ok
+                        ) {
+                            return;
+                        }
+
+                        const blob =
+                            await response.blob();
+
+                        await cacheVirtualServerVideo(
+                            serverId,
+                            library.id,
+                            library.videoRevision
+                                ?? 0,
+                            primaryFormat,
+                            blob
+                        );
+                    }).catch(error => {
+                        console.debug(
+                            '[Minitiger Virtual] Hover-Video Cache-Warmup übersprungen',
+                            error
+                        );
+                    });
+                }, 1_500);
+
+            return () => {
+                cancelled = true;
+
+                if (
+                    cacheTimer
+                    !== undefined
+                ) {
+                    window.clearTimeout(
+                        cacheTimer
+                    );
+                }
+
+                if (objectUrl) {
+                    URL.revokeObjectURL(
+                        objectUrl
+                    );
+                }
+            };
         }
 
         setFallbackVideoUrl('');
@@ -118,7 +218,10 @@ const MinitigerVirtualHomeMedia = ({
             }
         };
     }, [
+        apiClient,
+        library.id,
         library.videoKey,
+        library.videoRevision,
         prefersMp4,
         serverMp4Url,
         serverWebmUrl

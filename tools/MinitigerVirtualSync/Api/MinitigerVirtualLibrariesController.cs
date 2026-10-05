@@ -423,12 +423,13 @@ public sealed class MinitigerVirtualLibrariesController : ControllerBase
             ".jpg" or ".jpeg" => new MediaDescriptor("image.jpg", "image/jpeg"),
             ".png" => new MediaDescriptor("image.png", "image/png"),
             ".webp" => new MediaDescriptor("image.webp", "image/webp"),
+            ".gif" => new MediaDescriptor("image.gif", "image/gif"),
             _ => default
         };
 
         if (string.IsNullOrWhiteSpace(descriptor.FileName))
         {
-            validationError = "Virtual image must be JPG, PNG or WebP.";
+            validationError = "Virtual image must be JPG, PNG, WebP or GIF.";
             return false;
         }
 
@@ -442,6 +443,7 @@ public sealed class MinitigerVirtualLibrariesController : ControllerBase
             ".jpg" or ".jpeg" => "image/jpeg",
             ".png" => "image/png",
             ".webp" => "image/webp",
+            ".gif" => "image/gif",
             ".mp4" => "video/mp4",
             ".webm" => "video/webm",
             _ => "application/octet-stream"

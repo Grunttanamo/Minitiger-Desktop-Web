@@ -117,6 +117,8 @@ const imageFileName = (blob: Blob) => {
             return 'image.jpg';
         case 'image/webp':
             return 'image.webp';
+        case 'image/gif':
+            return 'image.gif';
         default:
             return 'image.png';
     }
@@ -795,6 +797,16 @@ const useMinitigerVirtualLibraries = () => {
             );
         } else {
             const dataUrl = await readFileAsDataUrl(file);
+
+            if (
+                kind === 'image'
+                && file.type === 'image/gif'
+                && dataUrl.length > 1_400_000
+            ) {
+                throw new Error(
+                    'Größere GIFs benötigen den aktiven Minitiger Virtual Sync Server-Speicher.'
+                );
+            }
 
             updateLibrary(
                 libraryId,
