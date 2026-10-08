@@ -572,8 +572,27 @@ export const supportsFskBadge = (
 
 export const getStreamLanguages = (
     item: ItemDto,
-    type: 'Audio' | 'Subtitle'
+    type: 'Audio' | 'Subtitle',
+    manualLanguages?: string[]
 ) => {
+    if (
+        type === 'Audio'
+        && manualLanguages !== undefined
+    ) {
+        return Array.from(
+            new Set(
+                manualLanguages
+                    .map(language =>
+                        normalizeLanguage(
+                            language
+                        )
+                        ?? language
+                    )
+                    .filter(Boolean)
+            )
+        );
+    }
+
     const mediaSources = (
         item.MediaSources
         ?? []
