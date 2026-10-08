@@ -40,11 +40,32 @@ const isLiteralTitleSort = (
         === ItemSortBy.SortName
 );
 
+const getLiteralSortTitle = (
+    item: ItemDto
+) => {
+    const sortName =
+        String(
+            item.SortName
+            ?? ''
+        ).trim();
+
+    if (sortName) {
+        return sortName;
+    }
+
+    return String(
+        item.Name
+        ?? ''
+    ).trim();
+};
+
 const getLiteralTitleInitial = (
-    name: string
+    item: ItemDto
 ) => {
     const trimmed =
-        name.trim();
+        getLiteralSortTitle(
+            item
+        );
 
     if (!trimmed) {
         return '';
@@ -73,7 +94,7 @@ const matchesLiteralAlphabet = (
 
     const initial =
         getLiteralTitleInitial(
-            String(item.Name ?? '')
+            item
         );
 
     if (alphabet === '#') {
@@ -116,8 +137,12 @@ const applyLiteralTitleView = (
             .sort((left, right) => {
                 const compared =
                     literalTitleCollator.compare(
-                        String(left.Name ?? '').trim(),
-                        String(right.Name ?? '').trim()
+                        getLiteralSortTitle(
+                            left
+                        ),
+                        getLiteralSortTitle(
+                            right
+                        )
                     );
 
                 if (compared !== 0) {
