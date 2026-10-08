@@ -30,6 +30,10 @@ import {
     supportsFskBadge
 } from '../mediaUtils';
 import useMinitigerRowMediaStreams from '../hooks/useMinitigerRowMediaStreams';
+import {
+    getCachedMinitigerLanguageFlags,
+    useMinitigerLanguageFlagRevision
+} from '../minitigerLanguageFlags';
 import { getItemRoute } from '../routingUtils';
 import { animateMinitigerHorizontalScroll } from '../../animateHorizontalScroll';
 import MinitigerPoster from './MinitigerPoster';
@@ -110,6 +114,10 @@ const MinitigerMediaRow = ({
     showTitle = true,
     subtitleOverride
 }: MinitigerMediaRowProps) => {
+    useMinitigerLanguageFlagRevision(
+        apiClient
+    );
+
     const rowRef = useRef<HTMLDivElement>(null);
     const [ canScroll, setCanScroll ] = useState(false);
     const queryClient = useQueryClient();
@@ -600,12 +608,21 @@ const MinitigerMediaRow = ({
                                 )
                                 : null;
 
+                        const manualLanguages =
+                            getCachedMinitigerLanguageFlags(
+                                item.Id
+                            );
+
                         const audioFlags =
                             loadAudioFlags
-                            && supportsAudioFlags(item)
+                            && (
+                                manualLanguages !== undefined
+                                || supportsAudioFlags(item)
+                            )
                                 ? getStreamLanguages(
                                     item,
-                                    'Audio'
+                                    'Audio',
+                                    manualLanguages
                                 )
                                     .map(language => ({
                                         language,
