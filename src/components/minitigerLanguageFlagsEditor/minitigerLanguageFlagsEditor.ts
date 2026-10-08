@@ -5,7 +5,8 @@ import {
     getCachedMinitigerLanguageFlags,
     loadMinitigerLanguageFlagOverrides,
     MINITIGER_LANGUAGE_FLAG_OPTIONS,
-    saveMinitigerLanguageFlags
+    saveMinitigerLanguageFlags,
+    saveMinitigerLanguageFlagsBulk
 } from 'apps/modern/routes/minitiger/home/minitigerLanguageFlags';
 import {
     getLanguageFlagUrl
@@ -16,7 +17,74 @@ import toast from 'components/toast/toast';
 interface ItemLike {
     Id?: string | null;
     Name?: string | null;
+    Type?: string | null;
 }
+
+const getCascadeItemIds = async (
+    apiClient: ApiClient,
+    item: ItemLike
+) => {
+    if (!item.Id) {
+        return [];
+    }
+
+    const itemType =
+        String(
+            item.Type
+            ?? ''
+        ).toLowerCase();
+
+    if (
+        itemType !== 'series'
+        && itemType !== 'season'
+    ) {
+        return [ item.Id ];
+    }
+
+    const userId =
+        apiClient.getCurrentUserId();
+
+    if (!userId) {
+        return [ item.Id ];
+    }
+
+    const result =
+        await apiClient.getItems(
+            userId,
+            {
+                ParentId: item.Id,
+                Recursive:
+                    itemType === 'series',
+                IncludeItemTypes:
+                    itemType === 'series'
+                        ? 'Season,Episode'
+                        : 'Episode',
+                EnableTotalRecordCount:
+                    false,
+                Limit: 4999
+            }
+        );
+
+    const children =
+        (
+            result?.Items
+            ?? []
+        )
+            .map(child =>
+                String(
+                    child.Id
+                    ?? ''
+                ).trim()
+            )
+            .filter(Boolean);
+
+    return Array.from(
+        new Set([
+            item.Id,
+            ...children
+        ])
+    );
+};
 
 const makeFlagRow = (
     language: {
@@ -138,6 +206,34 @@ export const showMinitigerLanguageFlagsEditor =
 
                     <div class="minitigerLanguageFlagsGrid"></div>
 
+                    ${
+                        String(item.Type ?? '').toLowerCase() === 'series'
+                            ? `
+                    <label class="minitigerLanguageFlagsCascade">
+                        <input
+                            type="checkbox"
+                            class="minitigerLanguageFlagsCascadeCheckbox"
+                        />
+                        <span>
+                            Auf alle Staffeln und Folgen anwenden
+                        </span>
+                    </label>
+                    `
+                            : String(item.Type ?? '').toLowerCase() === 'season'
+                                ? `
+                    <label class="minitigerLanguageFlagsCascade">
+                        <input
+                            type="checkbox"
+                            class="minitigerLanguageFlagsCascadeCheckbox"
+                        />
+                        <span>
+                            Auf alle Folgen dieser Staffel anwenden
+                        </span>
+                    </label>
+                    `
+                                : ''
+                    }
+
                     <div class="minitigerLanguageFlagsActions">
                         <button
                             type="button"
@@ -229,6 +325,30 @@ export const showMinitigerLanguageFlagsEditor =
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+                }
+
+                .minitigerLanguageFlagsCascade {
+                    display: flex;
+                    align-items: center;
+                    gap: .7rem;
+                    margin-top: 1rem;
+                    padding: .8rem .9rem;
+                    border: 1px solid rgba(255,255,255,.12);
+                    border-radius: .4rem;
+                    background: rgba(255,255,255,.045);
+                    cursor: pointer;
+                    user-select: none;
+                }
+
+                .minitigerLanguageFlagsCascade input {
+                    width: 1.15rem;
+                    height: 1.15rem;
+                    margin: 0;
+                    flex: 0 0 auto;
+                }
+
+                .minitigerLanguageFlagsCascade span {
+                    font-weight: 700;
                 }
 
                 .minitigerLanguageFlagsActions {
@@ -358,18 +478,49 @@ export const showMinitigerLanguageFlagsEditor =
                                         input.value
                                 );
 
-                            await saveMinitigerLanguageFlags(
-                                apiClient,
-                                item.Id as string,
-                                languages
-                            );
+                            const cascade =
+                                Boolean(
+                                    dlg.querySelector<HTMLInputElement>(
+                                        '.minitigerLanguageFlagsCascadeCheckbox'
+                                    )?.checked
+                                );
+
+                            let updatedCount = 1;
+
+                            if (cascade) {
+                                const itemIds =
+                                    await getCascadeItemIds(
+                                        apiClient,
+                                        item
+                                    );
+
+                                await saveMinitigerLanguageFlagsBulk(
+                                    apiClient,
+                                    itemIds,
+                                    languages
+                                );
+
+                                updatedCount =
+                                    itemIds.length;
+                            } else {
+                                await saveMinitigerLanguageFlags(
+                                    apiClient,
+                                    item.Id as string,
+                                    languages
+                                );
+                            }
 
                             changed = true;
 
-                            toast(
+                            const baseMessage =
                                 languages.length > 0
                                     ? `Sprachflaggen gespeichert: ${languages.join(', ')}`
-                                    : 'Manueller Override gespeichert: keine Flaggen.'
+                                    : 'Manueller Override gespeichert: keine Flaggen.';
+
+                            toast(
+                                cascade
+                                    ? `${baseMessage} · ${updatedCount} Inhalte aktualisiert.`
+                                    : baseMessage
                             );
 
                             close();
