@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 
 import type { CardOptions } from 'types/cardOptions';
 import type { ItemDto } from 'types/base/models/item-dto';
+import { useApi } from 'hooks/useApi';
 
 import {
     getLanguageFlagUrl,
@@ -10,6 +11,9 @@ import {
     supportsAudioFlags,
     supportsFskBadge
 } from 'apps/modern/routes/minitiger/home/mediaUtils';
+import {
+    useMinitigerLanguageFlags
+} from 'apps/modern/routes/minitiger/home/minitigerLanguageFlags';
 
 import './MinitigerNativeLibraryOverlay.scss';
 
@@ -49,6 +53,16 @@ const MinitigerNativeLibraryOverlay = ({
     item,
     cardOptions
 }: Props) => {
+    const {
+        __legacyApiClient__: apiClient
+    } = useApi();
+
+    const manualLanguages =
+        useMinitigerLanguageFlags(
+            apiClient,
+            item.Id
+        );
+
     const overlayRef =
         useRef<HTMLDivElement>(null);
 
@@ -215,10 +229,14 @@ const MinitigerNativeLibraryOverlay = ({
 
     const audioFlags =
         options.showAudioFlags
-        && supportsAudioFlags(item)
+        && (
+            manualLanguages !== undefined
+            || supportsAudioFlags(item)
+        )
             ? getStreamLanguages(
                 item,
-                'Audio'
+                'Audio',
+                manualLanguages
             )
                 .map(language => ({
                     language,
