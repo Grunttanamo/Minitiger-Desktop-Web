@@ -53,6 +53,10 @@ import {
     getStreamLanguages,
     shortOverview
 } from '../home/mediaUtils';
+import {
+    getCachedMinitigerLanguageFlags,
+    useMinitigerLanguageFlagRevision
+} from '../home/minitigerLanguageFlags';
 import { getItemRoute } from '../home/routingUtils';
 
 import './MinitigerVideoDetails.scss';
@@ -205,6 +209,9 @@ const MinitigerVideoDetails = () => {
         __legacyApiClient__: apiClient
     } = useApi();
 
+    useMinitigerLanguageFlagRevision(
+        apiClient
+    );
 
     const {
         settings
@@ -667,7 +674,10 @@ const MinitigerVideoDetails = () => {
     const audio =
         getStreamLanguages(
             item,
-            'Audio'
+            'Audio',
+            getCachedMinitigerLanguageFlags(
+                item.Id
+            )
         );
 
     const subtitles =
@@ -1228,11 +1238,17 @@ const MinitigerVideoDetails = () => {
                                                 ?.UnplayedItemCount
                                             ?? 0;
 
+                                        const seasonManualLanguages =
+                                            getCachedMinitigerLanguageFlags(
+                                                season.Id
+                                            );
+
                                         const seasonAudioFlags =
                                             settings.showAudioFlags
                                                 ? getStreamLanguages(
                                                     displaySeason,
-                                                    'Audio'
+                                                    'Audio',
+                                                    seasonManualLanguages
                                                 )
                                                     .map(
                                                         language => ({
