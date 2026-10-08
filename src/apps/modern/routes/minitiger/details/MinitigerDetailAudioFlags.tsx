@@ -1,11 +1,16 @@
 import React from 'react';
 
+import { useApi } from 'hooks/useApi';
+
 import type { ItemDto } from 'types/base/models/item-dto';
 
 import {
     getLanguageFlagUrl,
     getStreamLanguages
 } from '../home/mediaUtils';
+import {
+    useMinitigerLanguageFlags
+} from '../home/minitigerLanguageFlags';
 
 interface Props {
     item?: ItemDto;
@@ -20,11 +25,25 @@ const MinitigerDetailAudioFlags = ({
     className = '',
     maxFlags = 4
 }: Props) => {
+    const {
+        __legacyApiClient__: apiClient
+    } = useApi();
+
+    const manualLanguages =
+        useMinitigerLanguageFlags(
+            apiClient,
+            item?.Id
+        );
+
     if (!enabled || !item) {
         return null;
     }
 
-    const flags = getStreamLanguages(item, 'Audio')
+    const flags = getStreamLanguages(
+        item,
+        'Audio',
+        manualLanguages
+    )
         .map(language => ({
             language,
             url: getLanguageFlagUrl(language)
