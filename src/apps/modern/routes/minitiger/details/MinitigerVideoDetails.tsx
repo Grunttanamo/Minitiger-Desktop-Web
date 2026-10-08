@@ -22,6 +22,7 @@ import { useItem } from 'hooks/useItem';
 import type { ItemDto } from 'types/base/models/item-dto';
 
 import MinitigerDetailAudioFlags from './MinitigerDetailAudioFlags';
+import MinitigerEpisodePlayedButton from './MinitigerEpisodePlayedButton';
 import MinitigerItemMenuButton from './MinitigerItemMenuButton';
 import MinitigerRail from './MinitigerRail';
 import MinitigerSeasonSwitcher from './MinitigerSeasonSwitcher';
@@ -1130,6 +1131,10 @@ const MinitigerVideoDetails = () => {
                                                         <MinitigerDetailAudioFlags
                                                             item={audioFlagItem}
                                                             enabled={settings.showAudioFlags}
+                                                        />
+
+                                                        <MinitigerEpisodePlayedButton
+                                                            item={episode}
                                                         />
                                                     </div>
 
