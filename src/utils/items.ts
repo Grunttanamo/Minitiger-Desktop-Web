@@ -122,14 +122,24 @@ export const getFieldsQuery = (
 
     /*
      * Minitiger performs literal A-Z sorting client-side so articles such as
-     * "The" are not silently ignored. Jellyfin only includes SortName /
-     * ForcedSortName when the SortName field is explicitly requested.
+     * "The" are not silently ignored.
      *
-     * ForcedSortName is the user-entered "Sortiertitel" and must take
-     * precedence over the visible title whenever it is present.
+     * Jellyfin exposes two different values here:
+     * - ItemFields.SortName -> computed SortName
+     * - ItemFields.Settings -> ForcedSortName (the manual "Sortiertitel")
+     *
+     * Our rule is intentionally:
+     *   1. ForcedSortName, when the user entered one
+     *   2. otherwise the visible Name, literally from its first character
+     *
+     * Therefore Settings is required even though this is a library listing.
      */
     if (!fields.includes(ItemFields.SortName)) {
         fields.push(ItemFields.SortName);
+    }
+
+    if (!fields.includes(ItemFields.Settings)) {
+        fields.push(ItemFields.Settings);
     }
 
     return {
