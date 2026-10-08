@@ -25,6 +25,17 @@ const DOWNLOAD_ALL_TYPES = [
     BaseItemKind.Series
 ];
 
+const MINITIGER_LANGUAGE_FLAG_TYPES = [
+    BaseItemKind.Series,
+    BaseItemKind.Movie,
+    BaseItemKind.Season,
+    BaseItemKind.Episode,
+    BaseItemKind.Video,
+    BaseItemKind.Book,
+    BaseItemKind.Folder,
+    BaseItemKind.BoxSet
+];
+
 function getDeleteLabel(type) {
     switch (type) {
         case BaseItemKind.Series:
@@ -251,6 +262,20 @@ export async function getCommands(options) {
             name: text,
             id: 'edit',
             icon: 'edit'
+        });
+    }
+
+    if (
+        canEdit
+        && item.Id
+        && MINITIGER_LANGUAGE_FLAG_TYPES.includes(
+            item.Type
+        )
+    ) {
+        commands.push({
+            name: 'Sprachflaggen bearbeiten',
+            id: 'minitigerLanguageFlags',
+            icon: 'language'
         });
     }
 
@@ -514,6 +539,24 @@ function executeCommand(item, id, options) {
                 break;
             case 'edit':
                 editItem(apiClient, item).then(getResolveFunction(resolve, id, true), getResolveFunction(resolve, id));
+                break;
+            case 'minitigerLanguageFlags':
+                import('./minitigerLanguageFlagsEditor/minitigerLanguageFlagsEditor').then(({ showMinitigerLanguageFlagsEditor }) => {
+                    showMinitigerLanguageFlagsEditor(
+                        apiClient,
+                        item
+                    ).then(
+                        changed => getResolveFunction(
+                            resolve,
+                            id,
+                            changed
+                        )(),
+                        getResolveFunction(
+                            resolve,
+                            id
+                        )
+                    );
+                }).catch(reject);
                 break;
             case 'editplaylist':
                 import('./playlisteditor/playlisteditor').then(({ default: PlaylistEditor }) => {
