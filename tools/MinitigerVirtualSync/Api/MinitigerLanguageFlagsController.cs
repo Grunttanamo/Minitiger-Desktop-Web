@@ -144,43 +144,12 @@ public sealed class MinitigerLanguageFlagsController : ControllerBase
             return NotFound();
         }
 
-        var normalizedLanguages = new List<string>();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var raw in request.Languages ?? new List<string>())
+        if (!TryNormalizeLanguages(
+            request.Languages,
+            out var normalizedLanguages,
+            out var validationError))
         {
-            var value = raw?.Trim() ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                continue;
-            }
-
-            string? canonical = null;
-
-            if (SupportedLanguages.TryGetValue(value, out var byCode))
-            {
-                canonical = byCode;
-            }
-            else
-            {
-                canonical = SupportedLanguages.Values.FirstOrDefault(
-                    candidate => string.Equals(
-                        candidate,
-                        value,
-                        StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (canonical is null)
-            {
-                return BadRequest(
-                    $"Unsupported Minitiger language flag: {value}");
-            }
-
-            if (seen.Add(canonical))
-            {
-                normalizedLanguages.Add(canonical);
-            }
+            return BadRequest(validationError);
         }
 
         await IoLock.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -203,6 +172,101 @@ public sealed class MinitigerLanguageFlagsController : ControllerBase
             {
                 itemId = normalizedId,
                 manual = true,
+                languages = normalizedLanguages
+            });
+        }
+        finally
+        {
+            IoLock.Release();
+        }
+    }
+
+    [HttpPost("Bulk")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> PutBulk(
+        [FromBody] MinitigerLanguageFlagsBulkUpdateRequest request,
+        CancellationToken cancellationToken)
+    {
+        var rawIds =
+            request.ItemIds
+            ?? new List<string>();
+
+        if (
+            rawIds.Count == 0
+            || rawIds.Count > 5000)
+        {
+            return BadRequest(
+                "Bulk language flag updates require 1-5000 item ids.");
+        }
+
+        if (!TryNormalizeLanguages(
+            request.Languages,
+            out var normalizedLanguages,
+            out var validationError))
+        {
+            return BadRequest(validationError);
+        }
+
+        var normalizedIds =
+            new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (var rawId in rawIds)
+        {
+            if (
+                !TryNormalizeItemId(
+                    rawId,
+                    out var normalizedId)
+                || !Guid.TryParse(
+                    normalizedId,
+                    out var itemGuid))
+            {
+                continue;
+            }
+
+            if (_libraryManager.GetItemById(itemGuid) is null)
+            {
+                continue;
+            }
+
+            normalizedIds.Add(
+                normalizedId
+            );
+        }
+
+        if (normalizedIds.Count == 0)
+        {
+            return BadRequest(
+                "No valid Jellyfin item ids were supplied.");
+        }
+
+        await IoLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var state = await LoadStateAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (var normalizedId in normalizedIds)
+            {
+                state.Items[normalizedId] =
+                    new List<string>(
+                        normalizedLanguages);
+            }
+
+            await SaveStateAsync(state, cancellationToken)
+                .ConfigureAwait(false);
+
+            _logger.LogInformation(
+                "Minitiger language flags bulk-updated for {ItemCount} items: {Languages}",
+                normalizedIds.Count,
+                string.Join(", ", normalizedLanguages));
+
+            return Ok(new
+            {
+                updated = normalizedIds.Count,
+                itemIds = normalizedIds.ToArray(),
                 languages = normalizedLanguages
             });
         }
@@ -246,6 +310,62 @@ public sealed class MinitigerLanguageFlagsController : ControllerBase
         {
             IoLock.Release();
         }
+    }
+
+    private static bool TryNormalizeLanguages(
+        List<string>? languages,
+        out List<string> normalizedLanguages,
+        out string validationError)
+    {
+        normalizedLanguages = new List<string>();
+        validationError = string.Empty;
+
+        var seen =
+            new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (var raw in languages ?? new List<string>())
+        {
+            var value =
+                raw?.Trim()
+                ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            string? canonical = null;
+
+            if (SupportedLanguages.TryGetValue(
+                value,
+                out var byCode))
+            {
+                canonical = byCode;
+            }
+            else
+            {
+                canonical = SupportedLanguages.Values.FirstOrDefault(
+                    candidate => string.Equals(
+                        candidate,
+                        value,
+                        StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (canonical is null)
+            {
+                validationError =
+                    $"Unsupported Minitiger language flag: {value}";
+                return false;
+            }
+
+            if (seen.Add(canonical))
+            {
+                normalizedLanguages.Add(canonical);
+            }
+        }
+
+        return true;
     }
 
     private static bool TryNormalizeItemId(
@@ -347,6 +467,13 @@ public sealed class MinitigerLanguageFlagsController : ControllerBase
 
 public sealed class MinitigerLanguageFlagsUpdateRequest
 {
+    public List<string>? Languages { get; set; }
+}
+
+public sealed class MinitigerLanguageFlagsBulkUpdateRequest
+{
+    public List<string>? ItemIds { get; set; }
+
     public List<string>? Languages { get; set; }
 }
 
