@@ -114,8 +114,26 @@ export const getFieldsQuery = (
     viewType: LibraryTab,
     libraryViewSettings: LibraryViewSettings
 ) => {
+    const fields =
+        getItemFieldsEnum(
+            viewType,
+            libraryViewSettings
+        );
+
+    /*
+     * Minitiger performs literal A-Z sorting client-side so articles such as
+     * "The" are not silently ignored. Jellyfin only includes SortName /
+     * ForcedSortName when the SortName field is explicitly requested.
+     *
+     * ForcedSortName is the user-entered "Sortiertitel" and must take
+     * precedence over the visible title whenever it is present.
+     */
+    if (!fields.includes(ItemFields.SortName)) {
+        fields.push(ItemFields.SortName);
+    }
+
     return {
-        fields: getItemFieldsEnum(viewType, libraryViewSettings)
+        fields
     };
 };
 
