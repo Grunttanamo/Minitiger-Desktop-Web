@@ -422,6 +422,58 @@ export const saveMinitigerLanguageFlags =
         emit();
     };
 
+export const saveMinitigerLanguageFlagsBulk =
+    async (
+        apiClient: ApiClient,
+        itemIds: string[],
+        languages: string[]
+    ) => {
+        const uniqueIds =
+            Array.from(
+                new Set(
+                    itemIds
+                        .map(itemId =>
+                            String(itemId ?? '').trim()
+                        )
+                        .filter(Boolean)
+                )
+            );
+
+        if (!uniqueIds.length) {
+            return;
+        }
+
+        await requestJson(
+            apiClient,
+            'Minitiger/LanguageFlags/Bulk',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type':
+                        'application/json'
+                },
+                body: JSON.stringify({
+                    itemIds: uniqueIds,
+                    languages
+                })
+            }
+        );
+
+        uniqueIds.forEach(
+            itemId => {
+                cache.set(
+                    normalizeItemId(
+                        itemId
+                    ),
+                    [ ...languages ]
+                );
+            }
+        );
+
+        cacheLoaded = true;
+        emit();
+    };
+
 export const clearMinitigerLanguageFlags =
     async (
         apiClient: ApiClient,
