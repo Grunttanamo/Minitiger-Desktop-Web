@@ -939,6 +939,7 @@ a.minitigerDetailsParentTitle:focus-visible {
         minmax(180px, 250px)
         minmax(0, 1fr)
         95px
+        40px
         44px;
     min-height: 104px;
     padding: 0.55rem;
@@ -1318,6 +1319,7 @@ a.minitigerDetailsParentTitle:focus-visible {
             160px
             minmax(0, 1fr)
             74px
+            36px
             40px;
     }
 
@@ -1349,6 +1351,7 @@ a.minitigerDetailsParentTitle:focus-visible {
             26px
             118px
             minmax(0, 1fr)
+            34px
             40px;
     }
 
@@ -2795,3 +2798,104 @@ a.minitigerDetailsParentTitle:focus-visible {
     transform: translate(-50%, -50%) scale(1) !important;
 }
 
+
+
+/* =========================================================
+   MINITIGER - EPISODE WATCHED QUICK TOGGLE
+   ========================================================= */
+
+.minitigerDetailsEpisodeCard > div {
+    position: relative;
+}
+
+.minitigerEpisodePlayedButton {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.72);
+    border-radius: 50%;
+    background: rgba(12, 13, 16, 0.76);
+    color: var(--mt-accent-text);
+    cursor: pointer;
+    box-shadow:
+        0 2px 9px rgba(0, 0, 0, 0.48);
+    transition:
+        background 130ms ease,
+        border-color 130ms ease,
+        transform 130ms ease,
+        opacity 130ms ease;
+}
+
+.minitigerEpisodePlayedButton > span {
+    opacity: 0;
+    transform: scale(0.72);
+    font-weight: 900;
+    transition:
+        opacity 110ms ease,
+        transform 110ms ease;
+}
+
+.minitigerEpisodePlayedButton.isActive {
+    border-color: var(--mt-accent);
+    background: var(--mt-accent);
+}
+
+.minitigerEpisodePlayedButton.isActive > span {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.minitigerEpisodePlayedButton:hover,
+.minitigerEpisodePlayedButton:focus-visible {
+    border-color: var(--mt-accent-hover);
+    background: var(--mt-accent-hover);
+    transform: scale(1.06);
+    outline: none;
+}
+
+.minitigerEpisodePlayedButton:disabled {
+    opacity: 0.55;
+    cursor: default;
+    transform: none;
+}
+
+.minitigerEpisodePlayedButton.isOverlay {
+    position: absolute;
+    z-index: 7;
+    top: 0.4rem;
+    right: 0.4rem;
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.98rem;
+}
+
+.minitigerEpisodePlayedButton.isInline {
+    width: 2.35rem;
+    height: 2.35rem;
+    justify-self: end;
+    font-size: 1rem;
+    opacity: 0.82;
+}
+
+.minitigerSeasonEpisodeItem:hover
+.minitigerEpisodePlayedButton.isInline,
+.minitigerEpisodePlayedButton.isInline:focus-visible,
+.minitigerEpisodePlayedButton.isInline.isActive {
+    opacity: 1;
+}
+
+@media (max-width: 680px) {
+    .minitigerEpisodePlayedButton.isInline {
+        width: 2.1rem;
+        height: 2.1rem;
+        font-size: 0.9rem;
+    }
+
+    .minitigerEpisodePlayedButton.isOverlay {
+        width: 1.85rem;
+        height: 1.85rem;
+        top: 0.32rem;
+        right: 0.32rem;
+        font-size: 0.9rem;
+    }
+}
