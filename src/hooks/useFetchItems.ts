@@ -43,14 +43,14 @@ const isLiteralTitleSort = (
 const getLiteralSortTitle = (
     item: ItemDto
 ) => {
-    const sortName =
+    const forcedSortName =
         String(
-            item.SortName
+            item.ForcedSortName
             ?? ''
         ).trim();
 
-    if (sortName) {
-        return sortName;
+    if (forcedSortName) {
+        return forcedSortName;
     }
 
     return String(
