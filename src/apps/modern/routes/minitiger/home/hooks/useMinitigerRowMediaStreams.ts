@@ -153,7 +153,7 @@ const getSampleRef = (
         && item.Id
     ) {
         return {
-            key: `series:${item.Id}`,
+            key: `series-season-audio:${item.Id}`,
             kind: 'series',
             id: item.Id
         };
@@ -205,7 +205,7 @@ const useMinitigerRowMediaStreams = (
     const query = useQuery({
         queryKey: [
             'Minitiger',
-            'CardMetadataV3',
+            'CardMetadataV4',
             apiClient?.serverId()
             ?? '',
             signature
@@ -322,6 +322,13 @@ const useMinitigerRowMediaStreams = (
                                     Boolean(ref)
                             )
                             .filter(ref => {
+                                if (
+                                    ref.kind
+                                    === 'series'
+                                ) {
+                                    return true;
+                                }
+
                                 const exact =
                                     exactMap.get(
                                         ref.id
@@ -362,57 +369,228 @@ const useMinitigerRowMediaStreams = (
                         }
 
                         try {
-                            const queryOptions =
+                            let sample:
+                                ItemDto
+                                | null = null;
+
+                            if (
                                 ref.kind
                                 === 'season'
-                                    ? {
-                                        ParentId:
-                                            ref.id,
-                                        Recursive:
-                                            false,
-                                        IncludeItemTypes:
-                                            'Episode',
-                                        Fields:
-                                            'MediaStreams,MediaSources',
-                                        SortBy:
-                                            'IndexNumber',
-                                        SortOrder:
-                                            'Ascending',
-                                        EnableTotalRecordCount:
-                                            false,
-                                        Limit: 1
-                                    }
-                                    : {
-                                        ParentId:
-                                            ref.id,
-                                        Recursive:
-                                            true,
-                                        IncludeItemTypes:
-                                            'Episode',
-                                        Fields:
-                                            'MediaStreams,MediaSources',
-                                        SortBy:
-                                            'ParentIndexNumber,IndexNumber',
-                                        SortOrder:
-                                            'Ascending',
-                                        EnableTotalRecordCount:
-                                            false,
-                                        Limit: 1
-                                    };
+                            ) {
+                                const result =
+                                    await apiClient.getItems(
+                                        userId,
+                                        {
+                                            ParentId:
+                                                ref.id,
+                                            Recursive:
+                                                false,
+                                            IncludeItemTypes:
+                                                'Episode',
+                                            Fields:
+                                                'MediaStreams,MediaSources',
+                                            SortBy:
+                                                'IndexNumber',
+                                            SortOrder:
+                                                'Ascending',
+                                            EnableTotalRecordCount:
+                                                false,
+                                            Limit: 1
+                                        }
+                                    );
 
-                            const result =
-                                await apiClient.getItems(
-                                    userId,
-                                    queryOptions
+                                sample =
+                                    (
+                                        result?.Items?.[0]
+                                        ?? null
+                                    ) as
+                                        ItemDto
+                                        | null;
+                            } else {
+                                /*
+                                 * Series cards should represent the languages
+                                 * available across real seasons, not whatever
+                                 * happens to sort first recursively (often a
+                                 * Special / season 0).
+                                 *
+                                 * First fetch lightweight episode rows in
+                                 * season/episode order, keep only the first
+                                 * episode of each normal season, then fetch
+                                 * media streams only for those few episodes.
+                                 */
+                                const episodeIndexResult =
+                                    await apiClient.getItems(
+                                        userId,
+                                        {
+                                            ParentId:
+                                                ref.id,
+                                            Recursive:
+                                                true,
+                                            IncludeItemTypes:
+                                                'Episode',
+                                            SortBy:
+                                                'ParentIndexNumber,IndexNumber',
+                                            SortOrder:
+                                                'Ascending',
+                                            EnableTotalRecordCount:
+                                                false,
+                                            Limit: 2500
+                                        }
+                                    );
+
+                                const orderedEpisodes =
+                                    (
+                                        episodeIndexResult?.Items
+                                        ?? []
+                                    ) as ItemDto[];
+
+                                const normalEpisodes =
+                                    orderedEpisodes.filter(
+                                        episode =>
+                                            (
+                                                episode.ParentIndexNumber
+                                                ?? 0
+                                            ) > 0
+                                    );
+
+                                const candidates =
+                                    normalEpisodes.length > 0
+                                        ? normalEpisodes
+                                        : orderedEpisodes;
+
+                                const firstBySeason =
+                                    new Map<
+                                        string,
+                                        ItemDto
+                                    >();
+
+                                candidates.forEach(
+                                    episode => {
+                                        const seasonKey =
+                                            episode.SeasonId
+                                            ?? `index:${
+                                                episode.ParentIndexNumber
+                                                ?? 'unknown'
+                                            }`;
+
+                                        if (
+                                            !firstBySeason.has(
+                                                seasonKey
+                                            )
+                                        ) {
+                                            firstBySeason.set(
+                                                seasonKey,
+                                                episode
+                                            );
+                                        }
+                                    }
                                 );
 
-                            const sample =
-                                (
-                                    result?.Items?.[0]
-                                    ?? null
-                                ) as
-                                    ItemDto
-                                    | null;
+                                const firstEpisodes =
+                                    Array.from(
+                                        firstBySeason.values()
+                                    );
+
+                                const firstEpisodeIds =
+                                    firstEpisodes
+                                        .map(
+                                            episode =>
+                                                episode.Id
+                                        )
+                                        .filter(
+                                            (
+                                                id
+                                            ): id is string =>
+                                                Boolean(id)
+                                        );
+
+                                if (
+                                    firstEpisodeIds.length > 0
+                                ) {
+                                    const detailResults =
+                                        await Promise.all(
+                                            chunk(
+                                                firstEpisodeIds,
+                                                CHUNK_SIZE
+                                            ).map(ids =>
+                                                apiClient.getItems(
+                                                    userId,
+                                                    {
+                                                        Ids:
+                                                            ids.join(','),
+                                                        Fields:
+                                                            'MediaStreams,MediaSources',
+                                                        EnableTotalRecordCount:
+                                                            false,
+                                                        Limit:
+                                                            ids.length
+                                                    }
+                                                )
+                                            )
+                                        );
+
+                                    const detailedMap =
+                                        new Map<
+                                            string,
+                                            ItemDto
+                                        >();
+
+                                    detailResults
+                                        .flatMap(
+                                            result =>
+                                                (
+                                                    result?.Items
+                                                    ?? []
+                                                ) as ItemDto[]
+                                        )
+                                        .forEach(
+                                            episode => {
+                                                if (
+                                                    episode.Id
+                                                ) {
+                                                    detailedMap.set(
+                                                        episode.Id,
+                                                        episode
+                                                    );
+                                                }
+                                            }
+                                        );
+
+                                    const detailedEpisodes =
+                                        firstEpisodes.map(
+                                            episode =>
+                                                (
+                                                    episode.Id
+                                                    ? detailedMap.get(
+                                                        episode.Id
+                                                    )
+                                                    : undefined
+                                                )
+                                                ?? episode
+                                        );
+
+                                    if (
+                                        detailedEpisodes.length
+                                        > 0
+                                    ) {
+                                        sample = {
+                                            ...detailedEpisodes[0],
+                                            MediaStreams:
+                                                detailedEpisodes.flatMap(
+                                                    episode =>
+                                                        episode.MediaStreams
+                                                        ?? []
+                                                ),
+                                            MediaSources:
+                                                detailedEpisodes.flatMap(
+                                                    episode =>
+                                                        episode.MediaSources
+                                                        ?? []
+                                                )
+                                        };
+                                    }
+                                }
+                            }
 
                             sampleCache.set(
                                 ref.key,
@@ -505,27 +683,39 @@ const useMinitigerRowMediaStreams = (
                             ?? sample
                                 ?.OfficialRating,
                         MediaStreams:
-                            exact
-                                ?.MediaStreams
-                                ?.length
-                                ? exact.MediaStreams
-                                : item
-                                    .MediaStreams
+                            sampleRef?.kind
+                                === 'series'
+                                && sample
+                                    ?.MediaStreams
                                     ?.length
-                                    ? item.MediaStreams
-                                    : sample
-                                        ?.MediaStreams,
+                                ? sample.MediaStreams
+                                : exact
+                                    ?.MediaStreams
+                                    ?.length
+                                    ? exact.MediaStreams
+                                    : item
+                                        .MediaStreams
+                                        ?.length
+                                        ? item.MediaStreams
+                                        : sample
+                                            ?.MediaStreams,
                         MediaSources:
-                            exact
-                                ?.MediaSources
-                                ?.length
-                                ? exact.MediaSources
-                                : item
-                                    .MediaSources
+                            sampleRef?.kind
+                                === 'series'
+                                && sample
+                                    ?.MediaSources
                                     ?.length
-                                    ? item.MediaSources
-                                    : sample
-                                        ?.MediaSources
+                                ? sample.MediaSources
+                                : exact
+                                    ?.MediaSources
+                                    ?.length
+                                    ? exact.MediaSources
+                                    : item
+                                        .MediaSources
+                                        ?.length
+                                        ? item.MediaSources
+                                        : sample
+                                            ?.MediaSources
                     }
                 );
             });
