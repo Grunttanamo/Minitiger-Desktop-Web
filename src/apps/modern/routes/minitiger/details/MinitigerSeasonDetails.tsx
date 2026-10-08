@@ -17,6 +17,7 @@ import type { ItemDto } from 'types/base/models/item-dto';
 
 import { isMinitigerAvailableEpisode } from './episodeUtils';
 import MinitigerDetailAudioFlags from './MinitigerDetailAudioFlags';
+import MinitigerEpisodePlayedButton from './MinitigerEpisodePlayedButton';
 
 import useMinitigerDetailSettings from '../home/hooks/useMinitigerDetailSettings';
 import useMinitigerHomeSettings from '../home/hooks/useMinitigerHomeSettings';
@@ -405,15 +406,6 @@ const MinitigerSeasonDetails = ({
                                                             enabled={homeSettings.showAudioFlags}
                                                         />
 
-                                                        {episode.UserData?.Played && (
-                                                            <span
-                                                                className='minitigerSeasonEpisodeSeen'
-                                                                title='Gesehen'
-                                                                aria-label='Gesehen'
-                                                            >
-                                                                ✓
-                                                            </span>
-                                                        )}
                                                     </div>
 
                                                     <Link
@@ -450,6 +442,11 @@ const MinitigerSeasonDetails = ({
                                                             ?? ''
                                                         }
                                                     </strong>
+
+                                                    <MinitigerEpisodePlayedButton
+                                                        item={episode}
+                                                        placement='inline'
+                                                    />
 
                                                     <button
                                                         type='button'
