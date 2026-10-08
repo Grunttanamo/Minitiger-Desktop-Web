@@ -295,6 +295,43 @@ export const getCachedMinitigerLanguageFlags =
         ];
     };
 
+export const useMinitigerLanguageFlagRevision =
+    (
+        apiClient?: ApiClient
+    ) => {
+        const [
+            revision,
+            setRevision
+        ] = useState(0);
+
+        useEffect(() => {
+            const update = () => {
+                setRevision(
+                    current =>
+                        current + 1
+                );
+            };
+
+            listeners.add(
+                update
+            );
+
+            if (apiClient) {
+                void loadMinitigerLanguageFlagOverrides(
+                    apiClient
+                );
+            }
+
+            return () => {
+                listeners.delete(
+                    update
+                );
+            };
+        }, [ apiClient ]);
+
+        return revision;
+    };
+
 export const useMinitigerLanguageFlags =
     (
         apiClient?: ApiClient,
