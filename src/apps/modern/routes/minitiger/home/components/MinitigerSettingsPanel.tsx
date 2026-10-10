@@ -646,10 +646,25 @@ const onUpdate = (
             return;
         }
 
+        const allowed =
+            new Set<
+                keyof MinitigerLibrarySettings
+            >([
+                'seriesDisplay',
+                'movieDisplay',
+                'otherDisplay',
+                'posterSize',
+                'landscapeSize',
+                'contentGap',
+                'customNavigationEnabled',
+                'azMode'
+            ]);
+
         const filtered = Object.fromEntries(
             Object.entries(patch).filter(([ key ]) =>
-                key === 'customNavigationEnabled'
-                || key === 'azMode'
+                allowed.has(
+                    key as keyof MinitigerLibrarySettings
+                )
             )
         ) as Partial<MinitigerLibrarySettings>;
 
@@ -2071,11 +2086,13 @@ const onUpdate = (
                             </>
                         )}
 
-                        {isAdmin && activeTab === 'libraries' && (
+                        {activeTab === 'libraries' && (
                             <>
                                 <h3>Bibliotheken</h3>
                                 <p className='minitigerSettingsIntro'>
-                                    Darstellung der nativen Minitiger-Bibliotheksseiten nach Bibliothekstyp.
+                                    {isAdmin
+                                        ? 'Darstellung der nativen Minitiger-Bibliotheksseiten nach Bibliothekstyp.'
+                                        : 'Deine persönliche Darstellung der Minitiger-Bibliotheksseiten. Änderungen gelten nur für deinen Benutzer.'}
                                 </p>
 
                                 <section className='minitigerSettingsCard'>
@@ -2231,9 +2248,12 @@ const onUpdate = (
                                     </label>
                                 </section>
 
-                                <MinitigerLibraryPrefixScanSettings />
+                                {isAdmin && (
+                                    <MinitigerLibraryPrefixScanSettings />
+                                )}
 
-                                {virtualConfig
+                                {isAdmin
+                                    && virtualConfig
                                     && onSetVirtualPagePosterWidth
                                     && onSetVirtualPageLandscapeWidth
                                     && onSetVirtualPageGap
@@ -2305,55 +2325,6 @@ const onUpdate = (
                                             </label>
                                         </section>
                                     )}
-                            </>
-                        )}
-
-                        {!isAdmin && activeTab === 'libraries' && (
-                            <>
-                                <h3>Bibliotheken</h3>
-                                <p className='minitigerSettingsIntro'>
-                                    Persönliche Einstellung für die Bibliotheks-Navigation.
-                                </p>
-
-                                <section className='minitigerSettingsCard'>
-                                    <h4>Navigation</h4>
-
-                                    <label className='minitigerSettingsToggle'>
-                                        <input
-                                            type='checkbox'
-                                            checked={librarySettings.customNavigationEnabled}
-                                            onChange={event =>
-                                                onUpdateLibrarySettings({
-                                                    customNavigationEnabled:
-                                                        event.currentTarget.checked
-                                                })
-                                            }
-                                        />
-                                        <span>
-                                            <strong>Minitiger-Navigationsleiste verwenden</strong>
-                                            <small>Aus = originale Jellyfin A-Z-Navigation. An = Minitiger-Navigation.</small>
-                                        </span>
-                                    </label>
-
-                                    <label className='minitigerSettingsField'>
-                                        <span>Position der Minitiger-Navigation</span>
-                                        <select
-                                            value={librarySettings.azMode}
-                                            disabled={!librarySettings.customNavigationEnabled}
-                                            onChange={event =>
-                                                onUpdateLibrarySettings({
-                                                    azMode: parseAZMode(
-                                                        event.currentTarget.value
-                                                    )
-                                                })
-                                            }
-                                        >
-                                            <option value='auto'>Oben → rechts beim Scrollen</option>
-                                            <option value='top'>Immer oben</option>
-                                            <option value='side'>Immer rechts</option>
-                                        </select>
-                                    </label>
-                                </section>
                             </>
                         )}
 
