@@ -995,6 +995,20 @@ const LargePreview = ({
     const heroItem =
         seasonSeriesItem ?? target.item;
 
+    const [
+        trailerMuted,
+        setTrailerMuted
+    ] = useState(true);
+    const [
+        trailerReady,
+        setTrailerReady
+    ] = useState(false);
+
+    useEffect(() => {
+        setTrailerMuted(true);
+        setTrailerReady(false);
+    }, [heroItem.Id]);
+
     const backdropUrl = target.kind === 'manga'
         ? getPrimaryImageUrl(apiClient, target.item)
         : target.kind === 'season'
@@ -1093,11 +1107,51 @@ const LargePreview = ({
                             item={heroItem}
                             className='minitigerLargePreviewTrailerMedia'
                             delayMs={650}
+                            muted={trailerMuted}
+                            onReadyChange={setTrailerReady}
                             allowLocal={localTrailersEnabled}
                         />
                     )}
 
                     <div className='minitigerLargePreviewShade' />
+
+                    {target.kind !== 'manga'
+                        && trailerReady && (
+                        <button
+                            type='button'
+                            className={[
+                                'minitigerLargePreviewAudioToggle',
+                                trailerMuted
+                                    ? ''
+                                    : 'isAudible'
+                            ].filter(Boolean).join(' ')}
+                            onClick={() =>
+                                setTrailerMuted(
+                                    current => !current
+                                )
+                            }
+                            aria-label={
+                                trailerMuted
+                                    ? 'Trailer-Ton einschalten'
+                                    : 'Trailer-Ton ausschalten'
+                            }
+                            title={
+                                trailerMuted
+                                    ? 'Ton einschalten'
+                                    : 'Ton ausschalten'
+                            }
+                            aria-pressed={!trailerMuted}
+                        >
+                            <span
+                                className='material-icons'
+                                aria-hidden='true'
+                            >
+                                {trailerMuted
+                                    ? 'volume_off'
+                                    : 'volume_up'}
+                            </span>
+                        </button>
+                    )}
 
                     <div className='minitigerLargePreviewHeroContent'>
                         {logoUrl ? (
