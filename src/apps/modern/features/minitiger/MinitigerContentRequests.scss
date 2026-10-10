@@ -1,0 +1,311 @@
+.minitigerContentRequestLayer {
+    position: fixed;
+    z-index: 2147483200;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgb(0 0 0 / 58%);
+    backdrop-filter: blur(8px);
+}
+
+.minitigerContentRequestDialog {
+    box-sizing: border-box;
+    width: min(46rem, calc(100vw - 2rem));
+    max-height: min(86vh, 52rem);
+    overflow: auto;
+    border: 1px solid color-mix(
+        in srgb,
+        var(--minitiger-accent, #f2b84b) 45%,
+        transparent
+    );
+    border-radius: 1rem;
+    background: color-mix(in srgb, #111 96%, transparent);
+    box-shadow:
+        0 1.5rem 5rem rgb(0 0 0 / 58%),
+        0 0 2rem color-mix(
+            in srgb,
+            var(--minitiger-glow, #f2b84b) 22%,
+            transparent
+        );
+    color: #fff;
+}
+
+.minitigerContentRequestHeader {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid rgb(255 255 255 / 8%);
+    background: color-mix(in srgb, #111 96%, transparent);
+    backdrop-filter: blur(14px);
+}
+
+.minitigerContentRequestHeader small {
+    display: block;
+    color: rgb(255 255 255 / 55%);
+    font-size: 0.75rem;
+}
+
+.minitigerContentRequestHeader h2 {
+    margin: 0.1rem 0 0;
+    font-size: 1.45rem;
+}
+
+.minitigerContentRequestClose {
+    width: 2.4rem;
+    height: 2.4rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 7%);
+    color: inherit;
+    font-size: 1.6rem;
+    cursor: pointer;
+}
+
+.minitigerContentRequestForm {
+    display: grid;
+    gap: 1.1rem;
+    padding: 1.15rem;
+}
+
+.minitigerContentRequestForm > label {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.minitigerContentRequestForm > label > span,
+.minitigerContentRequestForm legend {
+    font-weight: 700;
+}
+
+.minitigerContentRequestForm label small {
+    color: rgb(255 255 255 / 50%);
+    font-weight: 400;
+}
+
+.minitigerContentRequestForm input[type='text'],
+.minitigerContentRequestForm textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.72rem 0.8rem;
+    border: 1px solid rgb(255 255 255 / 14%);
+    border-radius: 0.65rem;
+    outline: 0;
+    background: rgb(255 255 255 / 6%);
+    color: inherit;
+    font: inherit;
+}
+
+.minitigerContentRequestForm input[type='text']:focus,
+.minitigerContentRequestForm textarea:focus {
+    border-color: var(--minitiger-accent, #f2b84b);
+    box-shadow: 0 0 0 2px color-mix(
+        in srgb,
+        var(--minitiger-accent, #f2b84b) 20%,
+        transparent
+    );
+}
+
+.minitigerContentRequestForm textarea {
+    resize: vertical;
+    min-height: 7rem;
+}
+
+.minitigerContentRequestForm fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.minitigerContentRequestForm legend {
+    margin-bottom: 0.55rem;
+}
+
+.minitigerContentRequestTypes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.minitigerContentRequestTypes label {
+    cursor: pointer;
+}
+
+.minitigerContentRequestTypes input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.minitigerContentRequestTypes span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.2rem;
+    padding: 0 0.75rem;
+    border: 1px solid rgb(255 255 255 / 13%);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 5%);
+    transition:
+        border-color 150ms ease,
+        background 150ms ease,
+        color 150ms ease;
+}
+
+.minitigerContentRequestTypes label:hover span,
+.minitigerContentRequestTypes label.isSelected span {
+    border-color: var(--minitiger-accent, #f2b84b);
+    background: var(--minitiger-accent, #f2b84b);
+    color: var(--minitiger-accent-text, #111);
+}
+
+.minitigerContentRequestStatus {
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.65rem;
+    background: rgb(255 128 128 / 10%);
+    color: #ffb1b1;
+}
+
+.minitigerContentRequestStatus.isSuccess {
+    background: rgb(102 227 158 / 10%);
+    color: #8cf0b8;
+}
+
+.minitigerContentRequestActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+}
+
+.minitigerContentRequestActions button,
+.minitigerContentRequestAdminTop button,
+.minitigerContentRequestAdminItemTop button {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid rgb(255 255 255 / 12%);
+    border-radius: 0.6rem;
+    background: rgb(255 255 255 / 6%);
+    color: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.minitigerContentRequestActions button.isPrimary {
+    border-color: transparent;
+    background: var(--minitiger-accent, #f2b84b);
+    color: var(--minitiger-accent-text, #111);
+}
+
+.minitigerContentRequestActions button:disabled,
+.minitigerContentRequestAdminTop button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.minitigerContentRequestAdminTop,
+.minitigerContentRequestAdminItemTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.minitigerContentRequestAdminTop h4 {
+    margin: 0;
+}
+
+.minitigerContentRequestAdminTop small {
+    color: rgb(255 255 255 / 50%);
+}
+
+.minitigerContentRequestAdminStatus {
+    margin: 0.8rem 0 0;
+    color: #ffb1b1;
+}
+
+.minitigerContentRequestAdminList {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.minitigerContentRequestAdminItem {
+    padding: 0.9rem;
+    border: 1px solid rgb(255 255 255 / 9%);
+    border-radius: 0.8rem;
+    background: rgb(255 255 255 / 3%);
+}
+
+.minitigerContentRequestAdminItemTop {
+    align-items: flex-start;
+}
+
+.minitigerContentRequestAdminItemTop h4 {
+    margin: 0.35rem 0 0;
+}
+
+.minitigerContentRequestBadge {
+    display: inline-flex;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(
+        in srgb,
+        var(--minitiger-accent, #f2b84b) 18%,
+        transparent
+    );
+    color: var(--minitiger-accent, #f2b84b);
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.minitigerContentRequestMeta {
+    margin-top: 0.45rem;
+    color: rgb(255 255 255 / 52%);
+    font-size: 0.8rem;
+}
+
+.minitigerContentRequestAdminItem p {
+    margin: 0.7rem 0 0;
+    color: rgb(255 255 255 / 78%);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.minitigerContentRequestEmpty {
+    padding: 1rem;
+    border: 1px dashed rgb(255 255 255 / 12%);
+    border-radius: 0.75rem;
+    color: rgb(255 255 255 / 52%);
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .minitigerContentRequestLayer {
+        align-items: flex-start;
+        padding: 4.5rem 0.65rem 0.65rem;
+    }
+
+    .minitigerContentRequestDialog {
+        width: 100%;
+        max-height: calc(100vh - 5.2rem);
+    }
+
+    .minitigerContentRequestActions {
+        flex-direction: column-reverse;
+    }
+
+    .minitigerContentRequestActions button {
+        width: 100%;
+    }
+
+    .minitigerContentRequestAdminItemTop {
+        flex-direction: column;
+    }
+}
+
+// MINITIGER_PATCH_MARKER: CONTENT_REQUESTS_STYLE_V1
