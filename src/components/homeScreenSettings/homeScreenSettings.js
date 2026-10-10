@@ -4,6 +4,9 @@ import escapeHtml from 'escape-html';
 import { getUserViewsQuery } from 'hooks/api/useUserViews';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { queryClient } from 'utils/query/queryClient';
+import {
+    broadcastMinitigerServerPreference
+} from 'apps/modern/routes/minitiger/home/serverPreferences';
 
 import layoutManager from '../layoutManager';
 import focusManager from '../focusManager';
@@ -504,6 +507,21 @@ async function saveUser(context, user, userSettingsInstance, apiClient) {
     }
 
     user.Configuration.OrderedViews = orderedViews;
+
+    if (user.Policy?.IsAdministrator) {
+        try {
+            await broadcastMinitigerServerPreference(
+                apiClient,
+                'libraryOrder.v1',
+                orderedViews
+            );
+        } catch (error) {
+            console.warn(
+                '[Minitiger Libraries] Globale Bibliotheksreihenfolge konnte nicht verteilt werden.',
+                error
+            );
+        }
+    }
 
     userSettingsInstance.set('tvhome', context.querySelector('.selectTVHomeScreen').value);
 
