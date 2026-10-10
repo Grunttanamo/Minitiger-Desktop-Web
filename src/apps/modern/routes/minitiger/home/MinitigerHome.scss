@@ -1420,7 +1420,9 @@
     z-index: 7;
     /* Keep the audio toggle visually centered above the banner counter. */
     right: calc(2.1% + 2.45rem);
-    bottom: 11%;
+    /* Final visual trim: keep it centered above the counter, just a
+       little closer to the navigation controls. */
+    bottom: 9.8%;
     width: 2.55rem;
     height: 2.55rem;
     display: flex;
