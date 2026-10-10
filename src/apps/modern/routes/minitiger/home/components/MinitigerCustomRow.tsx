@@ -450,7 +450,7 @@ const fetchTop10LibraryItems = async (
     }
 
     const ranking =
-        await response.json()
+        (await response.json())
             as MinitigerTop10Response;
 
     const ids =
