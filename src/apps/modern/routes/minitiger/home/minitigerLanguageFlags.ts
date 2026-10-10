@@ -443,23 +443,81 @@ export const saveMinitigerLanguageFlagsBulk =
             return;
         }
 
-        await requestJson(
-            apiClient,
-            'Minitiger/LanguageFlags/Bulk',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type':
-                        'application/json'
-                },
-                body: JSON.stringify({
-                    itemIds: uniqueIds,
-                    languages
-                })
+        /*
+         * Use the same per-item PUT route that is already proven to work for
+         * normal manual flag edits. The dedicated Bulk route can be rejected
+         * with HTTP 403 by Jellyfin's elevated-route authorization even when
+         * the current admin is allowed to edit each item individually.
+         *
+         * Keep a small concurrency window so even long series do not hammer
+         * the server with hundreds of simultaneous requests.
+         */
+        const concurrency = Math.min(
+            6,
+            uniqueIds.length
+        );
+        let nextIndex = 0;
+
+        const succeeded: string[] = [];
+        const failed: string[] = [];
+
+        const worker = async () => {
+            while (true) {
+                const index = nextIndex;
+                nextIndex += 1;
+
+                if (index >= uniqueIds.length) {
+                    return;
+                }
+
+                const itemId =
+                    uniqueIds[index];
+
+                try {
+                    await requestJson(
+                        apiClient,
+                        `Minitiger/LanguageFlags/${
+                            encodeURIComponent(
+                                itemId
+                            )
+                        }`,
+                        {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type':
+                                    'application/json'
+                            },
+                            body: JSON.stringify({
+                                languages
+                            })
+                        }
+                    );
+
+                    succeeded.push(
+                        itemId
+                    );
+                } catch (error) {
+                    console.warn(
+                        '[Minitiger LanguageFlags] Unterelement konnte nicht aktualisiert werden',
+                        itemId,
+                        error
+                    );
+
+                    failed.push(
+                        itemId
+                    );
+                }
             }
+        };
+
+        await Promise.all(
+            Array.from(
+                { length: concurrency },
+                () => worker()
+            )
         );
 
-        uniqueIds.forEach(
+        succeeded.forEach(
             itemId => {
                 cache.set(
                     normalizeItemId(
@@ -472,6 +530,12 @@ export const saveMinitigerLanguageFlagsBulk =
 
         cacheLoaded = true;
         emit();
+
+        if (failed.length > 0) {
+            throw new Error(
+                `${failed.length} von ${uniqueIds.length} Inhalten konnten nicht aktualisiert werden.`
+            );
+        }
     };
 
 export const clearMinitigerLanguageFlags =
