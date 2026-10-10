@@ -1,3 +1,4 @@
+import type { ApiClient } from 'jellyfin-apiclient';
 import {
     useCallback,
     useEffect,
@@ -104,9 +105,7 @@ const blobToDataUrl = (
 });
 
 const resolveRememberedLoginAvatar = async (
-    apiClient: Parameters<
-        typeof getMinitigerVirtualServerMediaUrl
-    >[0],
+    apiClient: ApiClient,
     settings: MinitigerAvatarSettings
 ) => {
     if (settings.image.startsWith('data:image/')) {
@@ -154,12 +153,7 @@ const resolveRememberedLoginAvatar = async (
 };
 
 const syncRememberedLoginAvatar = async (
-    apiClient: {
-        serverId?: () => string;
-        deviceId?: () => string;
-    } & Parameters<
-        typeof getMinitigerVirtualServerMediaUrl
-    >[0],
+    apiClient: ApiClient,
     userId: string,
     settings: MinitigerAvatarSettings
 ) => {
