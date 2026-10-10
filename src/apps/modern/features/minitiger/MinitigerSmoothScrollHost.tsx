@@ -456,7 +456,6 @@ const MinitigerSmoothScrollHost = () => {
             );
         };
     }, [
-        location.key,
         location.pathname,
         location.search
     ]);
