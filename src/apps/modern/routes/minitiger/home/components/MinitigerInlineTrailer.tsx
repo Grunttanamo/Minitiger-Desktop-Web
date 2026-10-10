@@ -41,6 +41,8 @@ interface Props {
     className?: string;
     delayMs?: number;
     onLoadingChange?: (loading: boolean) => void;
+    onReadyChange?: (ready: boolean) => void;
+    muted?: boolean;
     allowYouTube?: boolean;
     allowLocal?: boolean;
 }
@@ -54,6 +56,7 @@ interface MinitigerYouTubePlayer {
     playVideo?: () => void;
     pauseVideo?: () => void;
     mute?: () => void;
+    unMute?: () => void;
     destroy?: () => void;
     getIframe?: () => HTMLIFrameElement;
     setOption?: (
@@ -260,7 +263,12 @@ const extractYouTubeId = (
 
 const callYouTube = (
     player: MinitigerYouTubePlayer | null | undefined,
-    method: 'playVideo' | 'pauseVideo' | 'mute' | 'destroy'
+    method:
+        | 'playVideo'
+        | 'pauseVideo'
+        | 'mute'
+        | 'unMute'
+        | 'destroy'
 ) => {
     const fn = player?.[method];
 
@@ -1335,6 +1343,8 @@ const MinitigerInlineTrailer = ({
     className,
     delayMs = 700,
     onLoadingChange,
+    onReadyChange,
+    muted = true,
     allowYouTube = true,
     allowLocal = true
 }: Props) => {
@@ -1400,6 +1410,17 @@ const MinitigerInlineTrailer = ({
         readyStateRef.current =
             ready;
     }, [ready]);
+
+    useEffect(() => {
+        onReadyChange?.(ready);
+
+        return () => {
+            onReadyChange?.(false);
+        };
+    }, [
+        onReadyChange,
+        ready
+    ]);
 
     useEffect(() => {
         const onTrailerChanged = (
@@ -1635,7 +1656,12 @@ const MinitigerInlineTrailer = ({
                             },
                             events: {
                                 onReady: event => {
-                                    callYouTube(event.target, 'mute');
+                                    callYouTube(
+                                        event.target,
+                                        muted
+                                            ? 'mute'
+                                            : 'unMute'
+                                    );
 
                                     try {
                                         event.target.setOption?.(
@@ -1760,6 +1786,30 @@ const MinitigerInlineTrailer = ({
     ]);
 
     useEffect(() => {
+        const video =
+            videoRef.current;
+
+        if (video) {
+            video.muted = muted;
+        }
+
+        const player =
+            youtubePlayerRef.current;
+
+        if (player) {
+            callYouTube(
+                player,
+                muted
+                    ? 'mute'
+                    : 'unMute'
+            );
+        }
+    }, [
+        muted,
+        source?.key
+    ]);
+
+    useEffect(() => {
         if (!source) {
             return;
         }
@@ -1820,7 +1870,7 @@ const MinitigerInlineTrailer = ({
                 className={hostClass}
                 src={source.url}
                 autoPlay
-                muted
+                muted={muted}
                 loop
                 playsInline
                 preload='metadata'
