@@ -1418,8 +1418,9 @@
 .minitigerHeroAudioToggle {
     position: absolute;
     z-index: 7;
-    right: calc(2.1% + 2.1rem);
-    bottom: 12.1%;
+    /* Keep the audio toggle visually centered above the banner counter. */
+    right: calc(2.1% + 2.45rem);
+    bottom: 11%;
     width: 2.55rem;
     height: 2.55rem;
     display: flex;
@@ -4817,11 +4818,22 @@ iframe.minitigerInlineTrailer {
     ));
 }
 
-.minitigerHome .minitigerHeroNavigation {
+.minitigerHome .minitigerHeroNavigation,
+.minitigerHome .minitigerHeroAudioToggle {
     transform: translateY(calc(
         -1 * var(--mt-banner-nav-shift)
         + var(--mt-banner-overlay-offset)
     ));
+}
+
+.minitigerHome .minitigerHeroAudioToggle:hover,
+.minitigerHome .minitigerHeroAudioToggle:focus-visible {
+    transform:
+        translateY(calc(
+            -1 * var(--mt-banner-nav-shift)
+            + var(--mt-banner-overlay-offset)
+        ))
+        scale(1.07);
 }
 
 /* Main/original media-library spacing now behaves like virtual libraries. */
@@ -5954,7 +5966,9 @@ iframe.minitigerInlineTrailer {
 .minitigerHome
 .minitigerMediaSectionRanked
 .minitigerMediaRow {
-    gap: clamp(1.1rem, 1.8vw, 2rem) !important;
+    /* Ranked rows use the same per-row Kartenabstand slider as normal
+       custom rows instead of overriding it with a fixed Top-10 gap. */
+    gap: var(--mt-custom-row-gap, 16px) !important;
 }
 
 .minitigerHome
