@@ -40,6 +40,7 @@ import MinitigerProfilesSettings from './MinitigerProfilesSettings';
 import MinitigerTranslationSettings from './MinitigerTranslationSettings';
 import MinitigerAvatarGallerySettings from './MinitigerAvatarGallerySettings';
 import MinitigerAdminMessagesSettings from './MinitigerAdminMessagesSettings';
+import MinitigerContentRequestsSettings from './MinitigerContentRequestsSettings';
 import MinitigerSeasonFixSettings from './MinitigerSeasonFixSettings';
 import MinitigerImageFixSettings from './MinitigerImageFixSettings';
 import MinitigerLibraryPrefixScanSettings from './MinitigerLibraryPrefixScanSettings';
@@ -155,6 +156,7 @@ type SettingsTab =
     | 'translation'
     | 'avatars'
     | 'messages'
+    | 'requests'
     | 'seasonFix'
     | 'imageFix'
     | 'backup';
@@ -964,6 +966,7 @@ const onUpdate = (
                                 {tabButton('login', 'Login', '↪')}
                                 {tabButton('avatars', 'Avatar-Galerie', '☺')}
                                 {tabButton('messages', 'Nachrichten', '✉')}
+                                {tabButton('requests', 'Anfragen', '♡')}
                                 {tabButton('translation', 'Auto-Übersetzung', '文')}
                                 {tabButton('seasonFix', 'Staffel Fix', '↺')}
                                 {tabButton('imageFix', 'Image Fix', '▧')}
@@ -2883,6 +2886,10 @@ const onUpdate = (
 
                         {isAdmin && activeTab === 'messages' && (
                             <MinitigerAdminMessagesSettings />
+                        )}
+
+                        {isAdmin && activeTab === 'requests' && (
+                            <MinitigerContentRequestsSettings />
                         )}
 
                         {isAdmin && activeTab === 'translation' && (
