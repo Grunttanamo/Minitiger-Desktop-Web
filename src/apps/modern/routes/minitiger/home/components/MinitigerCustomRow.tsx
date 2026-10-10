@@ -4,6 +4,9 @@ import React, { useEffect, useMemo } from 'react';
 
 import type { ItemDto } from 'types/base/models/item-dto';
 
+import {
+    getMinitigerAccessToken
+} from '../bannerPlaylistUtils';
 import type {
     MinitigerCustomRow
 } from '../config/customRows';
@@ -25,6 +28,14 @@ interface MinitigerCustomRowProps {
 
 interface ItemQueryResult {
     Items?: ItemDto[];
+}
+
+interface MinitigerTop10Response {
+    items?: Array<{
+        rank?: number;
+        id?: string;
+        score?: number;
+    }>;
 }
 
 interface MinitigerLatestSeasonItem extends ItemDto {
@@ -382,6 +393,130 @@ const fetchLibraryItems = async (
     ) as ItemQueryResult;
 
     return (result.Items ?? []) as ItemDto[];
+};
+
+const fetchTop10LibraryItems = async (
+    apiClient: ApiClient,
+    userId: string,
+    library: ItemDto
+): Promise<ItemDto[]> => {
+    if (!library.Id) {
+        return [];
+    }
+
+    const collectionType =
+        String(
+            library.CollectionType
+            ?? ''
+        ).toLowerCase();
+
+    const kind =
+        collectionType === 'movies'
+            ? 'movie'
+            : collectionType === 'tvshows'
+                ? 'series'
+                : '';
+
+    if (!kind) {
+        return [];
+    }
+
+    const token =
+        getMinitigerAccessToken(
+            apiClient
+        );
+
+    const url =
+        apiClient.getUrl(
+            'Minitiger/Top10',
+            {
+                libraryId:
+                    library.Id,
+                kind,
+                limit: 40,
+                ...(token
+                    ? { ApiKey: token }
+                    : {})
+            }
+        );
+
+    const response =
+        await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(
+            `Minitiger Top 10 fehlgeschlagen: HTTP ${response.status}`
+        );
+    }
+
+    const ranking =
+        await response.json()
+            as MinitigerTop10Response;
+
+    const ids =
+        (ranking.items ?? [])
+            .map(entry =>
+                String(
+                    entry.id
+                    ?? ''
+                ).trim()
+            )
+            .filter(Boolean);
+
+    if (!ids.length) {
+        return [];
+    }
+
+    /*
+     * Resolve the aggregate server ranking in the context of the currently
+     * signed-in user. Jellyfin therefore removes titles this account is not
+     * allowed to see, while the server-wide score itself stays shared.
+     */
+    const resolved =
+        await apiClient.getItems(
+            userId,
+            {
+                Recursive: true,
+                Ids: ids.join(','),
+                IncludeItemTypes:
+                    kind === 'movie'
+                        ? 'Movie'
+                        : 'Series',
+                Limit: ids.length,
+                Fields: [
+                    'Overview',
+                    'DateCreated',
+                    'PrimaryImageAspectRatio',
+                    'MediaSourceCount',
+                    'LocalTrailerCount',
+                    'RemoteTrailers'
+                ].join(','),
+                ImageTypeLimit: 3,
+                EnableImageTypes:
+                    'Primary,Backdrop,Logo,Thumb',
+                EnableTotalRecordCount: false
+            }
+        );
+
+    const byId =
+        new Map(
+            ((resolved?.Items ?? []) as ItemDto[])
+                .filter(item =>
+                    Boolean(item.Id)
+                )
+                .map(item => [
+                    String(item.Id),
+                    item
+                ] as const)
+        );
+
+    return ids
+        .map(id => byId.get(id))
+        .filter(
+            (item): item is ItemDto =>
+                Boolean(item)
+        )
+        .slice(0, 10);
 };
 
 const filterFutureEpisodes = (
@@ -865,7 +1000,8 @@ const MinitigerCustomRow = ({
     );
 
     const secondEnabled = Boolean(
-        apiClient
+        row.sortMode !== 'top10'
+        && apiClient
         && userId
         && secondLibrary?.Id
         && secondLibrary?.Id !== firstLibrary?.Id
@@ -903,12 +1039,19 @@ const MinitigerCustomRow = ({
             row.sortMode,
             row.count
         ],
-        queryFn: () => fetchLibraryPart(
-            apiClient!,
-            userId,
-            firstLibrary!,
-            row
-        ),
+        queryFn: () =>
+            row.sortMode === 'top10'
+                ? fetchTop10LibraryItems(
+                    apiClient!,
+                    userId,
+                    firstLibrary!
+                )
+                : fetchLibraryPart(
+                    apiClient!,
+                    userId,
+                    firstLibrary!,
+                    row
+                ),
         enabled: firstEnabled,
         staleTime: CUSTOM_ROW_QUERY_STALE_MS,
         gcTime: CUSTOM_ROW_QUERY_GC_MS,
@@ -938,22 +1081,30 @@ const MinitigerCustomRow = ({
     });
 
     const liveItems = useMemo(
-        () => uniqueById([
-            ...(firstQuery.data ?? []),
-            ...(secondQuery.data ?? [])
-        ])
-            .sort(byDateCreatedDesc)
-            .slice(0, row.count),
+        () => row.sortMode === 'top10'
+            ? (firstQuery.data ?? [])
+                .slice(0, 10)
+            : uniqueById([
+                ...(firstQuery.data ?? []),
+                ...(secondQuery.data ?? [])
+            ])
+                .sort(byDateCreatedDesc)
+                .slice(0, row.count),
         [
             firstQuery.data,
             row.count,
+            row.sortMode,
             secondQuery.data
         ]
     );
 
     const configuredLibrariesResolved = (
         (!row.library1 || Boolean(firstLibrary?.Id))
-        && (!row.library2 || Boolean(secondLibrary?.Id))
+        && (
+            row.sortMode === 'top10'
+            || !row.library2
+            || Boolean(secondLibrary?.Id)
+        )
     );
 
     const liveQueriesSettled = (
@@ -1008,6 +1159,7 @@ const MinitigerCustomRow = ({
     const effectiveDisplay:
         'poster' | 'landscape' | 'square' =
         row.sortMode === 'latestSeasons'
+        || row.sortMode === 'top10'
             ? 'poster'
             : primaryCollectionType === 'music'
                 ? 'square'
@@ -1050,6 +1202,7 @@ const MinitigerCustomRow = ({
             cardScale={row.cardScale}
             cardGap={row.gap}
             showTitle={row.showTitle}
+            ranked={row.sortMode === 'top10'}
             preferParentLandscape={
                 effectiveDisplay === 'landscape'
             }
