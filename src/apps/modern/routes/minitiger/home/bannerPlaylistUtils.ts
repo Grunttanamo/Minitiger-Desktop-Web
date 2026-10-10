@@ -20,6 +20,9 @@ export const MINITIGER_BANNER_LIMIT = 10;
 const MINITIGER_BANNER_SERIES_PREF_KEY =
     'bannerSeriesIds.v1';
 
+const MINITIGER_BANNER_GLOBAL_IDS_PREF_KEY =
+    'bannerGlobalItemIds.v1';
+
 const MINITIGER_BANNER_PLAYLIST_SCAN_LIMIT = 1000;
 
 /* Keep Jellyfin Users/{userId}/Items query URLs comfortably below the
@@ -109,6 +112,28 @@ export const setMinitigerBannerSeriesMembership = async (
     );
 
     return next;
+};
+
+export const getMinitigerGlobalBannerItemIds = async (
+    apiClient: ApiClient
+): Promise<string[] | null> => {
+    const userId =
+        apiClient.getCurrentUserId();
+
+    if (!userId) {
+        return null;
+    }
+
+    const stored =
+        await readMinitigerServerPreference<string[]>(
+            apiClient,
+            userId,
+            MINITIGER_BANNER_GLOBAL_IDS_PREF_KEY
+        );
+
+    return Array.isArray(stored)
+        ? uniqueIds(stored)
+        : null;
 };
 
 const authenticatedUrl = (
@@ -286,6 +311,106 @@ const getPlaylistPage = async (
                 ?? 0
             )
     };
+};
+
+const getPlaylistCuratedIds = async (
+    apiClient: ApiClient,
+    playlistId: string
+) => {
+    const page =
+        await getPlaylistPage(
+            apiClient,
+            playlistId,
+            0,
+            MINITIGER_BANNER_PLAYLIST_SCAN_LIMIT,
+            false,
+            false
+        );
+
+    const playlistItems =
+        page.Items as PlaylistItemDto[];
+
+    const directIds = playlistItems
+        .filter(item => {
+            const type =
+                String(
+                    item.Type
+                    ?? ''
+                ).toLowerCase();
+
+            return (
+                type === 'movie'
+                || type === 'series'
+            );
+        })
+        .map(item => item.Id);
+
+    const legacySeriesIds = playlistItems
+        .filter(item =>
+            String(
+                item.Type
+                ?? ''
+            ).toLowerCase() === 'episode'
+        )
+        .map(item => item.SeriesId);
+
+    return {
+        items: playlistItems,
+        ids: uniqueIds([
+            ...directIds,
+            ...legacySeriesIds
+        ])
+    };
+};
+
+export const setMinitigerGlobalBannerItemMembership = async (
+    apiClient: ApiClient,
+    itemId: string,
+    enabled: boolean
+) => {
+    let current =
+        await getMinitigerGlobalBannerItemIds(
+            apiClient
+        );
+
+    if (current === null) {
+        const playlist =
+            await findMinitigerBannerPlaylist(
+                apiClient
+            );
+
+        if (playlist?.Id) {
+            current =
+                (
+                    await getPlaylistCuratedIds(
+                        apiClient,
+                        playlist.Id
+                    )
+                ).ids;
+        } else {
+            current =
+                await getMinitigerBannerSeriesIds(
+                    apiClient
+                );
+        }
+    }
+
+    const next = enabled
+        ? uniqueIds([
+            ...current,
+            itemId
+        ])
+        : current.filter(
+            id => id !== itemId
+        );
+
+    await broadcastMinitigerServerPreference(
+        apiClient,
+        MINITIGER_BANNER_GLOBAL_IDS_PREF_KEY,
+        next
+    );
+
+    return next;
 };
 
 const getBannerItemsByIds = async (
@@ -529,68 +654,78 @@ export const getMinitigerBannerSample = async (
 
     const [
         playlist,
-        storedSeriesIds
+        storedSeriesIds,
+        globalIds
     ] = await Promise.all([
         findMinitigerBannerPlaylist(
             apiClient
         ),
         getMinitigerBannerSeriesIds(
             apiClient
+        ),
+        getMinitigerGlobalBannerItemIds(
+            apiClient
         )
     ]);
 
-    let playlistItems: PlaylistItemDto[] = [];
+    let playlistIds: string[] = [];
 
     if (playlist?.Id) {
-        /* Jellyfin expands folders (including Series) into their playable
-           descendants when they are added to a playlist.  Read a generous
-           but lightweight page so legacy Series selections can be restored
-           from the episode SeriesId without pulling image metadata for every
-           episode. */
-        const page =
-            await getPlaylistPage(
-                apiClient,
-                playlist.Id,
-                0,
-                MINITIGER_BANNER_PLAYLIST_SCAN_LIMIT,
-                false,
-                false
-            );
-
-        playlistItems =
-            page.Items as PlaylistItemDto[];
+        playlistIds =
+            (
+                await getPlaylistCuratedIds(
+                    apiClient,
+                    playlist.Id
+                )
+            ).ids;
     }
 
-    const directIds = playlistItems
-        .filter(item => {
-            const type = String(
-                item.Type
-                ?? ''
-            ).toLowerCase();
+    /*
+     * Once the admin-global list exists it is authoritative, including an
+     * intentionally empty list.  Before migration, a real banner playlist is
+     * authoritative and legacy Series IDs are only used when no playlist
+     * exists. This prevents stale old Series preferences from resurrecting
+     * entries the admin already removed.
+     */
+    const curatedIds =
+        globalIds !== null
+            ? globalIds
+            : playlist?.Id
+                ? playlistIds
+                : storedSeriesIds;
 
-            return (
-                type === 'movie'
-                || type === 'series'
+    const hasCuratedSource =
+        globalIds !== null
+        || Boolean(playlist?.Id)
+        || storedSeriesIds.length > 0;
+
+    if (
+        globalIds === null
+        && hasCuratedSource
+    ) {
+        try {
+            const currentUser =
+                await apiClient.getCurrentUser();
+
+            if (
+                currentUser?.Policy
+                    ?.IsAdministrator
+            ) {
+                await broadcastMinitigerServerPreference(
+                    apiClient,
+                    MINITIGER_BANNER_GLOBAL_IDS_PREF_KEY,
+                    curatedIds
+                );
+            }
+        } catch (error) {
+            console.debug(
+                '[Minitiger Banner] Globale Banner-Migration wird später erneut versucht.',
+                error
             );
-        })
-        .map(item => item.Id);
+        }
+    }
 
-    const legacySeriesIds = playlistItems
-        .filter(item =>
-            String(
-                item.Type
-                ?? ''
-            ).toLowerCase() === 'episode'
-        )
-        .map(item => item.SeriesId);
-
-    const curatedIds = uniqueIds([
-        ...directIds,
-        ...legacySeriesIds,
-        ...storedSeriesIds
-    ]);
-
-    if (playlist?.Id || storedSeriesIds.length) {
+    if (hasCuratedSource) {
         /*
          * Resolving every curated ID into a rich DTO is the expensive part of
          * banner startup.  When the user only wants e.g. 10 rotating entries,
@@ -665,7 +800,8 @@ export const getMinitigerBannerMembership = async (
 
     const [
         playlist,
-        storedSeriesIds
+        storedSeriesIds,
+        globalIds
     ] = await Promise.all([
         findMinitigerBannerPlaylist(
             apiClient
@@ -674,7 +810,10 @@ export const getMinitigerBannerMembership = async (
             ? getMinitigerBannerSeriesIds(
                 apiClient
             )
-            : Promise.resolve([])
+            : Promise.resolve([]),
+        getMinitigerGlobalBannerItemIds(
+            apiClient
+        )
     ]);
 
     let matchingEntries: PlaylistItemDto[] = [];
@@ -717,18 +856,28 @@ export const getMinitigerBannerMembership = async (
             itemId
         );
 
+    const globalConfigured =
+        globalIds !== null;
+
     return {
         playlistId:
             playlist?.Id
             ?? undefined,
         inBanner:
-            stored
-            || matchingEntries.length > 0,
+            globalConfigured
+                ? globalIds.includes(
+                    itemId
+                )
+                : (
+                    stored
+                    || matchingEntries.length > 0
+                ),
         entryId:
             entryIds[0]
             ?? undefined,
         entryIds,
-        storedSeries: stored
+        storedSeries: stored,
+        globalConfigured
     };
 };
 
