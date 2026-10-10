@@ -34,9 +34,18 @@ const getCascadeItemIds = async (
             ?? ''
         ).toLowerCase();
 
+    const isSeries =
+        itemType === 'series';
+    const isSeason =
+        itemType === 'season';
+    const isMangaParent =
+        itemType === 'folder'
+        || itemType === 'boxset';
+
     if (
-        itemType !== 'series'
-        && itemType !== 'season'
+        !isSeries
+        && !isSeason
+        && !isMangaParent
     ) {
         return [ item.Id ];
     }
@@ -54,11 +63,13 @@ const getCascadeItemIds = async (
             {
                 ParentId: item.Id,
                 Recursive:
-                    itemType === 'series',
+                    !isSeason,
                 IncludeItemTypes:
-                    itemType === 'series'
+                    isSeries
                         ? 'Season,Episode'
-                        : 'Episode',
+                        : isSeason
+                            ? 'Episode'
+                            : undefined,
                 EnableTotalRecordCount:
                     false,
                 Limit: 4999
@@ -231,7 +242,24 @@ export const showMinitigerLanguageFlagsEditor =
                         </span>
                     </label>
                     `
-                                : ''
+                                : [
+                                    'folder',
+                                    'boxset'
+                                ].includes(
+                                    String(item.Type ?? '').toLowerCase()
+                                )
+                                    ? `
+                    <label class="minitigerLanguageFlagsCascade">
+                        <input
+                            type="checkbox"
+                            class="minitigerLanguageFlagsCascadeCheckbox"
+                        />
+                        <span>
+                            Auf alle Unterordner und Inhalte anwenden
+                        </span>
+                    </label>
+                    `
+                                    : ''
                     }
 
                     <div class="minitigerLanguageFlagsActions">
