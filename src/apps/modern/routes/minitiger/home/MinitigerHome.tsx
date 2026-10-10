@@ -54,6 +54,7 @@ import {
     switchMinitigerProfileIdentity
 } from './profileIdentity';
 import {
+    broadcastMinitigerServerPreference,
     readMinitigerServerPreference
 } from './serverPreferences';
 import './MinitigerHome.scss';
@@ -268,6 +269,25 @@ const MinitigerHome = () => {
             setSharedLibraryOrder(
                 adminLibraryOrder
             );
+
+            /*
+             * The custom Minitiger home does not pass through Jellyfin's
+             * vanilla HomeScreenSettings renderer. Publish the admin's
+             * OrderedViews here as well so every non-admin receives the exact
+             * same media-library order even when the admin never opens the
+             * vanilla home settings page after an update.
+             */
+            void broadcastMinitigerServerPreference(
+                apiClient,
+                MINITIGER_LIBRARY_ORDER_PREF_KEY,
+                adminLibraryOrder
+            ).catch(error => {
+                console.warn(
+                    '[Minitiger Libraries] Admin-Reihenfolge konnte nicht global verteilt werden.',
+                    error
+                );
+            });
+
             return;
         }
 
