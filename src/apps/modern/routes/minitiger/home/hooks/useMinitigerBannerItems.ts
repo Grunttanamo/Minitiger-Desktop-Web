@@ -22,7 +22,7 @@ interface CachedBannerEnvelope {
 }
 
 const CACHE_PREFIX =
-    'minitiger.banner.lastSuccessful.v5';
+    'minitiger.banner.lastSuccessful.v6';
 
 const limitItems = (
     data: BannerData,
