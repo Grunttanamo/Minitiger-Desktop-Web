@@ -17,6 +17,7 @@ import React, {
 import { useNavigate } from 'react-router-dom';
 
 import { useLibrary } from 'apps/modern/features/libraries/hooks/useLibrary';
+import { requestMinitigerScrollToTop } from 'apps/modern/features/minitiger/MinitigerSmoothScrollHost';
 import MinitigerVirtualAssignModal from 'apps/modern/routes/minitiger/home/components/MinitigerVirtualAssignModal';
 import useMinitigerHomeSettings from 'apps/modern/routes/minitiger/home/hooks/useMinitigerHomeSettings';
 import useMinitigerLibrarySettings from 'apps/modern/routes/minitiger/home/hooks/useMinitigerLibrarySettings';
@@ -792,12 +793,23 @@ const ItemsView: FC = () => {
     const handleAlphabetChange = useCallback((
         newValue: string | null | undefined
     ) => {
+        requestMinitigerScrollToTop();
+
         setLibraryViewSettings(previous => ({
             ...previous,
             StartIndex: 0,
             Alphabet: newValue
         }));
     }, [setLibraryViewSettings]);
+
+    useEffect(() => {
+        requestMinitigerScrollToTop();
+    }, [
+        libraryViewSettings.Alphabet,
+        libraryViewSettings.StartIndex,
+        parentId,
+        viewType
+    ]);
 
     const hasSortName = !libraryViewSettings.SortBy
         .includes(ItemSortBy.Random);
