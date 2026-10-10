@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const isNativeMinitigerDesktop = () => (
     typeof window !== 'undefined'
@@ -9,6 +10,50 @@ const isNativeMinitigerDesktop = () => (
         )
     )
 );
+
+export const MINITIGER_SCROLL_TO_TOP_EVENT =
+    'minitiger:scroll-to-top';
+
+export const requestMinitigerScrollToTop = () => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.dispatchEvent(
+        new Event(
+            MINITIGER_SCROLL_TO_TOP_EVENT
+        )
+    );
+};
+
+const resetPageScroll = () => {
+    window.scrollTo(
+        window.scrollX,
+        0
+    );
+
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    document
+        .querySelectorAll<HTMLElement>(
+            [
+                '.mainAnimatedPage',
+                '.page',
+                '.minitigerLibraryPage',
+                '.minitigerDetailsPage',
+                '.smoothScrollY',
+                '.scrollY',
+                '.emby-scroller',
+                '[data-scrollable="true"]'
+            ].join(',')
+        )
+        .forEach(element => {
+            if (element.scrollTop !== 0) {
+                element.scrollTop = 0;
+            }
+        });
+};
 
 const shouldIgnoreTarget = (
     target: EventTarget | null
@@ -160,6 +205,9 @@ const WHEEL_SPEED_MULTIPLIER = 1.55;
 const SMOOTHING_FACTOR = 0.3;
 
 const MinitigerSmoothScrollHost = () => {
+    const location =
+        useLocation();
+
     useEffect(() => {
         if (!isNativeMinitigerDesktop()) {
             return;
@@ -302,6 +350,22 @@ const MinitigerSmoothScrollHost = () => {
             }
         };
 
+        const onScrollToTop = () => {
+            stopAnimation();
+            activeScroller = null;
+            targetTop = 0;
+            resetPageScroll();
+
+            /*
+             * Some Jellyfin page containers finish mounting one frame after
+             * the route/state change. Repeat once after layout so a newly
+             * mounted scroller cannot inherit the previous page position.
+             */
+            window.requestAnimationFrame(
+                resetPageScroll
+            );
+        };
+
         const stopForNativeAutoscroll = (
             event: MouseEvent
         ) => {
@@ -318,6 +382,11 @@ const MinitigerSmoothScrollHost = () => {
             activeScroller = null;
             targetTop = 0;
         };
+
+        window.addEventListener(
+            MINITIGER_SCROLL_TO_TOP_EVENT,
+            onScrollToTop
+        );
 
         document.addEventListener(
             'wheel',
@@ -340,6 +409,10 @@ const MinitigerSmoothScrollHost = () => {
 
         return () => {
             stopAnimation();
+            window.removeEventListener(
+                MINITIGER_SCROLL_TO_TOP_EVENT,
+                onScrollToTop
+            );
             document.removeEventListener(
                 'wheel',
                 onWheel,
@@ -357,6 +430,36 @@ const MinitigerSmoothScrollHost = () => {
             );
         };
     }, []);
+
+    useEffect(() => {
+        if (!isNativeMinitigerDesktop()) {
+            return;
+        }
+
+        const frame =
+            window.requestAnimationFrame(
+                requestMinitigerScrollToTop
+            );
+
+        const timer =
+            window.setTimeout(
+                requestMinitigerScrollToTop,
+                40
+            );
+
+        return () => {
+            window.cancelAnimationFrame(
+                frame
+            );
+            window.clearTimeout(
+                timer
+            );
+        };
+    }, [
+        location.key,
+        location.pathname,
+        location.search
+    ]);
 
     return null;
 };
