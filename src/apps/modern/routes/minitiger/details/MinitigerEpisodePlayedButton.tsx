@@ -11,12 +11,14 @@ interface Props {
     item: ItemDto;
     placement?: 'overlay' | 'inline';
     className?: string;
+    itemLabel?: string;
 }
 
 const MinitigerEpisodePlayedButton = ({
     item,
     placement = 'overlay',
-    className = ''
+    className = '',
+    itemLabel = 'Folge'
 }: Props) => {
     const queryClient =
         useQueryClient();
@@ -95,8 +97,8 @@ const MinitigerEpisodePlayedButton = ({
             }
             aria-label={
                 played
-                    ? `${item.Name ?? 'Folge'} als ungesehen markieren`
-                    : `${item.Name ?? 'Folge'} als gesehen markieren`
+                    ? `${item.Name ?? itemLabel} als ungesehen markieren`
+                    : `${item.Name ?? itemLabel} als gesehen markieren`
             }
             aria-pressed={played}
             disabled={playedMutation.isPending}
