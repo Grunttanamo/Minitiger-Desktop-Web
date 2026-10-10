@@ -1,5 +1,9 @@
 export type MinitigerCustomRowId = `custom${number}`;
-export type MinitigerCustomSortMode = 'latestItems' | 'latestTitles' | 'latestSeasons';
+export type MinitigerCustomSortMode =
+    | 'latestItems'
+    | 'latestTitles'
+    | 'latestSeasons'
+    | 'top10';
 export type MinitigerCustomDisplay = 'poster' | 'landscape';
 
 export interface MinitigerCustomRow {
@@ -108,17 +112,22 @@ export const normalizeCustomRows = (
                         ? 'latestTitles'
                         : candidate.sortMode === 'latestSeasons'
                             ? 'latestSeasons'
-                            : 'latestItems',
+                            : candidate.sortMode === 'top10'
+                                ? 'top10'
+                                : 'latestItems',
                 display:
                     candidate.display === 'landscape'
                         ? 'landscape'
                         : 'poster',
-                count: clamp(
-                    candidate.count,
-                    defaultRow.count,
-                    3,
-                    50
-                ),
+                count:
+                    candidate.sortMode === 'top10'
+                        ? 10
+                        : clamp(
+                            candidate.count,
+                            defaultRow.count,
+                            3,
+                            50
+                        ),
                 cardScale: clamp(
                     candidate.cardScale,
                     defaultRow.cardScale,
