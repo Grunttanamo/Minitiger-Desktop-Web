@@ -12,7 +12,8 @@ import {
     addSeriesToMinitigerBanner,
     getMinitigerBannerMembership,
     removeItemFromMinitigerBanner,
-    setMinitigerBannerSeriesMembership
+    setMinitigerBannerSeriesMembership,
+    setMinitigerGlobalBannerItemMembership
 } from '../bannerPlaylistUtils';
 
 const useMinitigerBannerMembership = (
@@ -102,6 +103,12 @@ const useMinitigerBannerMembership = (
                         );
                     }
 
+                    await setMinitigerGlobalBannerItemMembership(
+                        apiClient,
+                        itemId,
+                        false
+                    );
+
                     return;
                 }
 
@@ -114,23 +121,31 @@ const useMinitigerBannerMembership = (
                     itemId
                 );
 
+                await setMinitigerGlobalBannerItemMembership(
+                    apiClient,
+                    itemId,
+                    true
+                );
+
                 return;
             }
 
             if (query.data?.inBanner) {
                 if (
-                    !query.data.playlistId
-                    || !query.data.entryIds?.length
+                    query.data.playlistId
+                    && query.data.entryIds?.length
                 ) {
-                    throw new Error(
-                        'Banner-Eintrag besitzt keine PlaylistItemId.'
+                    await removeItemFromMinitigerBanner(
+                        apiClient,
+                        query.data.playlistId,
+                        query.data.entryIds
                     );
                 }
 
-                await removeItemFromMinitigerBanner(
+                await setMinitigerGlobalBannerItemMembership(
                     apiClient,
-                    query.data.playlistId,
-                    query.data.entryIds
+                    itemId,
+                    false
                 );
 
                 return;
@@ -139,6 +154,12 @@ const useMinitigerBannerMembership = (
             await addItemToMinitigerBanner(
                 apiClient,
                 itemId
+            );
+
+            await setMinitigerGlobalBannerItemMembership(
+                apiClient,
+                itemId,
+                true
             );
         },
         onSuccess: async () => {
