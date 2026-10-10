@@ -5948,6 +5948,105 @@ iframe.minitigerInlineTrailer {
     margin-left: auto;
 }
 
+/* =========================================================
+   MINITIGER TOP 10 - NETFLIX-LIKE RANKED POSTERS
+   ========================================================= */
+.minitigerHome
+.minitigerMediaSectionRanked
+.minitigerMediaRow {
+    gap: clamp(1.1rem, 1.8vw, 2rem) !important;
+}
+
+.minitigerHome
+.minitigerMediaSectionRanked
+.minitigerMediaCardRanked {
+    flex-basis: calc(
+        min(
+            var(--mt-custom-row-card-width, 180px),
+            calc(100vw - 7.5rem)
+        )
+        + 5.25rem
+    ) !important;
+    overflow: visible;
+}
+
+.minitigerMediaCardRanked
+.minitigerMediaCardBody {
+    margin-left: 5.25rem;
+}
+
+.minitigerTop10Rank {
+    position: absolute;
+    z-index: 0;
+    left: 0;
+    top: 48%;
+    width: 5.6rem;
+    transform: translateY(-58%);
+    color: rgba(11, 12, 14, 0.96);
+    font-family:
+        Impact,
+        Haettenschweiler,
+        'Arial Narrow Bold',
+        sans-serif;
+    font-size: clamp(8rem, 10vw, 12rem);
+    font-weight: 900;
+    line-height: 0.78;
+    letter-spacing: -0.08em;
+    text-align: center;
+    pointer-events: none;
+    -webkit-text-stroke:
+        2px rgba(255, 255, 255, 0.42);
+    text-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.48);
+    transition:
+        -webkit-text-stroke-color 160ms ease,
+        filter 160ms ease;
+}
+
+.minitigerMediaCardRanked:hover
+.minitigerTop10Rank,
+.minitigerMediaCardRanked:focus-within
+.minitigerTop10Rank,
+.minitigerMediaCardRanked.minitigerNativeHover
+.minitigerTop10Rank {
+    -webkit-text-stroke-color:
+        color-mix(
+            in srgb,
+            var(--mt-accent) 78%,
+            white
+        );
+    filter:
+        drop-shadow(
+            0 0 7px
+            color-mix(
+                in srgb,
+                var(--mt-accent) 58%,
+                transparent
+            )
+        );
+}
+
+@media (max-width: 520px) {
+    .minitigerHome
+    .minitigerMediaSectionRanked
+    .minitigerMediaCardRanked {
+        flex-basis: calc(
+            min(42vw, 162px)
+            + 3.8rem
+        ) !important;
+    }
+
+    .minitigerMediaCardRanked
+    .minitigerMediaCardBody {
+        margin-left: 3.8rem;
+    }
+
+    .minitigerTop10Rank {
+        width: 4.2rem;
+        font-size: 7rem;
+    }
+}
+
 
 
 /* Restore the native-style menu on original media-library cards. */
