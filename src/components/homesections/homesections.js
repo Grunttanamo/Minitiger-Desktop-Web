@@ -5,6 +5,10 @@ import globalize from 'lib/globalize';
 import ServerConnections from 'lib/jellyfin-apiclient/ServerConnections';
 import Dashboard from 'utils/dashboard';
 import { queryClient } from 'utils/query/queryClient';
+import {
+    broadcastMinitigerServerPreference,
+    readMinitigerServerPreference
+} from 'apps/modern/routes/minitiger/home/serverPreferences';
 
 import { loadRecordings } from './sections/activeRecordings';
 import { loadLibraryButtons } from './sections/libraryButtons';
@@ -23,6 +27,136 @@ import './homesections.scss';
 
 const MAX_SECTIONS = 10;
 const MAX_SECTIONS_TV = MAX_SECTIONS + 1; // TV layout can have an extra section to ensure a library section is always visible
+
+const MINITIGER_LIBRARY_ORDER_PREF_KEY =
+    'libraryOrder.v1';
+
+const normalizeMinitigerLibraryOrder = value => (
+    Array.isArray(value)
+        ? Array.from(
+            new Set(
+                value
+                    .map(id => String(id || '').trim())
+                    .filter(Boolean)
+            )
+        )
+        : []
+);
+
+const sortMinitigerUserViews = (
+    userViews,
+    order
+) => {
+    if (!order.length) {
+        return userViews;
+    }
+
+    const positions =
+        new Map(
+            order.map(
+                (id, index) => [ id, index ]
+            )
+        );
+
+    return userViews
+        .map((item, index) => ({
+            item,
+            index
+        }))
+        .sort((left, right) => {
+            const leftPos =
+                positions.get(left.item.Id);
+            const rightPos =
+                positions.get(right.item.Id);
+
+            if (
+                leftPos == null
+                && rightPos == null
+            ) {
+                return left.index - right.index;
+            }
+
+            if (leftPos == null) {
+                return 1;
+            }
+
+            if (rightPos == null) {
+                return -1;
+            }
+
+            return leftPos - rightPos;
+        })
+        .map(entry => entry.item);
+};
+
+const applyMinitigerGlobalLibraryOrder = async (
+    apiClient,
+    user,
+    userViews
+) => {
+    const userId =
+        user?.Id
+        || apiClient.getCurrentUserId();
+
+    if (!userId) {
+        return userViews;
+    }
+
+    if (user?.Policy?.IsAdministrator) {
+        const configured =
+            normalizeMinitigerLibraryOrder(
+                user.Configuration?.OrderedViews
+            );
+        const visibleIds =
+            normalizeMinitigerLibraryOrder(
+                userViews.map(item => item.Id)
+            );
+        const canonical =
+            normalizeMinitigerLibraryOrder([
+                ...configured,
+                ...visibleIds
+            ]);
+
+        const stored =
+            normalizeMinitigerLibraryOrder(
+                await readMinitigerServerPreference(
+                    apiClient,
+                    userId,
+                    MINITIGER_LIBRARY_ORDER_PREF_KEY
+                )
+            );
+
+        if (
+            JSON.stringify(stored)
+            !== JSON.stringify(canonical)
+        ) {
+            await broadcastMinitigerServerPreference(
+                apiClient,
+                MINITIGER_LIBRARY_ORDER_PREF_KEY,
+                canonical
+            );
+        }
+
+        return sortMinitigerUserViews(
+            userViews,
+            canonical
+        );
+    }
+
+    const globalOrder =
+        normalizeMinitigerLibraryOrder(
+            await readMinitigerServerPreference(
+                apiClient,
+                userId,
+                MINITIGER_LIBRARY_ORDER_PREF_KEY
+            )
+        );
+
+    return sortMinitigerUserViews(
+        userViews,
+        globalOrder
+    );
+};
 
 export function getDefaultSection(index) {
     if (index < 0 || index > DEFAULT_SECTIONS.length) return '';
@@ -61,6 +195,13 @@ export function loadSections(elem, apiClient, user, userSettings) {
     return queryClient
         .fetchQuery(getUserViewsQuery(api, { userId }))
         .then(result => result.Items || [])
+        .then(userViews =>
+            applyMinitigerGlobalLibraryOrder(
+                apiClient,
+                user,
+                userViews
+            )
+        )
         .then(function (userViews) {
             let html = '';
 
