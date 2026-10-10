@@ -1419,7 +1419,9 @@
     position: absolute;
     z-index: 7;
     /* Keep the audio toggle visually centered above the banner counter. */
-    right: calc(2.1% + 2.45rem);
+    /* Slightly further left so the round audio button is visually
+       centered above the counter/navigation group. */
+    right: calc(2.1% + 2.7rem);
     /* Final visual trim: keep it centered above the counter, just a
        little closer to the navigation controls. */
     bottom: 9.8%;
