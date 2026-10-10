@@ -425,7 +425,14 @@ const fetchGetItemsViewByType = async (
                 break;
             }
             case LibraryTab.Artists: {
-                response = await getArtistApi(api).getArtists(
+                /*
+                 * Minitiger's first Music tab is meant to be the actual
+                 * interpreters, not every contributing/featured artist that
+                 * happens to occur on one track. Jellyfin's /Artists endpoint
+                 * includes those contributors, while /Artists/AlbumArtists
+                 * represents the main artists much more closely.
+                 */
+                response = await getArtistApi(api).getAlbumArtists(
                     {
                         userId: user.Id,
                         parentId: parentId ?? undefined,
@@ -569,8 +576,31 @@ const fetchGetItemsViewByType = async (
             return result;
         }
 
+        const visibleResult =
+            viewType === LibraryTab.Artists
+                ? {
+                    ...result,
+                    Items: (result.Items ?? [])
+                        .filter(item =>
+                            Boolean(
+                                item.ImageTags
+                                    ?.Primary
+                            )
+                        ),
+                    TotalRecordCount:
+                        (result.Items ?? [])
+                            .filter(item =>
+                                Boolean(
+                                    item.ImageTags
+                                        ?.Primary
+                                )
+                            )
+                            .length
+                }
+                : result;
+
         return applyLiteralTitleView(
-            result,
+            visibleResult,
             libraryViewSettings
         );
     }
