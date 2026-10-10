@@ -1227,6 +1227,17 @@ const MinitigerVideoDetails = () => {
                                                 season
                                             );
 
+                                        const seasonPlayed =
+                                            Boolean(
+                                                season.UserData
+                                                    ?.Played
+                                            );
+
+                                        const seasonUnplayed =
+                                            season.UserData
+                                                ?.UnplayedItemCount
+                                            ?? 0;
+
                                         const seasonManualLanguages =
                                             getCachedMinitigerLanguageFlags(
                                                 season.Id
@@ -1301,6 +1312,28 @@ const MinitigerVideoDetails = () => {
                                                     ) : (
                                                         <span />
                                                     )}
+
+                                                    {settings.showPlayedIndicators
+                                                        && (
+                                                            seasonPlayed
+                                                            || seasonUnplayed > 0
+                                                        )
+                                                        && (
+                                                            <span
+                                                                className={[
+                                                                    'minitigerDetailsSeasonPlayed',
+                                                                    seasonPlayed
+                                                                        ? 'isComplete'
+                                                                        : ''
+                                                                ]
+                                                                    .filter(Boolean)
+                                                                    .join(' ')}
+                                                            >
+                                                                {seasonPlayed
+                                                                    ? '✓'
+                                                                    : seasonUnplayed}
+                                                            </span>
+                                                        )}
 
                                                     {seasonAudioFlags.length > 0 && (
                                                         <span className='minitigerDetailsSeasonAudio'>
