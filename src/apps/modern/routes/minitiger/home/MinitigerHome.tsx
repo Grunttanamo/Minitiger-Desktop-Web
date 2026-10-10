@@ -53,6 +53,9 @@ import {
     isMinitigerProfileIdentityCurrent,
     switchMinitigerProfileIdentity
 } from './profileIdentity';
+import {
+    readMinitigerServerPreference
+} from './serverPreferences';
 import './MinitigerHome.scss';
 
 const getLibraryImageUrl = (
@@ -98,6 +101,84 @@ const getLibraryImageUrl = (
     }
 
     return undefined;
+};
+
+const MINITIGER_LIBRARY_ORDER_PREF_KEY =
+    'libraryOrder.v1';
+
+const normalizeMinitigerLibraryOrder = (
+    value: unknown
+) => Array.isArray(value)
+    ? Array.from(
+        new Set(
+            value
+                .map(id =>
+                    String(
+                        id
+                        ?? ''
+                    ).trim()
+                )
+                .filter(Boolean)
+        )
+    )
+    : [];
+
+const sortLibrariesByMinitigerOrder = (
+    libraries: ItemDto[],
+    order: string[]
+) => {
+    if (!order.length) {
+        return libraries;
+    }
+
+    const positions =
+        new Map(
+            order.map(
+                (id, index) => [
+                    id,
+                    index
+                ]
+            )
+        );
+
+    return libraries
+        .map((library, index) => ({
+            library,
+            index
+        }))
+        .sort((left, right) => {
+            const leftPosition =
+                left.library.Id
+                    ? positions.get(
+                        left.library.Id
+                    )
+                    : undefined;
+            const rightPosition =
+                right.library.Id
+                    ? positions.get(
+                        right.library.Id
+                    )
+                    : undefined;
+
+            if (
+                leftPosition == null
+                && rightPosition == null
+            ) {
+                return left.index - right.index;
+            }
+
+            if (leftPosition == null) {
+                return 1;
+            }
+
+            if (rightPosition == null) {
+                return -1;
+            }
+
+            return leftPosition
+                - rightPosition;
+        })
+        .map(entry => entry.library);
 };
 
 const MinitigerHome = () => {
@@ -155,6 +236,71 @@ const MinitigerHome = () => {
     }, []);
 
     const isAdmin = Boolean(user?.Policy?.IsAdministrator);
+
+    const adminLibraryOrder =
+        useMemo(
+            () =>
+                normalizeMinitigerLibraryOrder(
+                    user?.Configuration
+                        ?.OrderedViews
+                ),
+            [
+                user?.Configuration
+                    ?.OrderedViews
+            ]
+        );
+
+    const [
+        sharedLibraryOrder,
+        setSharedLibraryOrder
+    ] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (
+            !apiClient
+            || !user?.Id
+        ) {
+            setSharedLibraryOrder([]);
+            return;
+        }
+
+        if (isAdmin) {
+            setSharedLibraryOrder(
+                adminLibraryOrder
+            );
+            return;
+        }
+
+        let cancelled = false;
+
+        void readMinitigerServerPreference<string[]>(
+            apiClient,
+            user.Id,
+            MINITIGER_LIBRARY_ORDER_PREF_KEY
+        ).then(value => {
+            if (!cancelled) {
+                setSharedLibraryOrder(
+                    normalizeMinitigerLibraryOrder(
+                        value
+                    )
+                );
+            }
+        }).catch(error => {
+            console.warn(
+                '[Minitiger Libraries] Globale Bibliotheksreihenfolge konnte nicht gelesen werden.',
+                error
+            );
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        adminLibraryOrder,
+        apiClient,
+        isAdmin,
+        user?.Id
+    ]);
 
     const {
         config: virtualConfig,
@@ -532,11 +678,14 @@ const MinitigerHome = () => {
         (rewatchData?.Items ?? []) as ItemDto[];
 
     const libraries =
-        librariesFetched
-            ? liveLibraries
-            : cachedLibraries.length > 0
-                ? cachedLibraries
-                : liveLibraries;
+        sortLibrariesByMinitigerOrder(
+            librariesFetched
+                ? liveLibraries
+                : cachedLibraries.length > 0
+                    ? cachedLibraries
+                    : liveLibraries,
+            sharedLibraryOrder
+        );
     const resumeItems =
         resumeFetched
             ? liveResumeItems
