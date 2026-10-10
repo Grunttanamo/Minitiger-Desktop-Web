@@ -141,6 +141,8 @@ const MinitigerHero = ({
     const [ activeIndex, setActiveIndex ] = useState(0);
     const [ trailerDebugOpen, setTrailerDebugOpen ] = useState(false);
     const [ trailerLoading, setTrailerLoading ] = useState(false);
+    const [ trailerReady, setTrailerReady ] = useState(false);
+    const [ trailerMuted, setTrailerMuted ] = useState(true);
     const paused = trailerDebugOpen || trailerLoading;
     const [ backdropFailed, setBackdropFailed ] = useState(false);
     const [ logoFailed, setLogoFailed ] = useState(false);
@@ -173,6 +175,11 @@ const MinitigerHero = ({
 
     const heroItem =
         (detailedItem ?? activeCandidate) as ItemDto | undefined;
+
+    useEffect(() => {
+        setTrailerMuted(true);
+        setTrailerReady(false);
+    }, [heroItem?.Id]);
 
     const favoriteMutation = useToggleFavoriteMutation();
 
@@ -424,6 +431,8 @@ const MinitigerHero = ({
                     className='minitigerHeroTrailerMedia'
                     delayMs={900}
                     onLoadingChange={setTrailerLoading}
+                    onReadyChange={setTrailerReady}
+                    muted={trailerMuted}
                     allowYouTube={youtubeTrailersEnabled}
                     allowLocal={localTrailersEnabled}
                 />
@@ -570,6 +579,43 @@ const MinitigerHero = ({
                 <div className='minitigerHeroFskFloating'>
                     {ratingLabel}
                 </div>
+            )}
+
+            {trailerReady && (
+                <button
+                    type='button'
+                    className={[
+                        'minitigerHeroAudioToggle',
+                        trailerMuted
+                            ? ''
+                            : 'isAudible'
+                    ].filter(Boolean).join(' ')}
+                    onClick={() =>
+                        setTrailerMuted(
+                            current => !current
+                        )
+                    }
+                    aria-label={
+                        trailerMuted
+                            ? 'Trailer-Ton einschalten'
+                            : 'Trailer-Ton ausschalten'
+                    }
+                    title={
+                        trailerMuted
+                            ? 'Ton einschalten'
+                            : 'Ton ausschalten'
+                    }
+                    aria-pressed={!trailerMuted}
+                >
+                    <span
+                        className='material-icons'
+                        aria-hidden='true'
+                    >
+                        {trailerMuted
+                            ? 'volume_off'
+                            : 'volume_up'}
+                    </span>
+                </button>
             )}
 
             {showNavigation && candidates.length > 1 && (
