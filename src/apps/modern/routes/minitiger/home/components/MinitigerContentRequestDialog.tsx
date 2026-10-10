@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useApi } from 'hooks/useApi';
 
@@ -96,7 +97,7 @@ const MinitigerContentRequestDialog = ({
         }
     };
 
-    return (
+    return createPortal(
         <div
             className='minitigerContentRequestLayer'
             role='presentation'
@@ -236,7 +237,8 @@ const MinitigerContentRequestDialog = ({
                     </div>
                 </form>
             </section>
-        </div>
+        </div>,
+        document.body
     );
 };
 
