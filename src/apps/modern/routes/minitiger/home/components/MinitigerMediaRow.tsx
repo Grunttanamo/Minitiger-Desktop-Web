@@ -58,6 +58,7 @@ interface MinitigerMediaRowProps {
     cardScale?: number;
     cardGap?: number;
     showTitle?: boolean;
+    ranked?: boolean;
     subtitleOverride?: (
         item: ItemDto
     ) => string | null | undefined;
@@ -112,6 +113,7 @@ const MinitigerMediaRow = ({
     cardScale,
     cardGap,
     showTitle = true,
+    ranked = false,
     subtitleOverride
 }: MinitigerMediaRowProps) => {
     useMinitigerLanguageFlagRevision(
@@ -476,6 +478,9 @@ const MinitigerMediaRow = ({
                 'minitigerMediaSection',
                 customLayout
                     ? 'minitigerMediaSectionCustomLayout'
+                    : '',
+                ranked
+                    ? 'minitigerMediaSectionRanked'
                     : ''
             ].filter(Boolean).join(' ')}
             data-has-scroll-controls={canScroll}
@@ -564,7 +569,7 @@ const MinitigerMediaRow = ({
                             : ''
                     ].filter(Boolean).join(' ')}
                 >
-                    {displayItems.map((item) => {
+                    {displayItems.map((item, index) => {
                         const imageUrl =
                             variant === 'landscape'
                                 ? (
@@ -669,7 +674,10 @@ const MinitigerMediaRow = ({
                                         ? 'minitigerMediaCardLandscape'
                                         : variant === 'square'
                                             ? 'minitigerMediaCardSquare'
-                                            : ''
+                                            : '',
+                                    ranked
+                                        ? 'minitigerMediaCardRanked'
+                                        : ''
                                 ].filter(Boolean).join(' ')}
                                 onMouseEnter={event => {
                                     if (window.NativeShell) {
@@ -684,6 +692,15 @@ const MinitigerMediaRow = ({
                                     );
                                 }}
                             >
+                                {ranked && (
+                                    <span
+                                        className='minitigerTop10Rank'
+                                        aria-hidden='true'
+                                    >
+                                        {index + 1}
+                                    </span>
+                                )}
+
                                 <div className='minitigerMediaCardBody'>
                                     <div
                                         className={[
