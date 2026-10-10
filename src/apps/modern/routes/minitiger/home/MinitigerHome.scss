@@ -1415,6 +1415,49 @@
     gap: 0.35rem;
 }
 
+.minitigerHeroAudioToggle {
+    position: absolute;
+    z-index: 7;
+    right: 3.15%;
+    bottom: 12.1%;
+    width: 2.55rem;
+    height: 2.55rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.48);
+    border-radius: 50%;
+    background: rgba(10, 12, 15, 0.68);
+    color: #fff;
+    cursor: pointer;
+    backdrop-filter: blur(7px);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.38);
+    transition:
+        transform 150ms ease,
+        border-color 150ms ease,
+        background 150ms ease,
+        color 150ms ease;
+}
+
+.minitigerHeroAudioToggle .material-icons {
+    font-size: 1.25rem;
+}
+
+.minitigerHeroAudioToggle:hover,
+.minitigerHeroAudioToggle:focus-visible,
+.minitigerHeroAudioToggle.isAudible {
+    border-color: var(--mt-accent);
+    background: var(--mt-accent);
+    color: var(--mt-accent-text);
+    outline: none;
+}
+
+.minitigerHeroAudioToggle:hover,
+.minitigerHeroAudioToggle:focus-visible {
+    transform: scale(1.07);
+}
+
 .minitigerHeroArrow {
     width: 2rem;
     height: 2rem;
@@ -4622,8 +4665,16 @@ iframe.minitigerInlineTrailer {
     transform: translateY(calc(-1 * var(--mt-banner-fsk-shift)));
 }
 
-.minitigerHome .minitigerHeroNavigation {
+.minitigerHome .minitigerHeroNavigation,
+.minitigerHome .minitigerHeroAudioToggle {
     transform: translateY(calc(-1 * var(--mt-banner-nav-shift)));
+}
+
+.minitigerHome .minitigerHeroAudioToggle:hover,
+.minitigerHome .minitigerHeroAudioToggle:focus-visible {
+    transform:
+        translateY(calc(-1 * var(--mt-banner-nav-shift)))
+        scale(1.07);
 }
 
 /* The original hero had a hard-coded mask fade. Disable it here so the two
