@@ -95,7 +95,9 @@ const parseCustomSort = (
         ? 'latestTitles'
         : value === 'latestSeasons'
             ? 'latestSeasons'
-            : 'latestItems'
+            : value === 'top10'
+                ? 'top10'
+                : 'latestItems'
 );
 
 const LibrarySelect = ({
@@ -820,36 +822,55 @@ const MinitigerHomeBuilderSettings = ({
                                                     Inhalt der Reihe 2
                                                     (optional)
                                                 </span>
-                                                <LibrarySelect
-                                                    value={row.library2}
-                                                    libraries={libraries}
-                                                    onChange={value =>
-                                                        onUpdateCustomRow(
-                                                            row.key,
-                                                            {
-                                                                library2:
-                                                                    value
-                                                            }
-                                                        )
-                                                    }
-                                                />
+                                                {row.sortMode === 'top10' ? (
+                                                    <div className='minitigerSettingsHint'>
+                                                        Top 10 verwendet nur
+                                                        Bibliothek 1. Für eine
+                                                        weitere Bibliothek
+                                                        einfach eine zweite
+                                                        Custom-Reihe anlegen.
+                                                    </div>
+                                                ) : (
+                                                    <LibrarySelect
+                                                        value={row.library2}
+                                                        libraries={libraries}
+                                                        onChange={value =>
+                                                            onUpdateCustomRow(
+                                                                row.key,
+                                                                {
+                                                                    library2:
+                                                                        value
+                                                                }
+                                                            )
+                                                        }
+                                                    />
+                                                )}
                                             </label>
 
                                             <label className='minitigerSettingsField'>
                                                 <span>Sortierregel</span>
                                                 <select
                                                     value={row.sortMode}
-                                                    onChange={event =>
+                                                    onChange={event => {
+                                                        const sortMode =
+                                                            parseCustomSort(
+                                                                event.currentTarget.value
+                                                            );
+
                                                         onUpdateCustomRow(
                                                             row.key,
-                                                            {
-                                                                sortMode:
-                                                                    parseCustomSort(
-                                                                        event.currentTarget.value
-                                                                    )
-                                                            }
-                                                        )
-                                                    }
+                                                            sortMode === 'top10'
+                                                                ? {
+                                                                    sortMode,
+                                                                    library2: '',
+                                                                    display: 'poster',
+                                                                    count: 10
+                                                                }
+                                                                : {
+                                                                    sortMode
+                                                                }
+                                                        );
+                                                    }}
                                                 >
                                                     <option value='latestItems'>
                                                         Neueste Einzelinhalte
@@ -865,6 +886,11 @@ const MinitigerHomeBuilderSettings = ({
                                                         letzter neuer Folge
                                                         (eine Karte je Staffel)
                                                     </option>
+                                                    <option value='top10'>
+                                                        Top 10 – serverweit
+                                                        am meisten gesehen
+                                                        (Filme/Serien)
+                                                    </option>
                                                 </select>
                                             </label>
 
@@ -873,11 +899,13 @@ const MinitigerHomeBuilderSettings = ({
                                                 <select
                                                     value={
                                                         row.sortMode === 'latestSeasons'
+                                                        || row.sortMode === 'top10'
                                                             ? 'poster'
                                                             : row.display
                                                     }
                                                     disabled={
                                                         row.sortMode === 'latestSeasons'
+                                                        || row.sortMode === 'top10'
                                                     }
                                                     onChange={event =>
                                                         onUpdateCustomRow(
@@ -901,12 +929,23 @@ const MinitigerHomeBuilderSettings = ({
                                             </label>
 
                                             <label className='minitigerSettingsField'>
-                                                <span>Anzahl (3-50)</span>
+                                                <span>
+                                                    {row.sortMode === 'top10'
+                                                        ? 'Anzahl'
+                                                        : 'Anzahl (3-50)'}
+                                                </span>
                                                 <input
                                                     type='number'
                                                     min='3'
                                                     max='50'
-                                                    value={row.count}
+                                                    disabled={
+                                                        row.sortMode === 'top10'
+                                                    }
+                                                    value={
+                                                        row.sortMode === 'top10'
+                                                            ? 10
+                                                            : row.count
+                                                    }
                                                     onChange={event =>
                                                         onUpdateCustomRow(
                                                             row.key,
