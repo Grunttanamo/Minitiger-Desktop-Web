@@ -270,6 +270,49 @@
     bottom: 2rem;
 }
 
+.minitigerLargePreviewAudioToggle {
+    position: absolute;
+    z-index: 8;
+    right: 2rem;
+    bottom: 2rem;
+    width: 2.65rem;
+    height: 2.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.52);
+    border-radius: 50%;
+    background: rgba(20, 20, 20, 0.72);
+    color: #fff;
+    cursor: pointer;
+    backdrop-filter: blur(7px);
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.42);
+    transition:
+        transform 150ms ease,
+        border-color 150ms ease,
+        background 150ms ease,
+        color 150ms ease;
+}
+
+.minitigerLargePreviewAudioToggle .material-icons {
+    font-size: 1.28rem;
+}
+
+.minitigerLargePreviewAudioToggle:hover,
+.minitigerLargePreviewAudioToggle:focus-visible,
+.minitigerLargePreviewAudioToggle.isAudible {
+    border-color: var(--mt-preview-accent);
+    background: var(--mt-preview-accent);
+    color: var(--mt-preview-accent-text);
+    outline: none;
+}
+
+.minitigerLargePreviewAudioToggle:hover,
+.minitigerLargePreviewAudioToggle:focus-visible {
+    transform: scale(1.07);
+}
+
 .minitigerLargePreviewType {
     color: var(--mt-preview-accent);
     font-size: 0.75rem;
