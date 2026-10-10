@@ -80,11 +80,86 @@ const getRememberedLoginUsersKey = (
     return `minitiger.login.users.v${LOGIN_USERS_VERSION}:${serverId}:${deviceId}`;
 };
 
-const syncRememberedLoginAvatar = (
+const blobToDataUrl = (
+    blob: Blob
+) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () =>
+        reject(
+            reader.error
+            ?? new Error(
+                'Avatar konnte nicht als Data-URL gelesen werden.'
+            )
+        );
+
+    reader.onload = () =>
+        resolve(
+            typeof reader.result === 'string'
+                ? reader.result
+                : ''
+        );
+
+    reader.readAsDataURL(blob);
+});
+
+const resolveRememberedLoginAvatar = async (
+    apiClient: Parameters<
+        typeof getMinitigerVirtualServerMediaUrl
+    >[0],
+    settings: MinitigerAvatarSettings
+) => {
+    if (settings.image.startsWith('data:image/')) {
+        return settings.image;
+    }
+
+    const galleryReference =
+        parseMinitigerGalleryAvatarReference(
+            settings.image
+        );
+
+    if (!galleryReference || !apiClient) {
+        return null;
+    }
+
+    const url =
+        getMinitigerVirtualServerMediaUrl(
+            apiClient,
+            galleryReference.id,
+            'image',
+            galleryReference.revision
+        );
+
+    if (!url) {
+        return null;
+    }
+
+    const response =
+        await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(
+            `Avatar-Abruf fehlgeschlagen: HTTP ${response.status}`
+        );
+    }
+
+    const dataUrl =
+        await blobToDataUrl(
+            await response.blob()
+        );
+
+    return dataUrl.startsWith('data:image/')
+        ? dataUrl
+        : null;
+};
+
+const syncRememberedLoginAvatar = async (
     apiClient: {
         serverId?: () => string;
         deviceId?: () => string;
-    },
+    } & Parameters<
+        typeof getMinitigerVirtualServerMediaUrl
+    >[0],
     userId: string,
     settings: MinitigerAvatarSettings
 ) => {
@@ -98,6 +173,12 @@ const syncRememberedLoginAvatar = (
             return;
         }
 
+        const avatar =
+            await resolveRememberedLoginAvatar(
+                apiClient,
+                settings
+            );
+
         let changed = false;
         const next = parsed.map(entry => {
             if (entry?.Id !== userId) {
@@ -108,10 +189,7 @@ const syncRememberedLoginAvatar = (
 
             return {
                 ...entry,
-                MinitigerAvatar:
-                    settings.image.startsWith('data:image/')
-                        ? settings.image
-                        : null
+                MinitigerAvatar: avatar
             };
         });
 
@@ -224,7 +302,7 @@ const useMinitigerAvatarSettings = () => {
                 // Server value remains available in memory.
             }
 
-            syncRememberedLoginAvatar(
+            void syncRememberedLoginAvatar(
                 apiClient,
                 userId,
                 normalized
@@ -274,7 +352,7 @@ const useMinitigerAvatarSettings = () => {
         }
 
         if (apiClient && userId) {
-            syncRememberedLoginAvatar(
+            await syncRememberedLoginAvatar(
                 apiClient,
                 userId,
                 normalized
