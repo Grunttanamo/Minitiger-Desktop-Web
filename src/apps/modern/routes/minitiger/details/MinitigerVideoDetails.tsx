@@ -1428,6 +1428,7 @@ const MinitigerVideoDetails = () => {
                             )}
                         </div>
 
+                        {cast.length > 0 && (
                         <MinitigerRail
                             className='minitigerDetailsCastRow'
                             ariaLabel='Besetzung und Mitwirkende'
@@ -1527,6 +1528,7 @@ const MinitigerVideoDetails = () => {
                                 );
                             })}
                         </MinitigerRail>
+                        )}
                     </section>
                 )}
 
