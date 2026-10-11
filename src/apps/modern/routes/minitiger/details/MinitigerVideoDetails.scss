@@ -159,8 +159,8 @@
     margin-top: 0.85rem;
 }
 
-.minitigerDetailsMeta span,
-.minitigerDetailsLanguages span {
+.minitigerDetailsMeta > span,
+.minitigerDetailsLanguages > span {
     padding: 0.2rem 0.45rem;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 4px;
@@ -2928,6 +2928,7 @@ a.minitigerDetailsParentTitle:focus-visible {
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 4px;
     background: rgba(18, 20, 24, 0.72);
+    box-sizing: border-box;
 }
 
 .minitigerUserRatingLabel {
