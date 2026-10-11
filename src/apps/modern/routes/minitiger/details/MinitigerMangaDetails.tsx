@@ -28,6 +28,7 @@ import { getItemRoute } from '../home/routingUtils';
 
 import MinitigerItemMenuButton from './MinitigerItemMenuButton';
 import MinitigerDirectoryUpdateButton from './MinitigerDirectoryUpdateButton';
+import MinitigerUserRating from './MinitigerUserRating';
 
 import './MinitigerVideoDetails.scss';
 
@@ -469,6 +470,10 @@ export const MinitigerMangaSeriesDetails = ({
                                 volumes.length
                             } Bände
                         </span>
+
+                        <MinitigerUserRating
+                            itemId={item.Id}
+                        />
                     </div>
 
                     {publishers.length > 0 && (
@@ -1036,6 +1041,10 @@ export const MinitigerMangaVolumeDetails = ({
                                 }
                             </span>
                         )}
+
+                        <MinitigerUserRating
+                            itemId={item.Id}
+                        />
                     </div>
 
                     {publishers.length > 0 && (
