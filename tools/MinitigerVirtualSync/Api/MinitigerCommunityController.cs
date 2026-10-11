@@ -194,7 +194,11 @@ public sealed class MinitigerCommunityController : ControllerBase
             return BadRequest("libraryId fehlt.");
         }
 
-        var queryUser = GetRankingQueryUser();
+        var users = _userManager.GetUsers().ToList();
+        var queryUser = users.FirstOrDefault(user =>
+            _userManager.GetUserDto(user).Policy?.IsAdministrator == true)
+            ?? users.FirstOrDefault();
+
         if (queryUser is null)
         {
             return Ok(new { items = Array.Empty<object>() });
@@ -385,15 +389,6 @@ public sealed class MinitigerCommunityController : ControllerBase
             average,
             count = votes.Count
         };
-    }
-
-    private MediaBrowser.Controller.Entities.User? GetRankingQueryUser()
-    {
-        var users = _userManager.GetUsers().ToList();
-
-        return users.FirstOrDefault(user =>
-            _userManager.GetUserDto(user).Policy?.IsAdministrator == true)
-            ?? users.FirstOrDefault();
     }
 
     private bool TryGetCurrentUserId(out Guid userId)
