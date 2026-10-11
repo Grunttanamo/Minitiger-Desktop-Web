@@ -97,7 +97,9 @@ const parseCustomSort = (
             ? 'latestSeasons'
             : value === 'top10'
                 ? 'top10'
-                : 'latestItems'
+                : value === 'top10Rated'
+                    ? 'top10Rated'
+                    : 'latestItems'
 );
 
 const LibrarySelect = ({
@@ -822,11 +824,12 @@ const MinitigerHomeBuilderSettings = ({
                                                     Inhalt der Reihe 2
                                                     (optional)
                                                 </span>
-                                                {row.sortMode === 'top10' ? (
+                                                {row.sortMode === 'top10'
+                                                || row.sortMode === 'top10Rated' ? (
                                                     <div className='minitigerSettingsHint'>
-                                                        Top 10 verwendet nur
-                                                        Bibliothek 1. Für eine
-                                                        weitere Bibliothek
+                                                        Top-10-Reihen verwenden
+                                                        nur Bibliothek 1. Für
+                                                        eine weitere Bibliothek
                                                         einfach eine zweite
                                                         Custom-Reihe anlegen.
                                                     </div>
@@ -860,6 +863,7 @@ const MinitigerHomeBuilderSettings = ({
                                                         onUpdateCustomRow(
                                                             row.key,
                                                             sortMode === 'top10'
+                                                            || sortMode === 'top10Rated'
                                                                 ? {
                                                                     sortMode,
                                                                     library2: '',
@@ -891,6 +895,10 @@ const MinitigerHomeBuilderSettings = ({
                                                         am meisten gesehen
                                                         (Filme/Serien)
                                                     </option>
+                                                    <option value='top10Rated'>
+                                                        Top 10 – beste
+                                                        Minitiger-Nutzerbewertung
+                                                    </option>
                                                 </select>
                                             </label>
 
@@ -900,12 +908,14 @@ const MinitigerHomeBuilderSettings = ({
                                                     value={
                                                         row.sortMode === 'latestSeasons'
                                                         || row.sortMode === 'top10'
+                                                        || row.sortMode === 'top10Rated'
                                                             ? 'poster'
                                                             : row.display
                                                     }
                                                     disabled={
                                                         row.sortMode === 'latestSeasons'
                                                         || row.sortMode === 'top10'
+                                                        || row.sortMode === 'top10Rated'
                                                     }
                                                     onChange={event =>
                                                         onUpdateCustomRow(
