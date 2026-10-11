@@ -1029,6 +1029,21 @@ const MinitigerVideoDetails = () => {
                                     </button>
                                 )}
 
+                            {isAdmin
+                                && selectableCastPeople.length > 0
+                                && (
+                                    <MinitigerCastEditor
+                                        itemId={item.Id}
+                                        people={selectableCastPeople}
+                                        preference={
+                                            castPreference.state
+                                        }
+                                        onSaved={
+                                            castPreference.setState
+                                        }
+                                    />
+                                )}
+
                             <button
                                 type='button'
                                 onClick={openMenu}
@@ -1414,18 +1429,6 @@ const MinitigerVideoDetails = () => {
                                 </h2>
                             </div>
 
-                            {isAdmin && (
-                                <MinitigerCastEditor
-                                    itemId={item.Id}
-                                    people={selectableCastPeople}
-                                    preference={
-                                        castPreference.state
-                                    }
-                                    onSaved={
-                                        castPreference.setState
-                                    }
-                                />
-                            )}
                         </div>
 
                         {cast.length > 0 && (
