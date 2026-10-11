@@ -99,7 +99,9 @@ const parseCustomSort = (
                 ? 'top10'
                 : value === 'top10Rated'
                     ? 'top10Rated'
-                    : 'latestItems'
+                    : value === 'random'
+                        ? 'random'
+                        : 'latestItems'
 );
 
 const LibrarySelect = ({
@@ -898,6 +900,10 @@ const MinitigerHomeBuilderSettings = ({
                                                     <option value='top10Rated'>
                                                         Top 10 – beste
                                                         Minitiger-Nutzerbewertung
+                                                    </option>
+                                                    <option value='random'>
+                                                        Zufällige Inhalte
+                                                        (neu bei jedem Startseiten-Aufruf)
                                                     </option>
                                                 </select>
                                             </label>
