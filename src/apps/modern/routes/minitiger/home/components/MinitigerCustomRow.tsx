@@ -1157,8 +1157,17 @@ const MinitigerCustomRow = ({
                     row
                 ),
         enabled: firstEnabled,
-        staleTime: CUSTOM_ROW_QUERY_STALE_MS,
+        staleTime:
+            row.sortMode === 'top10'
+            || row.sortMode === 'top10Rated'
+                ? 0
+                : CUSTOM_ROW_QUERY_STALE_MS,
         gcTime: CUSTOM_ROW_QUERY_GC_MS,
+        refetchOnMount:
+            row.sortMode === 'top10'
+            || row.sortMode === 'top10Rated'
+                ? 'always'
+                : true,
         refetchOnWindowFocus: false
     });
 
