@@ -624,7 +624,11 @@ const onUpdate = (
             'previewSeriesEnabled',
             'previewMovieEnabled',
             'previewMangaEnabled',
-            'cardTextCentered'
+            'cardTextCentered',
+            'discordPresenceEnabled',
+            'discordPresenceShowTitle',
+            'discordPresenceShowEpisode',
+            'discordPresenceShowProgress'
         ]);
 
         const filtered = Object.fromEntries(
@@ -999,6 +1003,105 @@ const onUpdate = (
                                         ? 'Globale Standard-Einstellungen für die komplette Minitiger-Oberfläche.'
                                         : 'Persönliche kosmetische Einstellungen für deinen Minitiger-Account.'}
                                 </p>
+
+                                <section className='minitigerSettingsCard'>
+                                    <h4>Discord Rich Presence</h4>
+                                    <p className='minitigerSettingsHint'>
+                                        Zeigt optional in Discord an, ob du Minitiger durchstöberst oder gerade etwas schaust. Diese Funktion läuft nur im nativen Minitiger Desktop Client.
+                                    </p>
+
+                                    <label className='minitigerSettingsToggle'>
+                                        <input
+                                            type='checkbox'
+                                            checked={settings.discordPresenceEnabled}
+                                            onChange={event =>
+                                                onUpdate({
+                                                    discordPresenceEnabled:
+                                                        event.currentTarget.checked
+                                                })
+                                            }
+                                        />
+                                        <span>
+                                            <strong>Discord Präsenz aktivieren</strong>
+                                            <small>Aus = Minitiger veröffentlicht keine Discord-Aktivität.</small>
+                                        </span>
+                                    </label>
+
+                                    <label className='minitigerSettingsToggle'>
+                                        <input
+                                            type='checkbox'
+                                            checked={settings.discordPresenceShowTitle}
+                                            disabled={!settings.discordPresenceEnabled}
+                                            onChange={event =>
+                                                onUpdate({
+                                                    discordPresenceShowTitle:
+                                                        event.currentTarget.checked
+                                                })
+                                            }
+                                        />
+                                        <span>
+                                            <strong>Titel anzeigen</strong>
+                                            <small>Zeigt z. B. „Afro Samurai“ als aktuellen Inhalt.</small>
+                                        </span>
+                                    </label>
+
+                                    <label className='minitigerSettingsToggle'>
+                                        <input
+                                            type='checkbox'
+                                            checked={settings.discordPresenceShowEpisode}
+                                            disabled={!settings.discordPresenceEnabled}
+                                            onChange={event =>
+                                                onUpdate({
+                                                    discordPresenceShowEpisode:
+                                                        event.currentTarget.checked
+                                                })
+                                            }
+                                        />
+                                        <span>
+                                            <strong>Staffel / Folge anzeigen</strong>
+                                            <small>Bei Episoden werden Staffel, Folgennummer und Folgentitel ergänzt.</small>
+                                        </span>
+                                    </label>
+
+                                    <label className='minitigerSettingsToggle'>
+                                        <input
+                                            type='checkbox'
+                                            checked={settings.discordPresenceShowProgress}
+                                            disabled={!settings.discordPresenceEnabled}
+                                            onChange={event =>
+                                                onUpdate({
+                                                    discordPresenceShowProgress:
+                                                        event.currentTarget.checked
+                                                })
+                                            }
+                                        />
+                                        <span>
+                                            <strong>Fortschritt anzeigen</strong>
+                                            <small>Discord erhält Start-/Endzeit beziehungsweise bei Pause den aktuellen Zeitstand.</small>
+                                        </span>
+                                    </label>
+
+                                    {isAdmin && (
+                                        <label className='minitigerSettingsField'>
+                                            <span>Discord Application ID</span>
+                                            <input
+                                                type='text'
+                                                inputMode='numeric'
+                                                value={settings.discordApplicationId}
+                                                placeholder='Discord Application ID'
+                                                onChange={event =>
+                                                    onUpdate({
+                                                        discordApplicationId:
+                                                            event.currentTarget.value
+                                                                .replace(/\D/g, '')
+                                                                .slice(0, 32)
+                                                    })
+                                                }
+                                            />
+                                            <small>Einmalige globale ID der Minitiger-App im Discord Developer Portal. Für das große Bild kann dort ein Rich-Presence-Asset mit dem Schlüssel „minitiger“ hinterlegt werden.</small>
+                                        </label>
+                                    )}
+                                </section>
 
                                 {isAdmin && (
                                 <section
