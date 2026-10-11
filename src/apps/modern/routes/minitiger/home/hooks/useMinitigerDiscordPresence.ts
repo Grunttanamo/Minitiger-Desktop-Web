@@ -227,13 +227,11 @@ const useMinitigerDiscordPresence = () => {
                         continue;
                     }
 
-                    const result =
-                        (await response.json())
-                            as RemoteImageResult;
+                    const result = (await response.json()) as RemoteImageResult;
 
                     const image =
                         (result.Images ?? [])
-                            .find(candidate =>
+                            .find((candidate: RemoteImageInfo) =>
                                 providerMatches(
                                     String(
                                         candidate.ProviderName
