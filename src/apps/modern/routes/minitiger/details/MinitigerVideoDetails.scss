@@ -161,6 +161,11 @@
 
 .minitigerDetailsMeta > span,
 .minitigerDetailsLanguages > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 1.95rem;
     padding: 0.2rem 0.45rem;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 4px;
@@ -168,6 +173,7 @@
     color: #ddd;
     font-size: 0.84rem;
     font-weight: 700;
+    line-height: 1;
 }
 
 .minitigerDetailsOverview {
