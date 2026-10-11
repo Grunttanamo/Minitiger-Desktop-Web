@@ -78,6 +78,11 @@ export interface MinitigerHomeSettings {
     toolbarGlassBlur: number;
     toolbarBrandTextEnabled: boolean;
     toolbarBrandText: string;
+    discordPresenceEnabled: boolean;
+    discordApplicationId: string;
+    discordPresenceShowTitle: boolean;
+    discordPresenceShowEpisode: boolean;
+    discordPresenceShowProgress: boolean;
     customHomeRowsEnabled: boolean;
     bannerEnabled: boolean;
     bannerHeightOffset: number;
@@ -775,6 +780,11 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     toolbarGlassBlur: 5,
     toolbarBrandTextEnabled: false,
     toolbarBrandText: 'Minitiger',
+    discordPresenceEnabled: false,
+    discordApplicationId: '',
+    discordPresenceShowTitle: true,
+    discordPresenceShowEpisode: true,
+    discordPresenceShowProgress: true,
     customHomeRowsEnabled: true,
     bannerEnabled: true,
     bannerHeightOffset: 280,
@@ -1140,6 +1150,20 @@ export const normalizeHomeSettings = (
             typeof source.toolbarBrandText === 'string'
                 ? source.toolbarBrandText.slice(0, 40)
                 : DEFAULT_HOME_SETTINGS.toolbarBrandText,
+        discordPresenceEnabled:
+            source.discordPresenceEnabled === true,
+        discordApplicationId:
+            typeof source.discordApplicationId === 'string'
+                ? source.discordApplicationId
+                    .replace(/\D/g, '')
+                    .slice(0, 32)
+                : DEFAULT_HOME_SETTINGS.discordApplicationId,
+        discordPresenceShowTitle:
+            source.discordPresenceShowTitle !== false,
+        discordPresenceShowEpisode:
+            source.discordPresenceShowEpisode !== false,
+        discordPresenceShowProgress:
+            source.discordPresenceShowProgress !== false,
         customHomeRowsEnabled: source.customHomeRowsEnabled !== false,
         bannerEnabled: source.bannerEnabled !== false,
         bannerHeightOffset: clampNumber(
