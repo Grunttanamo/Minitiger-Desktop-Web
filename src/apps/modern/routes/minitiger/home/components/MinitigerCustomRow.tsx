@@ -616,6 +616,67 @@ const fetchTopRatedLibraryItems = async (
         .slice(0, 10);
 };
 
+const fetchRandomLibraryItems = async (
+    apiClient: ApiClient,
+    userId: string,
+    library: ItemDto,
+    row: MinitigerCustomRow
+): Promise<ItemDto[]> => {
+    if (!library.Id) {
+        return [];
+    }
+
+    const collectionType =
+        String(library.CollectionType ?? '');
+
+    /*
+     * Random rows intentionally use main titles rather than episode/track
+     * rows. Picking an Anime library therefore returns random Series cards,
+     * a movie library random Movies, music random Albums, etc.
+     */
+    const itemTypes =
+        getItemTypes(
+            collectionType,
+            true,
+            false
+        );
+
+    if (!itemTypes) {
+        return [];
+    }
+
+    const isMangaTitles =
+        collectionType.toLowerCase() === 'books';
+
+    const url = apiClient.getUrl(
+        `Users/${userId}/Items`,
+        {
+            ParentId: library.Id,
+            Recursive: !isMangaTitles,
+            IncludeItemTypes: itemTypes,
+            Fields:
+                'PrimaryImageAspectRatio,DateCreated,ParentId,SeriesId,SeriesName,ParentIndexNumber',
+            EnableImageTypes:
+                'Primary,Thumb,Backdrop',
+            SortBy: 'Random',
+            Limit: Math.max(
+                row.count,
+                12
+            ),
+            EnableTotalRecordCount: false
+        }
+    );
+
+    const result =
+        await apiClient.getJSON(
+            url
+        ) as ItemQueryResult;
+
+    return (
+        (result.Items ?? []) as ItemDto[]
+    ).slice(0, row.count);
+};
+
 const filterFutureEpisodes = (
     items: ItemDto[],
     wantsEpisodes: boolean
@@ -1150,22 +1211,31 @@ const MinitigerCustomRow = ({
                         userId,
                         firstLibrary!
                     )
-                    : fetchLibraryPart(
-                    apiClient!,
-                    userId,
-                    firstLibrary!,
-                    row
-                ),
+                    : row.sortMode === 'random'
+                        ? fetchRandomLibraryItems(
+                            apiClient!,
+                            userId,
+                            firstLibrary!,
+                            row
+                        )
+                        : fetchLibraryPart(
+                            apiClient!,
+                            userId,
+                            firstLibrary!,
+                            row
+                        ),
         enabled: firstEnabled,
         staleTime:
             row.sortMode === 'top10'
             || row.sortMode === 'top10Rated'
+            || row.sortMode === 'random'
                 ? 0
                 : CUSTOM_ROW_QUERY_STALE_MS,
         gcTime: CUSTOM_ROW_QUERY_GC_MS,
         refetchOnMount:
             row.sortMode === 'top10'
             || row.sortMode === 'top10Rated'
+            || row.sortMode === 'random'
                 ? 'always'
                 : true,
         refetchOnWindowFocus: false
@@ -1181,12 +1251,20 @@ const MinitigerCustomRow = ({
             row.sortMode,
             row.count
         ],
-        queryFn: () => fetchLibraryPart(
-            apiClient!,
-            userId,
-            secondLibrary!,
-            row
-        ),
+        queryFn: () =>
+            row.sortMode === 'random'
+                ? fetchRandomLibraryItems(
+                    apiClient!,
+                    userId,
+                    secondLibrary!,
+                    row
+                )
+                : fetchLibraryPart(
+                    apiClient!,
+                    userId,
+                    secondLibrary!,
+                    row
+                ),
         enabled: secondEnabled,
         staleTime: CUSTOM_ROW_QUERY_STALE_MS,
         gcTime: CUSTOM_ROW_QUERY_GC_MS,
@@ -1198,12 +1276,19 @@ const MinitigerCustomRow = ({
         || row.sortMode === 'top10Rated'
             ? (firstQuery.data ?? [])
                 .slice(0, 10)
-            : uniqueById([
-                ...(firstQuery.data ?? []),
-                ...(secondQuery.data ?? [])
-            ])
-                .sort(byDateCreatedDesc)
-                .slice(0, row.count),
+            : row.sortMode === 'random'
+                ? uniqueById([
+                    ...(firstQuery.data ?? []),
+                    ...(secondQuery.data ?? [])
+                ])
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, row.count)
+                : uniqueById([
+                    ...(firstQuery.data ?? []),
+                    ...(secondQuery.data ?? [])
+                ])
+                    .sort(byDateCreatedDesc)
+                    .slice(0, row.count),
         [
             firstQuery.data,
             row.count,
