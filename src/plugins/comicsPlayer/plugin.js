@@ -38,6 +38,26 @@ export class ComicsPlayer {
         this.onDialogClosed = this.onDialogClosed.bind(this);
         this.onWindowKeyDown = this.onWindowKeyDown.bind(this);
         this.toggleFullscreen = this.toggleFullscreen.bind(this);
+        this.syncDiscordReading = this.syncDiscordReading.bind(this);
+    }
+
+    syncDiscordReading(state = 'Reading') {
+        const discord = window.api?.discord;
+
+        if (!discord?.updateReadingActivity) {
+            return;
+        }
+
+        const progress =
+            this.pageCount > 0
+                ? this.currentPage / this.pageCount
+                : 0;
+
+        discord.updateReadingActivity(
+            this.item || {},
+            Number(progress || 0),
+            state
+        );
     }
 
     play(options) {
@@ -53,6 +73,7 @@ export class ComicsPlayer {
     }
 
     stop() {
+        this.syncDiscordReading('Stopped');
         this.unbindEvents();
         this.unmountBookOsd?.();
         screenSaverManager.unblock();
@@ -245,6 +266,7 @@ export class ComicsPlayer {
     setCurrentSrc(elem, options) {
         const item = options.items[0];
         this.item = item;
+        this.syncDiscordReading('Reading');
         this.streamInfo = {
             started: true,
             ended: false,
@@ -281,6 +303,7 @@ export class ComicsPlayer {
                 this.pageCount = this.archiveSource.urls.length;
                 this.currentPage = options.startPositionTicks / 10000 || 0;
                 this.currentSrc = () => downloadUrl;
+                this.syncDiscordReading('Reading');
 
                 this.swiperInstance = new Swiper(elem.querySelector('.slideshowSwiperContainer'), {
                     direction: 'horizontal',
@@ -318,6 +341,7 @@ export class ComicsPlayer {
                 // save current page ( a page is an image file inside the archive )
                 this.swiperInstance.on('slideChange', () => {
                     this.currentPage = this.swiperInstance.activeIndex;
+                    this.syncDiscordReading('Reading');
                     Events.trigger(this, 'pause');
                 });
             });
