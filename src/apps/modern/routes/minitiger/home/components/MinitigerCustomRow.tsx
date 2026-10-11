@@ -7,6 +7,9 @@ import type { ItemDto } from 'types/base/models/item-dto';
 import {
     getMinitigerAccessToken
 } from '../bannerPlaylistUtils';
+import {
+    getMinitigerTopRated
+} from '../community';
 import type {
     MinitigerCustomRow
 } from '../config/customRows';
@@ -482,6 +485,100 @@ const fetchTop10LibraryItems = async (
                     kind === 'movie'
                         ? 'Movie'
                         : 'Series',
+                Limit: ids.length,
+                Fields: [
+                    'Overview',
+                    'DateCreated',
+                    'PrimaryImageAspectRatio',
+                    'MediaSourceCount',
+                    'LocalTrailerCount',
+                    'RemoteTrailers'
+                ].join(','),
+                ImageTypeLimit: 3,
+                EnableImageTypes:
+                    'Primary,Backdrop,Logo,Thumb',
+                EnableTotalRecordCount: false
+            }
+        );
+
+    const byId =
+        new Map(
+            ((resolved?.Items ?? []) as ItemDto[])
+                .filter(item =>
+                    Boolean(item.Id)
+                )
+                .map(item => [
+                    String(item.Id),
+                    item
+                ] as const)
+        );
+
+    return ids
+        .map(id => byId.get(id))
+        .filter(
+            (item): item is ItemDto =>
+                Boolean(item)
+        )
+        .slice(0, 10);
+};
+
+const fetchTopRatedLibraryItems = async (
+    apiClient: ApiClient,
+    userId: string,
+    library: ItemDto
+): Promise<ItemDto[]> => {
+    if (!library.Id) {
+        return [];
+    }
+
+    const collectionType =
+        String(
+            library.CollectionType
+            ?? ''
+        ).toLowerCase();
+
+    const includeItemTypes =
+        collectionType === 'movies'
+            ? 'Movie'
+            : collectionType === 'tvshows'
+                ? 'Series'
+                : collectionType === 'books'
+                    ? 'Book,Folder'
+                    : '';
+
+    if (!includeItemTypes) {
+        return [];
+    }
+
+    const ranking =
+        await getMinitigerTopRated(
+            apiClient,
+            library.Id,
+            40
+        );
+
+    const ids =
+        (ranking.items ?? [])
+            .map(entry =>
+                String(
+                    entry.id
+                    ?? ''
+                ).trim()
+            )
+            .filter(Boolean);
+
+    if (!ids.length) {
+        return [];
+    }
+
+    const resolved =
+        await apiClient.getItems(
+            userId,
+            {
+                Recursive: true,
+                Ids: ids.join(','),
+                IncludeItemTypes:
+                    includeItemTypes,
                 Limit: ids.length,
                 Fields: [
                     'Overview',
@@ -1001,6 +1098,7 @@ const MinitigerCustomRow = ({
 
     const secondEnabled = Boolean(
         row.sortMode !== 'top10'
+        && row.sortMode !== 'top10Rated'
         && apiClient
         && userId
         && secondLibrary?.Id
@@ -1046,7 +1144,13 @@ const MinitigerCustomRow = ({
                     userId,
                     firstLibrary!
                 )
-                : fetchLibraryPart(
+                : row.sortMode === 'top10Rated'
+                    ? fetchTopRatedLibraryItems(
+                        apiClient!,
+                        userId,
+                        firstLibrary!
+                    )
+                    : fetchLibraryPart(
                     apiClient!,
                     userId,
                     firstLibrary!,
@@ -1082,6 +1186,7 @@ const MinitigerCustomRow = ({
 
     const liveItems = useMemo(
         () => row.sortMode === 'top10'
+        || row.sortMode === 'top10Rated'
             ? (firstQuery.data ?? [])
                 .slice(0, 10)
             : uniqueById([
@@ -1102,6 +1207,7 @@ const MinitigerCustomRow = ({
         (!row.library1 || Boolean(firstLibrary?.Id))
         && (
             row.sortMode === 'top10'
+            || row.sortMode === 'top10Rated'
             || !row.library2
             || Boolean(secondLibrary?.Id)
         )
@@ -1160,6 +1266,7 @@ const MinitigerCustomRow = ({
         'poster' | 'landscape' | 'square' =
         row.sortMode === 'latestSeasons'
         || row.sortMode === 'top10'
+        || row.sortMode === 'top10Rated'
             ? 'poster'
             : primaryCollectionType === 'music'
                 ? 'square'
@@ -1202,7 +1309,10 @@ const MinitigerCustomRow = ({
             cardScale={row.cardScale}
             cardGap={row.gap}
             showTitle={row.showTitle}
-            ranked={row.sortMode === 'top10'}
+            ranked={
+                row.sortMode === 'top10'
+                || row.sortMode === 'top10Rated'
+            }
             preferParentLandscape={
                 effectiveDisplay === 'landscape'
             }
