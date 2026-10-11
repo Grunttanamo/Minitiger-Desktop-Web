@@ -228,7 +228,7 @@ const useMinitigerDiscordPresence = () => {
                     }
 
                     const result =
-                        await response.json()
+                        (await response.json())
                             as RemoteImageResult;
 
                     const image =
