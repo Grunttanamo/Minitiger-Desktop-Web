@@ -4,7 +4,8 @@ export type MinitigerCustomSortMode =
     | 'latestTitles'
     | 'latestSeasons'
     | 'top10'
-    | 'top10Rated';
+    | 'top10Rated'
+    | 'random';
 export type MinitigerCustomDisplay = 'poster' | 'landscape';
 
 export interface MinitigerCustomRow {
@@ -117,7 +118,9 @@ export const normalizeCustomRows = (
                                 ? 'top10'
                                 : candidate.sortMode === 'top10Rated'
                                     ? 'top10Rated'
-                                    : 'latestItems',
+                                    : candidate.sortMode === 'random'
+                                        ? 'random'
+                                        : 'latestItems',
                 display:
                     candidate.display === 'landscape'
                         ? 'landscape'
