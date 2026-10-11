@@ -714,9 +714,16 @@ const MinitigerVideoDetails = () => {
             ?? []
         ) as unknown as DetailPerson[];
 
+    const selectableCastPeople = people
+        .filter(person => (
+            person.Type === 'Actor'
+            || person.Type === 'GuestStar'
+            || person.Type === 'Narrator'
+        ));
+
     const visiblePeople =
         castPreference.state.enabled
-            ? people.filter(person =>
+            ? selectableCastPeople.filter(person =>
                 Boolean(
                     person.Id
                     && castPreference.selectedIdSet.has(
@@ -724,7 +731,7 @@ const MinitigerVideoDetails = () => {
                     )
                 )
             )
-            : people;
+            : selectableCastPeople;
 
     const cast = visiblePeople
         .filter(person => (
@@ -1398,7 +1405,7 @@ const MinitigerVideoDetails = () => {
                     </>
                 )}
 
-                {cast.length > 0 && (
+                {(cast.length > 0 || (isAdmin && selectableCastPeople.length > 0)) && (
                     <section className='minitigerDetailsSection'>
                         <div className='minitigerDetailsSectionHead'>
                             <div>
@@ -1410,7 +1417,7 @@ const MinitigerVideoDetails = () => {
                             {isAdmin && (
                                 <MinitigerCastEditor
                                     itemId={item.Id}
-                                    people={people}
+                                    people={selectableCastPeople}
                                     preference={
                                         castPreference.state
                                     }
@@ -1532,18 +1539,6 @@ const MinitigerVideoDetails = () => {
                                 </h2>
                             </div>
 
-                            {isAdmin && cast.length === 0 && (
-                                <MinitigerCastEditor
-                                    itemId={item.Id}
-                                    people={people}
-                                    preference={
-                                        castPreference.state
-                                    }
-                                    onSaved={
-                                        castPreference.setState
-                                    }
-                                />
-                            )}
                         </div>
 
                         <MinitigerRail
