@@ -29,6 +29,9 @@ import MinitigerSeasonSwitcher from './MinitigerSeasonSwitcher';
 import MinitigerSelectDropdown from './MinitigerSelectDropdown';
 import MinitigerTrailerDetectButton from './MinitigerTrailerDetectButton';
 import MinitigerDirectoryUpdateButton from './MinitigerDirectoryUpdateButton';
+import MinitigerUserRating from './MinitigerUserRating';
+import MinitigerCastEditor from './MinitigerCastEditor';
+import useMinitigerCastPreference from './useMinitigerCastPreference';
 import {
     getMinitigerEpisodeCode,
     isMinitigerAvailableEpisode
@@ -247,6 +250,11 @@ const MinitigerVideoDetails = () => {
     const isAdmin =
         Boolean(
             user?.Policy?.IsAdministrator
+        );
+
+    const castPreference =
+        useMinitigerCastPreference(
+            item?.Id
         );
 
     const bannerMembership =
@@ -706,7 +714,19 @@ const MinitigerVideoDetails = () => {
             ?? []
         ) as unknown as DetailPerson[];
 
-    const cast = people
+    const visiblePeople =
+        castPreference.state.enabled
+            ? people.filter(person =>
+                Boolean(
+                    person.Id
+                    && castPreference.selectedIdSet.has(
+                        String(person.Id)
+                    )
+                )
+            )
+            : people;
+
+    const cast = visiblePeople
         .filter(person => (
             person.Type === 'Actor'
             || person.Type === 'GuestStar'
@@ -718,7 +738,7 @@ const MinitigerVideoDetails = () => {
      * Keep them out of the normal actor row and render them in their own
      * Minitiger rail with the same card/menu/hover/settings behavior.
      */
-    const voiceCast = people
+    const voiceCast = visiblePeople
         .filter(person =>
             person.Type === 'Narrator'
         )
@@ -849,6 +869,10 @@ const MinitigerVideoDetails = () => {
                                     {value}
                                 </span>
                             ))}
+
+                            <MinitigerUserRating
+                                itemId={item.Id}
+                            />
                         </div>
 
                         {(audio.length > 0
@@ -1382,6 +1406,19 @@ const MinitigerVideoDetails = () => {
                                     Besetzung &amp; Mitwirkende
                                 </h2>
                             </div>
+
+                            {isAdmin && (
+                                <MinitigerCastEditor
+                                    itemId={item.Id}
+                                    people={people}
+                                    preference={
+                                        castPreference.state
+                                    }
+                                    onSaved={
+                                        castPreference.setState
+                                    }
+                                />
+                            )}
                         </div>
 
                         <MinitigerRail
@@ -1494,6 +1531,19 @@ const MinitigerVideoDetails = () => {
                                     Synchronsprecher
                                 </h2>
                             </div>
+
+                            {isAdmin && cast.length === 0 && (
+                                <MinitigerCastEditor
+                                    itemId={item.Id}
+                                    people={people}
+                                    preference={
+                                        castPreference.state
+                                    }
+                                    onSaved={
+                                        castPreference.setState
+                                    }
+                                />
+                            )}
                         </div>
 
                         <MinitigerRail
