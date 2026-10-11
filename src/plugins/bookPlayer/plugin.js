@@ -53,6 +53,21 @@ export class BookPlayer {
         this.onWindowKeyDown = this.onWindowKeyDown.bind(this);
         this.addSwipeGestures = this.addSwipeGestures.bind(this);
         this.toggleFullscreen = this.toggleFullscreen.bind(this);
+        this.syncDiscordReading = this.syncDiscordReading.bind(this);
+    }
+
+    syncDiscordReading(state = 'Reading') {
+        const discord = window.api?.discord;
+
+        if (!discord?.updateReadingActivity) {
+            return;
+        }
+
+        discord.updateReadingActivity(
+            this.item || {},
+            Number(this.progress || 0),
+            state
+        );
     }
 
     play(options) {
@@ -67,6 +82,7 @@ export class BookPlayer {
     }
 
     stop() {
+        this.syncDiscordReading('Stopped');
         this.unbindEvents();
         this.unmountBookOsd();
         screenSaverManager.unblock();
@@ -319,6 +335,7 @@ export class BookPlayer {
     setCurrentSrc(elem, options) {
         const item = options.items[0];
         this.item = item;
+        this.syncDiscordReading('Reading');
         this.streamInfo = {
             started: true,
             ended: false,
@@ -365,8 +382,10 @@ export class BookPlayer {
 
                         this.loaded = true;
                         epubElem.style.opacity = '';
+                        this.syncDiscordReading('Reading');
                         rendition.on('relocated', (locations) => {
                             this.progress = book.locations.percentageFromCfi(locations.start.cfi);
+                            this.syncDiscordReading('Reading');
                             Events.trigger(this, 'pause');
                         });
 
