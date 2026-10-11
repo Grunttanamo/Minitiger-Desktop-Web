@@ -2914,3 +2914,281 @@ a.minitigerDetailsParentTitle:focus-visible {
         font-size: 0.9rem;
     }
 }
+
+
+/* =========================================================
+   MINITIGER USER RATINGS
+   ========================================================= */
+.minitigerUserRating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    min-height: 1.95rem;
+    padding: 0.12rem 0.42rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 4px;
+    background: rgba(18, 20, 24, 0.72);
+}
+
+.minitigerUserRatingLabel {
+    margin-right: 0.12rem;
+    color: #ddd;
+    font-size: 0.78rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.minitigerUserRatingStars {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.02rem;
+}
+
+.minitigerUserRatingStars button {
+    width: 1.05rem;
+    height: 1.35rem;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: color-mix(
+        in srgb,
+        var(--mt-accent) 35%,
+        transparent
+    );
+    font-size: 0.94rem;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        color 100ms ease,
+        transform 100ms ease;
+}
+
+.minitigerUserRatingStars button.isFilled {
+    color: var(--mt-accent);
+}
+
+.minitigerUserRatingStars button:hover,
+.minitigerUserRatingStars button:focus-visible {
+    transform: scale(1.16);
+    outline: none;
+}
+
+.minitigerUserRatingStars button:disabled {
+    cursor: default;
+}
+
+.minitigerUserRating.isLoading,
+.minitigerUserRating.isSaving {
+    opacity: 0.72;
+}
+
+.minitigerUserRatingClear {
+    width: 1.25rem;
+    height: 1.25rem;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ddd !important;
+    font-size: 0.9rem !important;
+    line-height: 1;
+}
+
+/* =========================================================
+   CURATED CAST EDITOR
+   ========================================================= */
+.minitigerCastEditButton {
+    flex: 0 0 auto;
+    padding: 0.48rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.55rem;
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.minitigerCastEditorLayer {
+    position: fixed;
+    z-index: 2147483250;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 1.25rem;
+    background: rgba(0, 0, 0, 0.64);
+    backdrop-filter: blur(9px);
+}
+
+.minitigerCastEditorDialog {
+    box-sizing: border-box;
+    width: min(54rem, calc(100vw - 2rem));
+    max-height: min(86vh, 56rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid color-mix(
+        in srgb,
+        var(--mt-accent) 42%,
+        transparent
+    );
+    border-radius: 1rem;
+    background: rgba(12, 13, 16, 0.97);
+    color: #fff;
+    box-shadow:
+        0 1.5rem 5rem rgba(0, 0, 0, 0.58),
+        0 0 2rem color-mix(
+            in srgb,
+            var(--mt-glow-color, var(--mt-accent)) 18%,
+            transparent
+        );
+}
+
+.minitigerCastEditorDialog > header,
+.minitigerCastEditorDialog > footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.minitigerCastEditorDialog > header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.minitigerCastEditorDialog > footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.minitigerCastEditorDialog > header h2 {
+    margin: 0.1rem 0 0;
+}
+
+.minitigerCastEditorDialog > header small {
+    color: rgba(255, 255, 255, 0.52);
+}
+
+.minitigerCastEditorDialog button {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.55rem;
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.minitigerCastEditorDialog button.isPrimary {
+    border-color: transparent;
+    background: var(--mt-accent);
+    color: var(--mt-accent-text);
+}
+
+.minitigerCastEditorDialog button:disabled {
+    opacity: 0.48;
+    cursor: default;
+}
+
+.minitigerCastEditorHint,
+.minitigerCastEditorStatus {
+    margin: 0;
+    padding: 0.85rem 1.1rem 0;
+    color: rgba(255, 255, 255, 0.68);
+    line-height: 1.45;
+}
+
+.minitigerCastEditorToolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.85rem 1.1rem 0;
+}
+
+.minitigerCastEditorList {
+    min-height: 10rem;
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(220px, 1fr)
+        );
+    gap: 0.55rem;
+    overflow: auto;
+    padding: 0.85rem 1.1rem 1.1rem;
+}
+
+.minitigerCastEditorList label {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.62rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 0.65rem;
+    background: rgba(255, 255, 255, 0.035);
+    cursor: pointer;
+}
+
+.minitigerCastEditorList input {
+    flex: 0 0 auto;
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--mt-accent);
+}
+
+.minitigerCastEditorList span {
+    min-width: 0;
+    display: grid;
+    gap: 0.15rem;
+}
+
+.minitigerCastEditorList strong,
+.minitigerCastEditorList small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.minitigerCastEditorList small {
+    color: rgba(255, 255, 255, 0.52);
+}
+
+.minitigerCastEditorDialog > footer > div {
+    display: flex;
+    gap: 0.55rem;
+}
+
+@media (max-width: 700px) {
+    .minitigerUserRatingLabel {
+        display: none;
+    }
+
+    .minitigerCastEditorLayer {
+        padding: 0.7rem;
+    }
+
+    .minitigerCastEditorDialog {
+        width: 100%;
+        max-height: calc(100vh - 1.4rem);
+    }
+
+    .minitigerCastEditorDialog > footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .minitigerCastEditorDialog > footer > div {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* MINITIGER_PATCH_MARKER: USER_RATINGS_CAST_EDITOR_STYLE_V1 */
