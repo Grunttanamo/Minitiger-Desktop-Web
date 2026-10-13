@@ -958,6 +958,7 @@ const onUpdate = (
                             {tabButton('libraries', 'Bibliotheken', '▦')}
                             {tabButton('details', 'Detailpages', '▤')}
                             {tabButton('profiles', 'Profile', '👥')}
+                            {tabButton('requests', 'Wünsche', '♡')}
                         </div>
 
                         {isAdmin && (
@@ -970,7 +971,6 @@ const onUpdate = (
                                 {tabButton('login', 'Login', '↪')}
                                 {tabButton('avatars', 'Avatar-Galerie', '☺')}
                                 {tabButton('messages', 'Nachrichten', '✉')}
-                                {tabButton('requests', 'Anfragen', '♡')}
                                 {tabButton('translation', 'Auto-Übersetzung', '文')}
                                 {tabButton('seasonFix', 'Staffel Fix', '↺')}
                                 {tabButton('imageFix', 'Image Fix', '▧')}
@@ -2991,8 +2991,8 @@ const onUpdate = (
                             <MinitigerAdminMessagesSettings />
                         )}
 
-                        {isAdmin && activeTab === 'requests' && (
-                            <MinitigerContentRequestsSettings />
+                        {activeTab === 'requests' && (
+                            <MinitigerContentRequestsSettings isAdmin={isAdmin} />
                         )}
 
                         {isAdmin && activeTab === 'translation' && (
