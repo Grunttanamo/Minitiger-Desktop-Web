@@ -311,3 +311,24 @@
 }
 
 // MINITIGER_PATCH_MARKER: CONTENT_REQUESTS_STYLE_V1
+
+/* Minitiger wish lifecycle groups: native details/summary preserve keyboard
+   navigation and stay collapsed until the user explicitly opens a group. */
+.minitigerContentRequestGroups { display: grid; gap: 10px; }
+.minitigerContentRequestGroup { border: 1px solid var(--mt-border-color, #45414a); border-radius: 12px; overflow: hidden; }
+.minitigerContentRequestGroup > summary { display: flex; justify-content: space-between; align-items: center; padding: 14px; cursor: pointer; font-weight: 650; }
+.minitigerContentRequestGroup > summary strong { opacity: .7; }
+.minitigerContentRequestGroup > .minitigerContentRequestAdminList { padding: 10px; }
+.minitigerContentRequestStatusDot { width: 10px; height: 10px; border-radius: 100%; background: #adb5bd; flex-shrink: 0; }
+.minitigerContentRequestStatusDot.is0 { background: #8899ac; }
+.minitigerContentRequestStatusDot.is1 { background: #f1c34f; }
+.minitigerContentRequestStatusDot.is2 { background: #48c78e; }
+.minitigerContentRequestStatusDot.is3 { background: #9299a6; }
+.minitigerContentRequestStatusDot.is4 { background: #eb646e; }
+.minitigerContentRequestAdminActions { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.minitigerContentRequestAdminActions label { display: grid; gap: 4px; }
+.minitigerContentRequestAdminActions select { background: #282831; border: 1px solid #77717e; border-radius: 8px; padding: 7px 10px; color: white; }
+.minitigerContentRequestAdminActions button { padding: 8px 12px; border-radius: 8px; background: #332f38; color: #ffbdc1; border: 1px solid #69505b; cursor: pointer; }
+.minitigerContentRequestConfirm { padding: 22px; max-width: 470px; }
+.minitigerContentRequestConfirm > p { margin: 16px 0; overflow-wrap: anywhere; }
+.minitigerContentRequestActions button.isDanger { background: #a83242; color: white; }
