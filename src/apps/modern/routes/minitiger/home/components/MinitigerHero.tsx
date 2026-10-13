@@ -143,7 +143,7 @@ const MinitigerHero = ({
     const [ trailerLoading, setTrailerLoading ] = useState(false);
     const [ trailerReady, setTrailerReady ] = useState(false);
     const [ trailerMuted, setTrailerMuted ] = useState(true);
-    const paused = trailerDebugOpen || trailerLoading;
+    const paused = trailerDebugOpen || (trailerLoading && autoRotateMs !== -1000);
     const [ backdropFailed, setBackdropFailed ] = useState(false);
     const [ logoFailed, setLogoFailed ] = useState(false);
     const [ favorite, setFavorite ] = useState(false);
