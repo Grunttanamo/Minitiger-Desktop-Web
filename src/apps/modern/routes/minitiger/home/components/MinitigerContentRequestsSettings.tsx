@@ -72,13 +72,13 @@ const MinitigerContentRequestsSettings = ({ isAdmin }: { isAdmin: boolean }) => 
         setLoading(true);
         void load();
         const timer = window.setInterval(() => {
-            if (!document.hidden && !busyId) void load();
+            if (!document.hidden) void load();
         }, REFRESH_MS);
         return () => {
             mounted.current = false;
             window.clearInterval(timer);
         };
-    }, [load, busyId]);
+    }, [load]);
 
     const updateStatus = async (request: MinitigerContentRequest, next: MinitigerRequestStatus) => {
         if (!apiClient || busyId || !isAdmin) return;
