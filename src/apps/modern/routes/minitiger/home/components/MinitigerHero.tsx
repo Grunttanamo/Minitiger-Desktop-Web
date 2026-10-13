@@ -245,18 +245,25 @@ const MinitigerHero = ({
         if (
             paused
             || candidates.length <= 1
-            || autoRotateMs <= 0
+            || autoRotateMs === 0
         ) {
             return;
         }
 
-        const timer = window.setInterval(showNext, autoRotateMs);
+        // -1000 means switch at trailer end. If no trailer becomes ready,
+        // switch after ten seconds; prevent indefinite stall if playback hangs.
+        const timer = window.setTimeout(showNext,
+            autoRotateMs === -1000
+                ? (trailerReady ? 180000 : 10000)
+                : autoRotateMs);
 
-        return () => window.clearInterval(timer);
+        return () => window.clearTimeout(timer);
     }, [
         autoRotateMs,
         candidates.length,
         paused,
+        trailerReady,
+        heroItem?.Id,
         showNext
     ]);
 
@@ -432,6 +439,8 @@ const MinitigerHero = ({
                     delayMs={900}
                     onLoadingChange={setTrailerLoading}
                     onReadyChange={setTrailerReady}
+                    loop={autoRotateMs !== -1000}
+                    onEnded={() => { if (autoRotateMs === -1000) showNext(); }}
                     muted={trailerMuted}
                     allowYouTube={youtubeTrailersEnabled}
                     allowLocal={localTrailersEnabled}
