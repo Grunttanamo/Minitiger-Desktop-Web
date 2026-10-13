@@ -37,9 +37,6 @@ const MinitigerContentRequestDialog = ({
             return;
         }
 
-        setStatus('');
-        setSent(false);
-
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape' && !submitting) {
                 onClose();
@@ -83,9 +80,8 @@ const MinitigerContentRequestDialog = ({
             setStatus(
                 'Dein Wunsch wurde an den Administrator gesendet. ♥'
             );
-            setTitle('');
-            setComment('');
-            setContentType('Anime');
+            // Keep the submitted title visible with its confirmation.
+            // The form is reset only when explicitly starting another wish.
         } catch (error) {
             setStatus(
                 error instanceof Error
@@ -208,8 +204,18 @@ const MinitigerContentRequestDialog = ({
                                 sent ? 'isSuccess' : ''
                             ].filter(Boolean).join(' ')}
                         >
-                            {status}
+                            {sent ? '✓ ' : ''}{status}
                         </div>
+                    )}
+
+                    {sent && (
+                        <button type='button' className='minitigerContentRequestNewWish' onClick={() => {
+                            setTitle('');
+                            setComment('');
+                            setContentType('Anime');
+                            setStatus('');
+                            setSent(false);
+                        }}>Weiteren Wunsch einreichen</button>
                     )}
 
                     <div className='minitigerContentRequestActions'>
@@ -226,13 +232,14 @@ const MinitigerContentRequestDialog = ({
                             className='isPrimary'
                             disabled={
                                 submitting
+                                || sent
                                 || !title.trim()
                                 || !apiClient
                             }
                         >
                             {submitting
                                 ? 'Wird gesendet …'
-                                : 'Absenden'}
+                                : sent ? 'Erfolgreich übermittelt' : 'Absenden'}
                         </button>
                     </div>
                 </form>
