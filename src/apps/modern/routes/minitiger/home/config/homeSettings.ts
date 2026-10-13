@@ -48,7 +48,7 @@ export const DEFAULT_HOME_ROW_ORDER: HomeRowId[] = [
 
 export type MinitigerCardSize = 'compact' | 'normal' | 'large';
 
-export type BannerRotationSeconds = 0 | 8 | 12 | 20 | 30 | 45 | 60;
+export type BannerRotationSeconds = -1 | 0 | 8 | 12 | 20 | 30 | 45 | 60 | 90 | 120;
 
 export type BannerItemLimit = 0 | 5 | 10 | 15 | 20 | 30 | 50 | 100;
 
@@ -913,7 +913,10 @@ const isRotationSeconds = (
     || value === 20
     || value === 30
     || value === 45
-    || value === 60;
+    || value === 60
+    || value === 90
+    || value === 120
+    || value === -1;
 
 const isPlayedIndicatorShape = (
     value: unknown
