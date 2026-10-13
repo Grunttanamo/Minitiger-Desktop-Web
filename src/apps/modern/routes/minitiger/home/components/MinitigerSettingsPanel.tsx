@@ -171,7 +171,10 @@ const ROTATION_OPTIONS: Array<{
     { value: 20, label: '20 Sekunden' },
     { value: 30, label: '30 Sekunden' },
     { value: 45, label: '45 Sekunden' },
-    { value: 60, label: '60 Sekunden' }
+    { value: 60, label: '60 Sekunden' },
+    { value: 90, label: '90 Sekunden' },
+    { value: 120, label: '120 Sekunden' },
+    { value: -1, label: 'Nach Trailerende (sonst 10 Sekunden)' }
 ];
 
 const BANNER_ITEM_LIMIT_OPTIONS: Array<{
