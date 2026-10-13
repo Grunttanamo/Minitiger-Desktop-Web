@@ -195,11 +195,30 @@ const getRememberedMinitigerLoginUsers = apiClient => {
             return [];
         }
 
+        // Recover direct custom avatars from the user's persistent
+        // settings if a remembered-login entry was written before avatar
+        // synchronization had completed.
+        const serverId = apiClient?.serverId?.() || 'server';
         return parsed.filter(user =>
             user
             && typeof user.Id === 'string'
             && typeof user.Name === 'string'
-        ).slice(0, 12);
+        ).slice(0, 12).map(user => {
+            if (user.MinitigerAvatar) return user;
+            try {
+                const raw = localStorage.getItem(
+                    `Minitiger.CustomAvatar.v1:${serverId}:${user.Id}`
+                );
+                const saved = raw ? JSON.parse(raw) : null;
+                const image = saved?.image;
+                if (typeof image === 'string' && image.startsWith('data:image/')) {
+                    return { ...user, MinitigerAvatar: image };
+                }
+            } catch {
+                // Continue with the public Jellyfin avatar fallback.
+            }
+            return user;
+        });
     } catch (error) {
         console.warn('[Minitiger Login] Lokale Benutzerliste konnte nicht gelesen werden.', error);
         return [];
@@ -227,7 +246,7 @@ const rememberMinitigerLoginUser = (apiClient, user) => {
                 HasPassword: user.HasPassword !== false,
                 PrimaryImageTag: user.PrimaryImageTag || null,
                 MinitigerAvatar:
-                    previous?.MinitigerAvatar || null
+                    user.MinitigerAvatar || previous?.MinitigerAvatar || null
             },
             ...existing
         ].slice(0, 12);
