@@ -59,6 +59,11 @@ self.addEventListener('fetch', event => {
     // Image tag is part of the key; a changed poster automatically misses.
     if (!/\/Items\/[0-9a-f-]+\/Images\/(Primary|Thumb|Backdrop|Logo)(?:\/|$)/i.test(url.pathname)) return;
     if (!url.searchParams.has('tag')) return;
+    // Only cache image URLs bound to an authenticated Jellyfin session.
+    // Without a per-user token a shared browser cache could expose a
+    // different profile's image if both requested the same item URL.
+    const params = Array.from(url.searchParams.keys()).map(key => key.toLowerCase());
+    if (!params.some(key => key === 'api_key' || key === 'apikey' || key === 'access_token')) return;
 
     event.respondWith((async () => {
         const cache = await caches.open(MINITIGER_POSTER_CACHE);
