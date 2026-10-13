@@ -318,7 +318,8 @@ public sealed class MinitigerContentRequestsController : ControllerBase
         }
         catch (JsonException)
         {
-            return new MinitigerContentRequestsState();
+            // Do not overwrite corrupt request archives with empty state.
+            throw new InvalidDataException("Stored content requests contain invalid JSON.");
         }
     }
 
