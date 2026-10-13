@@ -17,6 +17,17 @@ export const MINITIGER_CONTENT_TYPES = [
 export type MinitigerContentType =
     typeof MINITIGER_CONTENT_TYPES[number];
 
+export type MinitigerRequestStatus =
+    | 'Neu'
+    | 'In Arbeit'
+    | 'Hinzugefügt'
+    | 'Nicht gefunden'
+    | 'Abgelehnt';
+
+export const MINITIGER_REQUEST_STATUSES: MinitigerRequestStatus[] = [
+    'Neu', 'In Arbeit', 'Hinzugefügt', 'Nicht gefunden', 'Abgelehnt'
+];
+
 export interface MinitigerContentRequest {
     id: string;
     requesterUserId: string;
@@ -25,6 +36,8 @@ export interface MinitigerContentRequest {
     contentType: MinitigerContentType;
     comment: string;
     createdAtUtc: string;
+    status: MinitigerRequestStatus;
+    statusUpdatedAtUtc?: string;
 }
 
 const authenticatedUrl = (
@@ -49,11 +62,9 @@ const requestJson = async <T>(
         init
     );
 
-    if (response.status === 404) {
-        throw new Error(
-            'Das Minitiger Companion Plugin muss für Inhaltsanfragen aktualisiert werden.'
-        );
-    }
+    // A 404 on a particular request may mean an item was deleted, the
+    // server is briefly unavailable, or an obsolete route was requested.
+    // It is not proof that the installed Companion is outdated.
 
     if (!response.ok) {
         const details = await response.text().catch(() => '');
@@ -89,6 +100,10 @@ const normalizeRequest = (
     const contentType = String(
         pick(source, 'contentType', 'ContentType') ?? ''
     ).trim() as MinitigerContentType;
+    const rawStatus = String(pick(source, 'status', 'Status') ?? 'Neu');
+    const status = MINITIGER_REQUEST_STATUSES.includes(rawStatus as MinitigerRequestStatus)
+        ? rawStatus as MinitigerRequestStatus
+        : 'Neu';
 
     if (
         !id
@@ -125,7 +140,9 @@ const normalizeRequest = (
                 'createdAtUtc',
                 'CreatedAtUtc'
             ) ?? ''
-        ).trim()
+        ).trim(),
+        status,
+        statusUpdatedAtUtc: String(pick(source, 'statusUpdatedAtUtc', 'StatusUpdatedAtUtc') ?? '')
     };
 };
 
@@ -180,6 +197,32 @@ export const getMinitigerContentRequests = async (
             ): value is MinitigerContentRequest =>
                 Boolean(value)
         );
+};
+
+export const getOwnMinitigerContentRequests = async (apiClient: ApiClient) => {
+    const raw = await requestJson<unknown>(apiClient, 'Minitiger/ContentRequests/Mine');
+    return Array.isArray(raw)
+        ? raw.map(normalizeRequest).filter((item): item is MinitigerContentRequest => Boolean(item))
+        : [];
+};
+
+export const updateMinitigerContentRequestStatus = async (
+    apiClient: ApiClient,
+    requestId: string,
+    status: MinitigerRequestStatus
+) => {
+    const raw = await requestJson<unknown>(
+        apiClient,
+        `Minitiger/ContentRequests/${encodeURIComponent(requestId)}/Status`,
+        {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        }
+    );
+    const item = normalizeRequest(raw);
+    if (!item) throw new Error('Der aktualisierte Wunsch konnte nicht gelesen werden.');
+    return item;
 };
 
 export const deleteMinitigerContentRequest = async (
