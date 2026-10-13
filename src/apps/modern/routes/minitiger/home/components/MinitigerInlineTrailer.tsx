@@ -1355,6 +1355,9 @@ const MinitigerInlineTrailer = ({
     const videoRef =
         useRef<HTMLVideoElement | null>(null);
 
+    const onEndedRef = useRef(onEnded);
+    onEndedRef.current = onEnded;
+
     const youtubeHostRef =
         useRef<HTMLDivElement | null>(null);
 
@@ -1654,7 +1657,7 @@ const MinitigerInlineTrailer = ({
                                 iv_load_policy: 3,
                                 cc_load_policy: 0,
                                 hl: 'de',
-                                loop: 1,
+                                loop: loop ? 1 : 0,
                                 playlist:
                                     source.videoId
                             },
@@ -1709,7 +1712,7 @@ const MinitigerInlineTrailer = ({
                                     if (playing) {
                                         setReady(true);
                                     } else if (event.data === 0 && !loop) {
-                                        onEnded?.();
+                                        onEndedRef.current?.();
                                     }
                                 },
                                 onError: event => {
@@ -1757,7 +1760,8 @@ const MinitigerInlineTrailer = ({
         };
     }, [
         enabled,
-        source?.key
+        source?.key,
+        loop
     ]);
 
     useEffect(() => {
@@ -1878,7 +1882,7 @@ const MinitigerInlineTrailer = ({
                 autoPlay
                 muted={muted}
                 loop={loop}
-                onEnded={() => { onEnded?.(); }}
+                onEnded={() => { onEndedRef.current?.(); }}
                 playsInline
                 preload='metadata'
                 disablePictureInPicture
