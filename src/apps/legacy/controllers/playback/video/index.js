@@ -1901,6 +1901,13 @@ export default function (view) {
         Events.off(playbackManager, 'playerchange', onPlayerChange);
         releaseCurrentPlayer();
     });
+    const mtPopoutButton = view.querySelector('.btnMinitigerPopout');
+    if (mtPopoutButton && window.api?.window?.setVideoPopout) {
+        mtPopoutButton.classList.remove('hide');
+        mtPopoutButton.addEventListener('click', function () {
+            window.api.window.setVideoPopout(true);
+        });
+    }
     view.querySelector('.btnFullscreen').addEventListener('click', function () {
         playbackManager.toggleFullscreen(currentPlayer);
     });
