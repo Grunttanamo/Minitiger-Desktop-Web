@@ -690,6 +690,7 @@ const onUpdate = (
             && activeTab !== 'colors'
             && activeTab !== 'details'
             && activeTab !== 'profiles'
+            && activeTab !== 'requests'
         ) {
             setActiveTab('general');
         }
