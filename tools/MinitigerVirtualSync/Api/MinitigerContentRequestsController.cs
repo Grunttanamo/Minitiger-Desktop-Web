@@ -17,6 +17,11 @@ public sealed class MinitigerContentRequestsController : ControllerBase
     private const int MaxTitleLength = 180;
     private const int MaxCommentLength = 2000;
     private const int MaxStoredRequests = 500;
+    private static readonly TimeSpan SubmissionCooldown = TimeSpan.FromSeconds(3);
+    private static readonly HashSet<string> AllowedStatuses = new(StringComparer.Ordinal)
+    {
+        "Neu", "In Arbeit", "Hinzugefügt", "Nicht gefunden", "Abgelehnt"
+    };
 
     private static readonly HashSet<string> AllowedContentTypes =
         new(StringComparer.Ordinal)
@@ -70,6 +75,32 @@ public sealed class MinitigerContentRequestsController : ControllerBase
                     .OrderByDescending(value => value.CreatedAtUtc)
                     .Select(ToResponse)
                     .ToList());
+        }
+        finally
+        {
+            IoLock.Release();
+        }
+    }
+
+    [HttpGet("Mine")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> GetOwnRequests(CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var requesterId))
+            return Unauthorized();
+
+        await IoLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var state = await LoadStateAsync(cancellationToken).ConfigureAwait(false);
+            // Subprofiles are individual Jellyfin technical users, so their
+            // authenticated UserId is distinct from the household owner's ID.
+            return Ok(state.Requests
+                .Where(value => value.RequesterUserId == requesterId)
+                .OrderByDescending(value => value.CreatedAtUtc)
+                .Select(ToResponse)
+                .ToList());
         }
         finally
         {
@@ -137,16 +168,21 @@ public sealed class MinitigerContentRequestsController : ControllerBase
             var state = await LoadStateAsync(
                 cancellationToken).ConfigureAwait(false);
 
-            state.Requests.Add(record);
+            // Do not silently delete older requests when the list gets large.
+            if (state.Requests.Count >= MaxStoredRequests)
+                return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                    "Request storage is full. Contact an administrator.");
 
-            if (state.Requests.Count > MaxStoredRequests)
-            {
-                state.Requests = state.Requests
-                    .OrderByDescending(value => value.CreatedAtUtc)
-                    .Take(MaxStoredRequests)
-                    .OrderBy(value => value.CreatedAtUtc)
-                    .ToList();
-            }
+            // Prevent accidental rapid repeated submissions without taking
+            // away a user's ability to submit multiple different wishes.
+            var recent = state.Requests.Any(value =>
+                value.RequesterUserId == requesterUserId
+                && DateTimeOffset.UtcNow - value.CreatedAtUtc < SubmissionCooldown);
+            if (recent)
+                return StatusCode(StatusCodes.Status429TooManyRequests,
+                    "Please wait a few seconds before another request.");
+
+            state.Requests.Add(record);
 
             await SaveStateAsync(
                 state,
@@ -163,6 +199,38 @@ public sealed class MinitigerContentRequestsController : ControllerBase
             record.RequesterUserId);
 
         return Ok(ToResponse(record));
+    }
+
+    [HttpPut("{requestId:guid}/Status")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> UpdateStatus(
+        [FromRoute] Guid requestId,
+        [FromBody] MinitigerContentRequestStatusUpdate update,
+        CancellationToken cancellationToken)
+    {
+        var status = update.Status?.Trim() ?? string.Empty;
+        if (!AllowedStatuses.Contains(status))
+            return BadRequest("Unsupported request status.");
+
+        await IoLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var state = await LoadStateAsync(cancellationToken).ConfigureAwait(false);
+            var item = state.Requests.FirstOrDefault(value => value.Id == requestId);
+            if (item is null)
+                return NotFound();
+
+            item.Status = status;
+            item.StatusUpdatedAtUtc = DateTimeOffset.UtcNow;
+            await SaveStateAsync(state, cancellationToken).ConfigureAwait(false);
+            return Ok(ToResponse(item));
+        }
+        finally
+        {
+            IoLock.Release();
+        }
     }
 
     [HttpDelete("{requestId:guid}")]
@@ -295,9 +363,16 @@ public sealed class MinitigerContentRequestsController : ControllerBase
             Title = record.Title,
             ContentType = record.ContentType,
             Comment = record.Comment,
-            CreatedAtUtc = record.CreatedAtUtc
+            CreatedAtUtc = record.CreatedAtUtc,
+            Status = AllowedStatuses.Contains(record.Status) ? record.Status : "Neu",
+            StatusUpdatedAtUtc = record.StatusUpdatedAtUtc
         };
     }
+}
+
+public sealed class MinitigerContentRequestStatusUpdate
+{
+    public string? Status { get; set; }
 }
 
 public sealed class MinitigerContentRequestCreateRequest
@@ -331,6 +406,10 @@ public sealed class MinitigerContentRequestRecord
     public string Comment { get; set; } = string.Empty;
 
     public DateTimeOffset CreatedAtUtc { get; set; }
+
+    public string Status { get; set; } = "Neu";
+
+    public DateTimeOffset? StatusUpdatedAtUtc { get; set; }
 }
 
 public sealed class MinitigerContentRequestResponse
@@ -348,6 +427,10 @@ public sealed class MinitigerContentRequestResponse
     public string Comment { get; set; } = string.Empty;
 
     public DateTimeOffset CreatedAtUtc { get; set; }
+
+    public string Status { get; set; } = "Neu";
+
+    public DateTimeOffset? StatusUpdatedAtUtc { get; set; }
 }
 
 // MINITIGER_PATCH_MARKER: CONTENT_REQUESTS_CONTROLLER_V1
