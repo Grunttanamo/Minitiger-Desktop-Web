@@ -42,6 +42,8 @@ interface Props {
     delayMs?: number;
     onLoadingChange?: (loading: boolean) => void;
     onReadyChange?: (ready: boolean) => void;
+    onEnded?: () => void;
+    loop?: boolean;
     muted?: boolean;
     allowYouTube?: boolean;
     allowLocal?: boolean;
@@ -1344,6 +1346,8 @@ const MinitigerInlineTrailer = ({
     delayMs = 700,
     onLoadingChange,
     onReadyChange,
+    onEnded,
+    loop = true,
     muted = true,
     allowYouTube = true,
     allowLocal = true
@@ -1704,6 +1708,8 @@ const MinitigerInlineTrailer = ({
 
                                     if (playing) {
                                         setReady(true);
+                                    } else if (event.data === 0 && !loop) {
+                                        onEnded?.();
                                     }
                                 },
                                 onError: event => {
@@ -1871,7 +1877,8 @@ const MinitigerInlineTrailer = ({
                 src={source.url}
                 autoPlay
                 muted={muted}
-                loop
+                loop={loop}
+                onEnded={() => { onEnded?.(); }}
                 playsInline
                 preload='metadata'
                 disablePictureInPicture
