@@ -167,11 +167,19 @@ const syncRememberedLoginAvatar = async (
             return;
         }
 
-        const avatar =
-            await resolveRememberedLoginAvatar(
-                apiClient,
-                settings
-            );
+        // A missing/failed gallery response must never wipe an avatar
+        // already cached for the login screen. Wait briefly for the server
+        // to finish avatar uploads and retry transient errors.
+        let avatar: string | null = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                avatar = await resolveRememberedLoginAvatar(apiClient, settings);
+                break;
+            } catch (error) {
+                if (attempt === 2) throw error;
+                await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
+            }
+        }
 
         let changed = false;
         const next = parsed.map(entry => {
@@ -183,7 +191,9 @@ const syncRememberedLoginAvatar = async (
 
             return {
                 ...entry,
-                MinitigerAvatar: avatar
+                // Empty settings mean an intentional avatar reset; otherwise
+                // never replace an existing image with an unresolved value.
+                MinitigerAvatar: avatar || (settings.image ? entry.MinitigerAvatar : null)
             };
         });
 
