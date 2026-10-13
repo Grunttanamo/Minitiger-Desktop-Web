@@ -83,10 +83,10 @@ const MinitigerContentRequestDialog = ({
             // Keep the submitted title visible with its confirmation.
             // The form is reset only when explicitly starting another wish.
         } catch (error) {
+            setSent(false);
             setStatus(
-                error instanceof Error
-                    ? error.message
-                    : String(error)
+                'Dein Wunsch konnte nicht übermittelt werden. Grund: '
+                + (error instanceof Error ? error.message : String(error))
             );
         } finally {
             setSubmitting(false);
