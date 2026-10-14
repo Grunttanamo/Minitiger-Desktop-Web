@@ -3964,9 +3964,9 @@ export class PlaybackManager {
             const queuedEntry = !errorOccurred && self._playNextAfterEnded
                 && endedNaturally && queueApi
                 ? readSoloQueue(queueApi, queueProfile)[0] : null;
-            // Series/Season entries require episode expansion before playback.
-            // Until that is implemented, retain Jellyfin's existing next-episode path.
-            const queuedPlayable = queuedEntry && (queuedEntry.itemType === 'Movie' || queuedEntry.itemType === 'Episode')
+            // A series queue item expands into its first unwatched available
+            // episode, then follows Jellyfin's normal next-episode sequencing.
+            const queuedPlayable = queuedEntry && ['Movie', 'Episode', 'Series', 'Season'].includes(queuedEntry.itemType)
                 ? queuedEntry : null;
             const nextItem = queuedPlayable
                 ? null
@@ -4016,7 +4016,22 @@ export class PlaybackManager {
                 // Resolve as the active authenticated Jellyfin user. Leave the
                 // queue entry untouched on failure so retry stays possible.
                 Promise.resolve().then(async () => {
-                    const next = await queueApi.getItem(queueApi.getCurrentUserId(), queuedPlayable.itemId);
+                    let next = await queueApi.getItem(queueApi.getCurrentUserId(), queuedPlayable.itemId);
+                    if (queuedPlayable.itemType === 'Series' || queuedPlayable.itemType === 'Season') {
+                        const episodes = await queueApi.getItems(queueApi.getCurrentUserId(), {
+                            ParentId: queuedPlayable.itemId,
+                            Recursive: queuedPlayable.itemType === 'Series',
+                            IncludeItemTypes: 'Episode',
+                            IsMissing: false,
+                            EnableTotalRecordCount: false,
+                            Limit: 1000
+                        });
+                        const playable = (episodes?.Items || [])
+                            .filter(item => item.Id && !item.IsVirtualItem && item.LocationType !== 'Virtual')
+                            .sort((a, b) => (a.ParentIndexNumber ?? 9999) - (b.ParentIndexNumber ?? 9999)
+                                || (a.IndexNumber ?? 9999) - (b.IndexNumber ?? 9999));
+                        next = playable.find(item => !item.UserData?.Played) || playable[0];
+                    }
                     if (!next?.Id || self.getCurrentPlayer()) return;
                     await self.play({ items: [next], startPositionTicks: 0 });
                     removeSoloQueueItem(queueApi, queueProfile, queuedPlayable.id);
