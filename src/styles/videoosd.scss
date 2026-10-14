@@ -380,3 +380,36 @@
 @media all and (max-width:70em) { .minitigerEpisodePreviewList { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media all and (max-width:45em) { .minitigerEpisodePreviewPanel { right:.65rem; left:.65rem; width:auto; max-height:70vh; } .minitigerEpisodePreviewHeader { align-items:flex-start; flex-direction:column; } .minitigerEpisodePreviewList { grid-template-columns:1fr; } }
 // MINITIGER_PATCH_MARKER: PHASE_18_20_0_IN_PLAYER_EPISODE_PREVIEW_STYLE
+
+
+/* Minitiger Desktop OSD palette: replace Jellyfin's transient blue/turquoise
+   hover/pressed states with the currently selected Minitiger accent. */
+.videoOsdBottom,
+.osdHeader {
+    --theme-primary-color: var(--minitiger-accent, #f2a33b);
+    --theme-accent-color: var(--minitiger-accent, #f2a33b);
+}
+
+.videoOsdBottom .paper-icon-button-light:hover,
+.videoOsdBottom .paper-icon-button-light:focus-visible,
+.videoOsdBottom .paper-icon-button-light:active,
+.videoOsdBottom .emby-button:hover,
+.videoOsdBottom .emby-button:focus-visible,
+.osdHeader .paper-icon-button-light:hover,
+.osdHeader .paper-icon-button-light:focus-visible,
+.osdHeader .emby-button:hover {
+    color: var(--minitiger-accent, #f2a33b) !important;
+}
+
+.videoOsdBottom .paper-icon-button-light:hover .material-icons,
+.videoOsdBottom .paper-icon-button-light:focus-visible .material-icons,
+.videoOsdBottom .paper-icon-button-light:active .material-icons,
+.osdHeader .paper-icon-button-light:hover .material-icons {
+    color: inherit !important;
+}
+
+.videoOsdBottom input[type="range"],
+.videoOsdBottom .mdl-slider,
+.videoOsdBottom .osdVolumeSlider {
+    accent-color: var(--minitiger-accent, #f2a33b);
+}
