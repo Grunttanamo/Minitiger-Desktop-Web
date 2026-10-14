@@ -31,6 +31,7 @@ import {
     shortOverview
 } from '../home/mediaUtils';
 import { getItemRoute } from '../home/routingUtils';
+import { addSoloQueueItem, activeSoloQueueProfileId } from 'apps/modern/features/minitiger/watchparty/soloQueue';
 
 import './MinitigerVideoDetails.scss';
 
@@ -306,6 +307,10 @@ const MinitigerSeasonDetails = ({
                                 }
                             </h1>
 
+                            {apiClient && <button type='button' title='Ganze Staffel einreihen'
+                                onClick={() => addSoloQueueItem(apiClient, activeSoloQueueProfileId(apiClient), season)}>
+                                ⊕ Staffel einreihen
+                            </button>}
                             <div className='minitigerDetailsMeta'>
                                 <span>
                                     {
@@ -443,6 +448,13 @@ const MinitigerSeasonDetails = ({
                                                         }
                                                     </strong>
 
+                                                    {apiClient && <button type='button'
+                                                        className='minitigerSeasonEpisodeMenu'
+                                                        title='Folge einreihen'
+                                                        aria-label='Folge einreihen'
+                                                        onClick={() => addSoloQueueItem(apiClient, activeSoloQueueProfileId(apiClient), episode)}>
+                                                        ⊕
+                                                    </button>}
                                                     <MinitigerEpisodePlayedButton
                                                         item={episode}
                                                         placement='inline'
