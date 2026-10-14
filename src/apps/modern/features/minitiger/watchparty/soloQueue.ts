@@ -59,7 +59,9 @@ export const addSoloQueueItem = (
     const entries = readSoloQueue(apiClient, profileId);
     if (entries.length >= LIMIT) return entries;
     const entry: SoloQueueEntry = {
-        id: crypto.randomUUID(),
+        id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         itemId: item.Id,
         itemType: String(item.Type || ''),
         title: item.Name || 'Unbekannt',
