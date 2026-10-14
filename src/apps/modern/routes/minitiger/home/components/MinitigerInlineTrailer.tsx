@@ -982,9 +982,8 @@ const resolveSources = async (
                     ? canH264
                     : container === 'webm'
                         ? (
-                            videoCodec === 'vp8'
-                                ? canVp8
-                                : canVp9
+                            videoCodec === 'vp9'
+                            && canVp9
                         )
                         : isLikelyBrowserSafe(local)
             );
