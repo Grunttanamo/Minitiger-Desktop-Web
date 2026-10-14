@@ -428,7 +428,7 @@ const getDirectPlayMime = (trailer: TrailerItem) => {
         audioCodec,
         container
     } = getMediaCodecs(trailer);
-    const format = container.split(',')[0]?.trim();
+    const format = container.split(',')[0]?.trim() ?? '';
 
     let mimeType = '';
     let videoMimeCodec = '';
