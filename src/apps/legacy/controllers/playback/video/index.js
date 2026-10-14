@@ -33,6 +33,7 @@ import { ServerConnections } from 'lib/jellyfin-apiclient';
 import LibraryMenu from 'scripts/libraryMenu';
 import { setBackdropTransparency, TRANSPARENCY_LEVEL } from 'components/backdrop/backdrop';
 import { pluginManager } from 'components/pluginManager';
+import { SOLO_QUEUE_CHANGED, activeSoloQueueProfileId, clearSoloQueue, moveSoloQueueItem, readSoloQueue, removeSoloQueueItem } from 'apps/modern/features/minitiger/watchparty/soloQueue';
 
 function getOpenedDialog() {
     return document.querySelector('.dialogContainer .dialog.opened');
@@ -1661,6 +1662,94 @@ export default function (view) {
     const mtEpisodeList = view.querySelector('.minitigerEpisodePreviewList');
     const mtEpisodeStatus = view.querySelector('.minitigerEpisodePreviewStatus');
     const mtSeriesTitle = view.querySelector('.minitigerEpisodePreviewSeriesTitle');
+    const mtQueueButton = view.querySelector('.btnMinitigerQueue');
+    const mtQueuePanel = view.querySelector('.minitigerQueueOsdPanel');
+    const mtQueueItems = view.querySelector('.minitigerQueueOsdItems');
+    const mtQueueClear = view.querySelector('.minitigerQueueOsdClear');
+    const mtQueueClose = view.querySelector('.minitigerQueueOsdClose');
+
+    function getMinitigerQueueContext() {
+        const serverId = currentItem?.ServerId || currentPlayer?.streamInfo?.item?.ServerId;
+        const client = serverId ? ServerConnections.getApiClient(serverId) : ServerConnections.currentApiClient();
+        if (!client) return null;
+        return { client, profileId: activeSoloQueueProfileId(client) };
+    }
+
+    function refreshMinitigerQueue() {
+        const context = getMinitigerQueueContext();
+        if (!context) return;
+        const entries = readSoloQueue(context.client, context.profileId);
+        mtQueueItems.replaceChildren();
+        mtQueueClear.disabled = entries.length === 0;
+        if (!entries.length) {
+            const empty = document.createElement('p');
+            empty.textContent = 'Noch keine Inhalte eingereiht. Nutze + Einreihen auf einer Detailseite.';
+            mtQueueItems.appendChild(empty);
+            return;
+        }
+        entries.forEach((entry, index) => {
+            const card = document.createElement('article');
+            card.className = 'minitigerQueueOsdCard';
+            const poster = document.createElement('img');
+            poster.loading = 'lazy';
+            poster.alt = '';
+            poster.src = context.client.getUrl('Items/' + encodeURIComponent(entry.itemId) + '/Images/Primary', { maxWidth: 180, quality: 80 });
+            const title = document.createElement('strong');
+            title.textContent = entry.seriesTitle || entry.title;
+            const detail = document.createElement('small');
+            detail.textContent = entry.itemType === 'Episode'
+                ? 'Staffel ' + (entry.seasonNumber ?? '?') + ' · Folge ' + (entry.episodeNumber ?? '?')
+                : entry.itemType === 'Series' ? 'Serie' : entry.itemType === 'Movie' ? 'Film' : entry.itemType;
+            const controls = document.createElement('div');
+            controls.className = 'minitigerQueueOsdCardActions';
+            const action = (label, symbol, disabled, callback) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.title = label;
+                button.setAttribute('aria-label', label);
+                button.textContent = symbol;
+                button.disabled = disabled;
+                button.addEventListener('click', callback);
+                controls.appendChild(button);
+            };
+            action('Nach links', '←', index === 0, () => moveSoloQueueItem(context.client, context.profileId, index, index - 1));
+            action('Nach rechts', '→', index === entries.length - 1, () => moveSoloQueueItem(context.client, context.profileId, index, index + 1));
+            action('Entfernen', '×', false, () => removeSoloQueueItem(context.client, context.profileId, entry.id));
+            card.append(poster, title, detail, controls);
+            mtQueueItems.appendChild(card);
+        });
+    }
+
+    function closeMinitigerQueue() {
+        mtQueuePanel.classList.add('hide');
+        mtQueuePanel.setAttribute('aria-hidden', 'true');
+        mtQueueButton.setAttribute('aria-expanded', 'false');
+        mtQueueButton.classList.remove('isActive');
+        if (currentVisibleMenu === 'minitigerQueue') currentVisibleMenu = 'osd';
+    }
+
+    mtQueueButton.addEventListener('click', () => {
+        const opening = mtQueuePanel.classList.contains('hide');
+        if (!opening) { closeMinitigerQueue(); return; }
+        closeMinitigerEpisodePreview();
+        refreshMinitigerQueue();
+        mtQueuePanel.classList.remove('hide');
+        mtQueuePanel.setAttribute('aria-hidden', 'false');
+        mtQueueButton.setAttribute('aria-expanded', 'true');
+        mtQueueButton.classList.add('isActive');
+        currentVisibleMenu = 'minitigerQueue';
+        showOsd();
+    });
+    mtQueueClose.addEventListener('click', closeMinitigerQueue);
+    mtQueueClear.addEventListener('click', () => {
+        const context = getMinitigerQueueContext();
+        if (!context || !window.confirm('Persönliche Warteschlange wirklich leeren?')) return;
+        clearSoloQueue(context.client, context.profileId);
+    });
+    window.addEventListener(SOLO_QUEUE_CHANGED, () => {
+        if (!mtQueuePanel.classList.contains('hide')) refreshMinitigerQueue();
+    });
+
     let mtSeriesId = '';
     let mtEpisodes = [];
     let mtRequestId = 0;
@@ -1857,6 +1946,7 @@ export default function (view) {
     });
     view.addEventListener('viewbeforehide', function () {
         window.__minitigerVideoOsdActive = false;
+        closeMinitigerQueue();
         document.body.classList.remove('mouseIdle');
         window.api?.window?.setCursorVisibility?.(true);
         if (statsOverlay) {
