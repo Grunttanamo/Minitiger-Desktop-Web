@@ -1904,9 +1904,55 @@ export default function (view) {
     const mtPopoutButton = view.querySelector('.btnMinitigerPopout');
     if (mtPopoutButton && window.api?.window?.setVideoPopout) {
         mtPopoutButton.classList.remove('hide');
-        mtPopoutButton.addEventListener('click', function () {
-            window.api.window.setVideoPopout(true);
+        const popoutIcon = mtPopoutButton.querySelector('.material-icons');
+        let lastPopoutState = false;
+        let popoutRefreshTimer = null;
+        let popoutRefreshing = false;
+
+        const renderPopoutState = (detached) => {
+            lastPopoutState = Boolean(detached);
+            const title = lastPopoutState ? 'Video andocken' : 'Video ausklinken';
+            mtPopoutButton.title = title;
+            mtPopoutButton.setAttribute('aria-label', title);
+            mtPopoutButton.setAttribute('aria-pressed', String(lastPopoutState));
+            if (popoutIcon) {
+                popoutIcon.classList.toggle('open_in_new', !lastPopoutState);
+                popoutIcon.classList.toggle('close_fullscreen', lastPopoutState);
+                popoutIcon.textContent = lastPopoutState ? 'close_fullscreen' : 'open_in_new';
+            }
+        };
+        const refreshPopoutState = async () => {
+            if (popoutRefreshing || !window.api?.window?.isVideoPoppedOut) return;
+            popoutRefreshing = true;
+            try {
+                const detached = await window.api.window.isVideoPoppedOut();
+                renderPopoutState(detached);
+            } catch (err) {
+                console.debug('[Minitiger Pop-out] State check:', err);
+            } finally {
+                popoutRefreshing = false;
+            }
+        };
+        mtPopoutButton.addEventListener('click', async function () {
+            await refreshPopoutState();
+            const target = !lastPopoutState;
+            window.api.window.setVideoPopout(target);
+            renderPopoutState(target);
+            window.setTimeout(() => { void refreshPopoutState(); }, 350);
         });
+        view.addEventListener('viewbeforeshow', () => {
+            void refreshPopoutState();
+            if (!popoutRefreshTimer) {
+                popoutRefreshTimer = window.setInterval(() => {
+                    void refreshPopoutState();
+                }, 800);
+            }
+        });
+        view.addEventListener('viewbeforehide', () => {
+            if (popoutRefreshTimer) window.clearInterval(popoutRefreshTimer);
+            popoutRefreshTimer = null;
+        });
+        void refreshPopoutState();
     }
     view.querySelector('.btnFullscreen').addEventListener('click', function () {
         playbackManager.toggleFullscreen(currentPlayer);
