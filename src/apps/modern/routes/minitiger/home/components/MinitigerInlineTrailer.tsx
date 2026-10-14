@@ -1252,6 +1252,25 @@ export const runMinitigerTrailerDiagnostic = async (
     lines.push(`UserAgent: ${typeof navigator !== 'undefined' ? navigator.userAgent : '-'}`);
     lines.push(`canPlay H264/AAC MP4: ${browserCanPlay('video/mp4; codecs="avc1.42E01E, mp4a.40.2"')}`);
     lines.push(`canPlay VP9/Opus WebM: ${browserCanPlay('video/webm; codecs="vp9, opus"')}`);
+    const nativeApi = (window as unknown as {
+        api?: { system?: {
+            nativeTrailerPreviewAvailable?: (cb: (available: boolean) => void) => void;
+            nativeTrailerPreviewEnded?: (cb: (ended: boolean) => void) => void;
+        } }
+    }).api?.system;
+    const nativeAvailable = await new Promise<boolean>(resolve => {
+        if (!isJellyfinDesktopShell() || !nativeApi?.nativeTrailerPreviewAvailable) {
+            resolve(false);
+            return;
+        }
+        const timeout = window.setTimeout(() => resolve(false), 1500);
+        nativeApi.nativeTrailerPreviewAvailable(available => {
+            window.clearTimeout(timeout);
+            resolve(Boolean(available));
+        });
+    });
+    lines.push(`Native MPV Preview: ${nativeAvailable ? 'verfügbar' : 'nicht verfügbar'}`);
+    lines.push('H264/VP9 canPlayType: nur HTML5-Decoder, NICHT MPV');
     lines.push('');
 
     const trailers = await resolveMinitigerLocalTrailers(
@@ -1324,6 +1343,19 @@ export const runMinitigerTrailerDiagnostic = async (
         lines.push('Keine lokale Videoquelle wurde erzeugt.');
     }
 
+    if (nativeAvailable) {
+        lines.push('Player: Nativer MPV-Vorschau-Decoder (Banner & große Vorschaukarte)');
+        lines.push('Modus: Originalquelle zuerst (Direct Play); HTML5 nur Fallback');
+        lines.push('Die Diagnose startet KEINE weiteren MPV/FFmpeg-Streams neben dem laufenden Banner.');
+        lines.push(`Bevorzugte Quelle: ${videoSources[0]?.mode ?? '-'}`);
+        lines.push(`Bevorzugte URL: ${sanitizeDiagnosticUrl(videoSources[0]?.url)}`);
+        lines.push('Hinweis: MPV-Verfügbarkeit beweist noch nicht die erfolgreiche Dekodierung jedes Codecs.');
+        lines.push('');
+        lines.push('=== Ende Diagnose ===');
+        return lines.join('\\n');
+    }
+
+    lines.push('HTML5-Fallback: Wiedergabeproben mit Browser-Videoelement');
     for (let index = 0; index < videoSources.length; index++) {
         const source = videoSources[index];
         lines.push(`Probe ${index + 1}: mode=${source.mode}`);
