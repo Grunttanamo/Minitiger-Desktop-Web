@@ -413,3 +413,15 @@
 .videoOsdBottom .osdVolumeSlider {
     accent-color: var(--minitiger-accent, #f2a33b);
 }
+
+
+/* Hide ONLY the web player overlays during a native pop-out resize. The video
+   remains visible, and OSD controls return 260ms after the last size change. */
+html.minitiger-popout-resizing .videoOsdBottom,
+html.minitiger-popout-resizing .osdHeader,
+html.minitiger-popout-resizing .chapterThumbContainer,
+html.minitiger-popout-resizing .minitigerEpisodePreviewPanel {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: none !important;
+}
