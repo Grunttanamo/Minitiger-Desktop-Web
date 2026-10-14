@@ -117,7 +117,9 @@ const pruneTrailerCache = () => {
     }
     while (trailerCache.size >= MAX_TRAILER_CACHE_ENTRIES) {
         const oldest = trailerCache.keys().next().value;
-        if (!oldest) break;
+        if (!oldest) {
+            break;
+        }
         trailerCache.delete(oldest);
     }
 };
@@ -332,7 +334,9 @@ const refreshTranscodeSessionIds = (entries: TrailerSource[]): TrailerSource[] =
             return source;
         }
         const sessionId = createPlaySessionId();
-        if (!sessionId) return source;
+        if (!sessionId) {
+            return source;
+        }
         try {
             const url = new URL(source.url, window.location.href);
             url.searchParams.set('PlaySessionId', sessionId);
@@ -1372,7 +1376,9 @@ const MinitigerInlineTrailer = ({
         video: HTMLVideoElement | null,
         trailerSource: TrailerSource | undefined
     ) => {
-        if (trailerSource?.kind !== 'video') return;
+        if (trailerSource?.kind !== 'video') {
+            return;
+        }
 
         // First detach the media request, then terminate its own transcoder.
         if (video) {
@@ -1385,7 +1391,9 @@ const MinitigerInlineTrailer = ({
             }
         }
 
-        if (!apiClient || !trailerSource.mode.startsWith('transcode-')) return;
+        if (!apiClient || !trailerSource.mode.startsWith('transcode-')) {
+            return;
+        }
 
         let sessionId: string | null = null;
         try {
@@ -1397,7 +1405,9 @@ const MinitigerInlineTrailer = ({
             return;
         }
 
-        if (!sessionId || stoppedEncodingSessionsRef.current.has(sessionId)) return;
+        if (!sessionId || stoppedEncodingSessionsRef.current.has(sessionId)) {
+            return;
+        }
         stoppedEncodingSessionsRef.current.add(sessionId);
 
         try {
@@ -1655,7 +1665,13 @@ const MinitigerInlineTrailer = ({
         if (!enabled || source?.kind !== 'video') return;
 
         const video = videoRef.current;
-        return () => releaseLocalVideo(video, source);
+        return () => {
+            // React may replay effects while the same element is still mounted
+            // (StrictMode). Only detach an element being replaced or removed.
+            if (video && !video.isConnected) {
+                releaseLocalVideo(video, source);
+            }
+        };
     }, [ enabled, source, releaseLocalVideo ]);
 
     useEffect(() => {
@@ -1921,7 +1937,7 @@ const MinitigerInlineTrailer = ({
                     videoRef.current = element;
                     visibilityRef.current = element;
                 }}
-                key={source.key}
+                key={`${source.key}:${source.url}`}
                 className={hostClass}
                 src={source.url}
                 autoPlay
