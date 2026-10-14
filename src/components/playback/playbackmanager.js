@@ -31,6 +31,7 @@ import { AppFeature } from 'constants/appFeature';
 import { PluginType } from 'constants/pluginType';
 import { TICKS_PER_SECOND } from 'constants/time';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
+import { activeSoloQueueProfileId, readSoloQueue, removeSoloQueueItem } from 'apps/modern/features/minitiger/watchparty/soloQueue';
 import { OutboundWebSocketMessageType } from '@jellyfin/sdk/lib/websocket';
 import { MediaError } from 'types/mediaError';
 import { getMediaError } from 'utils/mediaError';
@@ -3950,7 +3951,26 @@ export class PlaybackManager {
 
             const errorOccurred = displayErrorCode && typeof (displayErrorCode) === 'string';
 
-            const nextItem = self._playNextAfterEnded && !errorOccurred ? self._playQueueManager.getNextItemInfo() : null;
+            // Minitiger solo queue has priority over Jellyfin's next episode.
+            // Only take over a genuine natural end (not Stop, seek or errors).
+            const finishedItem = streamInfo?.item;
+            const finishedTicks = Number(state?.PlayState?.PositionTicks || 0);
+            const runtimeTicks = Number(finishedItem?.RunTimeTicks || 0);
+            const endedNaturally = Boolean(runtimeTicks > 0
+                && finishedTicks >= runtimeTicks - 3 * 10000000);
+            const queueApi = finishedItem?.ServerId
+                ? ServerConnections.getApiClient(finishedItem.ServerId) : null;
+            const queueProfile = queueApi ? activeSoloQueueProfileId(queueApi) : 'owner';
+            const queuedEntry = !errorOccurred && self._playNextAfterEnded
+                && endedNaturally && queueApi
+                ? readSoloQueue(queueApi, queueProfile)[0] : null;
+            // Series/Season entries require episode expansion before playback.
+            // Until that is implemented, retain Jellyfin's existing next-episode path.
+            const queuedPlayable = queuedEntry && (queuedEntry.itemType === 'Movie' || queuedEntry.itemType === 'Episode')
+                ? queuedEntry : null;
+            const nextItem = queuedPlayable
+                ? null
+                : self._playNextAfterEnded && !errorOccurred ? self._playQueueManager.getNextItemInfo() : null;
 
             const nextMediaType = (nextItem ? nextItem.item.MediaType : null);
 
@@ -3990,6 +4010,19 @@ export class PlaybackManager {
                 data.streamInfo = null;
                 destroyPlayer(player);
                 removeCurrentPlayer(player);
+            }
+
+            if (queuedPlayable && queueApi) {
+                // Resolve as the active authenticated Jellyfin user. Leave the
+                // queue entry untouched on failure so retry stays possible.
+                Promise.resolve().then(async () => {
+                    const next = await queueApi.getItem(queueApi.getCurrentUserId(), queuedPlayable.itemId);
+                    if (!next?.Id || self.getCurrentPlayer()) return;
+                    await self.play({ items: [next], startPositionTicks: 0 });
+                    removeSoloQueueItem(queueApi, queueProfile, queuedPlayable.id);
+                }).catch(error => {
+                    console.warn('[Minitiger Queue] Automatischer Start fehlgeschlagen', error);
+                });
             }
 
             if (errorOccurred) {
