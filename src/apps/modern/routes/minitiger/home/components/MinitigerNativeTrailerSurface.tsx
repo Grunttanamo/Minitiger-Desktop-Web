@@ -75,7 +75,7 @@ const MinitigerNativeTrailerSurface = ({
             setFallback(true);
             return;
         }
-        system.nativeTrailerPreviewAvailable(available => {
+        const start = (available: boolean) => {
             if (closed) return;
             const p = bounds();
             if (!available || !p) { failed(); return; }
@@ -92,13 +92,22 @@ const MinitigerNativeTrailerSurface = ({
                     frame = requestAnimationFrame(move);
                 }
             );
-        });
+        };
+        const onReleased = () => {
+            if (!closed && !window.__minitigerNativePreviewOwner && elementRef.current?.isConnected) {
+                system.nativeTrailerPreviewAvailable?.(start);
+            }
+        };
+        window.addEventListener('minitiger:native-preview-released', onReleased);
+        system.nativeTrailerPreviewAvailable(start);
         return () => {
+            window.removeEventListener('minitiger:native-preview-released', onReleased);
             closed = true;
             cancelAnimationFrame(frame);
             if (started && window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
+                window.dispatchEvent(new Event('minitiger:native-preview-released'));
             }
         };
     }, [url]);
