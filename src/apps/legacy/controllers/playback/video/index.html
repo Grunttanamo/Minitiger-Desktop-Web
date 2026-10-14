@@ -24,6 +24,17 @@
         <div class="minitigerEpisodePreviewList"></div>
     </section>
 
+    <section class="minitigerQueueOsdPanel hide" aria-label="Minitiger Warteschlange" aria-hidden="true">
+        <header class="minitigerQueueOsdHeader">
+            <strong>MINITIGER · MEINE WARTESCHLANGE</strong>
+            <div>
+                <button type="button" class="minitigerQueueOsdClear">Liste leeren</button>
+                <button type="button" class="minitigerQueueOsdClose" aria-label="Warteschlange schließen">✕</button>
+            </div>
+        </header>
+        <div class="minitigerQueueOsdItems"></div>
+    </section>
+
     <div class="videoOsdBottom videoOsdBottom-maincontrols">
         <div class="osdControls">
             <div class="osdTextContainer osdMainTextContainer">
@@ -86,6 +97,10 @@
 
                 <button is="paper-icon-button-light" type="button" class="btnMinitigerEpisodePreview hide autoSize" title="Episoden" aria-label="Episoden anzeigen">
                     <span class="xlargePaperIconButton material-icons video_library" aria-hidden="true"></span>
+                </button>
+
+                <button is="paper-icon-button-light" type="button" class="btnMinitigerQueue autoSize" title="Warteschlange" aria-label="Warteschlange öffnen" aria-expanded="false">
+                    <span class="xlargePaperIconButton material-icons playlist_play" aria-hidden="true"></span>
                 </button>
 
                 <button is="emby-ratingbutton" type="button" class="btnUserRating hide autoSize paper-icon-button-light" title="${Rate}">
