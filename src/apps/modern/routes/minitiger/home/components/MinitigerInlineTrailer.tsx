@@ -981,16 +981,13 @@ const resolveSources = async (
             const desktopShell =
                 isJellyfinDesktopShell();
 
-            const directCodecPlayable = (
-                [ 'mp4', 'm4v', 'mov' ].includes(container)
-                    ? canH264
-                    : container === 'webm'
-                        ? (
-                            videoCodec === 'vp9'
-                            && canVp9
-                        )
-                        : isLikelyBrowserSafe(local)
-            );
+            let directCodecPlayable = isLikelyBrowserSafe(local);
+
+            if ([ 'mp4', 'm4v', 'mov' ].includes(container)) {
+                directCodecPlayable = canH264;
+            } else if (container === 'webm') {
+                directCodecPlayable = videoCodec === 'vp9' && canVp9;
+            }
 
             if (desktopShell) {
                 // H.264 where Qt supports it; VP9/Opus otherwise.
@@ -1015,7 +1012,6 @@ const resolveSources = async (
                         mode: 'download'
                     });
                 }
-
             } else if (isLikelyBrowserSafe(local)) {
                 if (direct) {
                     sources.push({
@@ -1408,20 +1404,28 @@ const MinitigerInlineTrailer = ({
         if (!sessionId || stoppedEncodingSessionsRef.current.has(sessionId)) {
             return;
         }
-        stoppedEncodingSessionsRef.current.add(sessionId);
+        const stoppedSessions = stoppedEncodingSessionsRef.current;
+        stoppedSessions.add(sessionId);
 
-        try {
-            void Promise.resolve(apiClient.stopActiveEncodings(sessionId))
-                .catch(error => console.warn(
+        // Bound the bookkeeping set in long-running clients.
+        if (stoppedSessions.size > 128) {
+            const oldest = stoppedSessions.values().next().value;
+
+            if (oldest) {
+                stoppedSessions.delete(oldest);
+            }
+        }
+
+        // The promise chain also captures synchronous failures without
+        // throwing during React cleanup or trailer navigation.
+        void Promise.resolve()
+            .then(() => apiClient.stopActiveEncodings(sessionId))
+            .catch(error => {
+                console.warn(
                     '[Minitiger Trailer] Transcoding-Sitzung konnte nicht beendet werden',
                     error
-                ));
-        } catch (error) {
-            console.warn(
-                '[Minitiger Trailer] Transcoding-Cleanup konnte nicht gestartet werden',
-                error
-            );
-        }
+                );
+            });
     }, [apiClient]);
 
     const [
