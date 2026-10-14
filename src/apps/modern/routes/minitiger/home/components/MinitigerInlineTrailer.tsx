@@ -1960,6 +1960,7 @@ const MinitigerInlineTrailer = ({
                 muted={muted}
                 loop={loop}
                 onReady={() => setReady(true)}
+                onEnded={() => onEndedRef.current?.()}
                 onError={advance}
             />
         );
