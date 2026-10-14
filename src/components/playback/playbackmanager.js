@@ -4033,8 +4033,11 @@ export class PlaybackManager {
                         next = playable.find(item => !item.UserData?.Played) || playable[0];
                     }
                     if (!next?.Id || self.getCurrentPlayer()) return;
-                    await self.play({ items: [next], startPositionTicks: 0 });
+                    // Consume before awaiting play(): native playback promises may
+                    // remain pending for the entire playback lifetime, which
+                    // previously caused the same queued film to launch twice.
                     removeSoloQueueItem(queueApi, queueProfile, queuedPlayable.id);
+                    await self.play({ items: [next], startPositionTicks: 0 });
                 }).catch(error => {
                     console.warn('[Minitiger Queue] Automatischer Start fehlgeschlagen', error);
                 });
