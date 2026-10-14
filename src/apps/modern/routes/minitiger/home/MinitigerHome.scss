@@ -94,6 +94,21 @@
     animation: minitigerHeroFadeIn 450ms ease both;
 }
 
+/* Retain the last successful artwork while the next backdrop is loading. */
+.minitigerHeroBackdrop > .minitigerHeroBackdropPrevious,
+.minitigerHeroBackdrop > .minitigerHeroBackdropCurrent {
+    position: absolute;
+    inset: 0;
+}
+
+.minitigerHeroBackdrop > .minitigerHeroBackdropPrevious {
+    z-index: 0;
+}
+
+.minitigerHeroBackdrop > .minitigerHeroBackdropCurrent {
+    z-index: 1;
+}
+
 @keyframes minitigerHeroFadeIn {
     from {
         opacity: 0;
