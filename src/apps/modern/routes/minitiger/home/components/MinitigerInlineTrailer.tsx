@@ -1036,7 +1036,7 @@ const resolveSources = async (
             // An original trailer costs the server no video transcoding.
             // Only offer this path if the *banner* decoder supports the
             // actual video+audio+container combination, independent of MPV.
-            if (directPlayable) {
+            if (directPlayable || isJellyfinDesktopShell()) {
                 if (direct) {
                     sources.push({
                         kind: 'video',
