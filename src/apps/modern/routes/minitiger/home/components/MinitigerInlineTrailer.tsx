@@ -1352,7 +1352,7 @@ export const runMinitigerTrailerDiagnostic = async (
         lines.push('Hinweis: MPV-Verfügbarkeit beweist noch nicht die erfolgreiche Dekodierung jedes Codecs.');
         lines.push('');
         lines.push('=== Ende Diagnose ===');
-        return lines.join('\\n');
+        return lines.join('\n');
     }
 
     lines.push('HTML5-Fallback: Wiedergabeproben mit Browser-Videoelement');
