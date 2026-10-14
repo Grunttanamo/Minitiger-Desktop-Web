@@ -61,6 +61,7 @@ import {
     useMinitigerLanguageFlagRevision
 } from '../home/minitigerLanguageFlags';
 import { getItemRoute } from '../home/routingUtils';
+import { activeSoloQueueProfileId, addSoloQueueItem } from 'apps/modern/features/minitiger/watchparty/soloQueue';
 
 import './MinitigerVideoDetails.scss';
 
@@ -933,6 +934,22 @@ const MinitigerVideoDetails = () => {
                                 onClick={playItem}
                             >
                                 ▶ Abspielen
+                            </button>
+
+                            <button
+                                type='button'
+                                aria-label='Zur persönlichen Warteschlange hinzufügen'
+                                title='Zur persönlichen Warteschlange hinzufügen'
+                                onClick={() => {
+                                    if (!apiClient || !item) return;
+                                    try {
+                                        addSoloQueueItem(apiClient, activeSoloQueueProfileId(apiClient), item);
+                                    } catch (error) {
+                                        console.warn('[Minitiger Queue] Einreihen fehlgeschlagen', error);
+                                    }
+                                }}
+                            >
+                                + Einreihen
                             </button>
 
                             {detailSettings.trailerButtonEnabled
