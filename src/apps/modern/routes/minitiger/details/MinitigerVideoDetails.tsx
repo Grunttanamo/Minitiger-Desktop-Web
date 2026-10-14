@@ -62,7 +62,6 @@ import {
 } from '../home/minitigerLanguageFlags';
 import { getItemRoute } from '../home/routingUtils';
 import { activeSoloQueueProfileId, addSoloQueueItem } from 'apps/modern/features/minitiger/watchparty/soloQueue';
-import SoloQueuePanel from 'apps/modern/features/minitiger/watchparty/SoloQueuePanel';
 
 import './MinitigerVideoDetails.scss';
 
@@ -928,7 +927,6 @@ const MinitigerVideoDetails = () => {
                                 </div>
                             )}
 
-                        {apiClient && <SoloQueuePanel apiClient={apiClient} />}
                         <div className='minitigerDetailsActions'>
                             <button
                                 type='button'
