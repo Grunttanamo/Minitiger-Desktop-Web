@@ -56,7 +56,7 @@ const MinitigerFloatingQueue = () => {
                     Limit: 1000,
                     EnableTotalRecordCount: false
                 });
-                const episodes = (result.Items || []).filter(x => x.Id && !x.IsVirtualItem && x.LocationType !== 'Virtual')
+                const episodes = (result.Items || []).filter(x => x.Id && x.LocationType !== 'Virtual' && x.LocationType !== 'Offline')
                     .sort((a, b) => (a.ParentIndexNumber ?? 9999) - (b.ParentIndexNumber ?? 9999)
                         || (a.IndexNumber ?? 9999) - (b.IndexNumber ?? 9999));
                 item = episodes.find(x => !x.UserData?.Played) || episodes[0];
