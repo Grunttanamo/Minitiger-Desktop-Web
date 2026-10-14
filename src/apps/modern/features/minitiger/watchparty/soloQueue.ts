@@ -16,6 +16,14 @@ const PREFIX = 'minitiger.soloQueue.v1:';
 export const SOLO_QUEUE_CHANGED = 'minitiger:solo-queue-changed';
 const LIMIT = 150;
 
+export const activeSoloQueueProfileId = (apiClient: ApiClient): string => {
+    try {
+        const value = sessionStorage.getItem('minitiger.profile-runtime.v1:' + apiClient.serverId());
+        const parsed = value ? JSON.parse(value) as { activeProfileId?: string } : null;
+        return parsed?.activeProfileId || 'owner';
+    } catch { return 'owner'; }
+};
+
 const queueKey = (apiClient: ApiClient, profileId: string) => [
     PREFIX,
     apiClient.serverId() || 'server',
