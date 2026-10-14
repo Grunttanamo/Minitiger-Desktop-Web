@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 
 import type { ItemDto } from 'types/base/models/item-dto';
+import MinitigerNativeTrailerSurface from './MinitigerNativeTrailerSurface';
 
 import {
     getMinitigerAccessToken
@@ -1947,6 +1948,21 @@ const MinitigerInlineTrailer = ({
         || !source
     ) {
         return null;
+    }
+
+    if (source.kind === 'video' && isJellyfinDesktopShell()
+        && (source.mode === 'direct' || source.mode === 'download')) {
+        return (
+            <MinitigerNativeTrailerSurface
+                key={source.url}
+                url={source.url}
+                className={hostClass}
+                muted={muted}
+                loop={loop}
+                onReady={() => setReady(true)}
+                onError={advance}
+            />
+        );
     }
 
     if (source.kind === 'video') {
