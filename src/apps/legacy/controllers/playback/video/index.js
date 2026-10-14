@@ -1918,7 +1918,6 @@ export default function (view) {
             if (popoutIcon) {
                 popoutIcon.classList.toggle('open_in_new', !lastPopoutState);
                 popoutIcon.classList.toggle('close_fullscreen', lastPopoutState);
-                popoutIcon.textContent = lastPopoutState ? 'close_fullscreen' : 'open_in_new';
             }
         };
         const refreshPopoutState = async () => {
