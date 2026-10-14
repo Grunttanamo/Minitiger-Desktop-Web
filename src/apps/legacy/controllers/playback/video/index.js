@@ -1805,6 +1805,9 @@ export default function (view) {
         setBackdropTransparency(TRANSPARENCY_LEVEL.Full);
     });
     view.addEventListener('viewshow', function () {
+        // The native cursor bridge must never treat a library page as an
+        // active video OSD just because Jellyfin's mouseIdle class remained.
+        window.__minitigerVideoOsdActive = true;
         try {
             Events.on(playbackManager, 'playerchange', onPlayerChange);
             bindToPlayer(playbackManager.getCurrentPlayer());
@@ -1853,6 +1856,9 @@ export default function (view) {
         }
     });
     view.addEventListener('viewbeforehide', function () {
+        window.__minitigerVideoOsdActive = false;
+        document.body.classList.remove('mouseIdle');
+        window.api?.window?.setCursorVisibility?.(true);
         if (statsOverlay) {
             statsOverlay.enabled(false);
         }
