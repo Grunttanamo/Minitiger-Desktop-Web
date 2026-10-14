@@ -1,0 +1,17 @@
+.minitigerFloatingQueue{position:fixed;right:24px;bottom:24px;z-index:1800;display:flex;flex-direction:column;align-items:flex-end;gap:12px;color:#fff}
+.minitigerFloatingQueueToggle{width:58px;height:58px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:#191c25;color:#fff;box-shadow:0 7px 28px #0009;cursor:pointer;position:relative;font-size:28px}
+.minitigerFloatingQueueCount{position:absolute;top:-6px;right:-6px;border-radius:20px;background:#ffcc00;color:#151515;font-size:12px;padding:3px 7px;font-weight:bold}
+.minitigerFloatingQueuePanel{width:min(420px,calc(100vw - 30px));max-height:min(66vh,680px);background:rgba(15,17,23,.97);backdrop-filter:blur(20px);border:1px solid #ffffff30;border-radius:14px;box-shadow:0 14px 45px #000b;padding:14px;display:flex;flex-direction:column;gap:12px}
+.minitigerFloatingQueuePanel header,.minitigerFloatingQueuePanel footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.minitigerFloatingQueuePanel button{border:0;border-radius:7px;background:#343743;color:#fff;padding:7px 10px;cursor:pointer}
+.minitigerFloatingQueuePanel button:disabled{opacity:.35;cursor:default}
+.minitigerFloatingQueuePanel footer button:first-child{background:#ffcc00;color:#111;font-weight:700}
+.minitigerFloatingQueueItems{overflow-y:auto;display:flex;flex-direction:column;gap:9px;overscroll-behavior:contain}
+.minitigerFloatingQueueItems article{display:flex;align-items:center;gap:9px;min-width:0}
+.minitigerFloatingQueueItems img{width:46px;height:68px;object-fit:cover;border-radius:5px;background:#242630;flex-shrink:0}
+.minitigerFloatingQueueItems article>div:nth-child(2){min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.minitigerFloatingQueueItems article strong{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.minitigerFloatingQueueItems small{font-size:11px;color:#b7bac7}
+.minitigerFloatingQueueActions{display:flex;gap:3px}
+.minitigerFloatingQueueActions button{padding:4px 6px}
+@media(max-width:600px){.minitigerFloatingQueue{right:12px;bottom:12px}}
