@@ -26,7 +26,6 @@ type TrailerSource =
             | 'direct'
             | 'download'
             | 'transcode-h264'
-            | 'transcode-vp8'
             | 'transcode-vp9';
     }
     | {
@@ -106,6 +105,24 @@ const trailerCache =
     new Map<string, TrailerCacheEntry>();
 
 const CACHE_MS = 60_000;
+const MAX_TRAILER_CACHE_ENTRIES = 96;
+
+// Expired trailers should not retain old URLs and session metadata.
+const pruneTrailerCache = () => {
+    const now = Date.now();
+    for (const [ key, entry ] of trailerCache) {
+        if (now - entry.timestamp >= CACHE_MS) {
+            trailerCache.delete(key);
+        }
+    }
+    while (trailerCache.size >= MAX_TRAILER_CACHE_ENTRIES) {
+        const oldest = trailerCache.keys().next().value;
+        if (!oldest) {
+            break;
+        }
+        trailerCache.delete(oldest);
+    }
+};
 
 export const notifyMinitigerLocalTrailerChanged = (
     apiClient: ApiClient,
@@ -310,6 +327,25 @@ const createPlaySessionId = () => {
     }
 };
 
+// Cached transcoding URLs must not reuse a previous PlaySessionId.
+const refreshTranscodeSessionIds = (entries: TrailerSource[]): TrailerSource[] =>
+    entries.map(source => {
+        if (source.kind !== 'video' || !source.mode.startsWith('transcode-')) {
+            return source;
+        }
+        const sessionId = createPlaySessionId();
+        if (!sessionId) {
+            return source;
+        }
+        try {
+            const url = new URL(source.url, window.location.href);
+            url.searchParams.set('PlaySessionId', sessionId);
+            return { ...source, url: url.toString() };
+        } catch {
+            return source;
+        }
+    });
+
 const browserCanPlay = (
     mime: string
 ) => {
@@ -503,7 +539,7 @@ const buildDownloadVideoUrl = (
 const buildForcedTranscodeUrl = (
     apiClient: ApiClient,
     trailer: TrailerItem,
-    target: 'h264' | 'vp8' | 'vp9'
+    target: 'h264' | 'vp9'
 ) => {
     if (!trailer.Id) {
         return undefined;
@@ -517,13 +553,9 @@ const buildForcedTranscodeUrl = (
             apiClient
         );
 
-    const isWebm = target === 'vp8' || target === 'vp9';
+    const isWebm = target === 'vp9';
     const container = isWebm ? 'webm' : 'mp4';
-    const videoBitRate = target === 'vp8'
-        ? 1_100_000
-        : target === 'vp9'
-            ? 2_000_000
-            : 5_000_000;
+    const videoBitRate = isWebm ? 2_000_000 : 5_000_000;
     const maxWidth = isWebm ? 640 : 1280;
     const maxHeight = isWebm ? 360 : 720;
 
@@ -843,7 +875,9 @@ const resolveSources = async (
     }
 
     const cacheKey =
-        `${apiClient.serverId?.() ?? 'server'}:${item.Id}:local-${allowLocal ? '1' : '0'}:youtube-${allowYouTube ? '1' : '0'}`;
+        `${apiClient.serverId?.() ?? 'server'}:${item.Id}:user-${apiClient.getCurrentUserId?.() ?? 'user'}:local-${allowLocal ? '1' : '0'}:youtube-${allowYouTube ? '1' : '0'}`;
+
+    pruneTrailerCache();
 
     const cached =
         trailerCache.get(cacheKey);
@@ -854,7 +888,7 @@ const resolveSources = async (
             - cached.timestamp
             < CACHE_MS
     ) {
-        return cached.sources;
+        return refreshTranscodeSessionIds(cached.sources);
     }
 
     const sources:
@@ -908,13 +942,6 @@ const resolveSources = async (
                     'h264'
                 );
 
-            const vp8 =
-                buildForcedTranscodeUrl(
-                    apiClient,
-                    local,
-                    'vp8'
-                );
-
             const vp9 =
                 buildForcedTranscodeUrl(
                     apiClient,
@@ -924,9 +951,6 @@ const resolveSources = async (
 
             const canH264 = browserCanPlay(
                 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
-            );
-            const canVp8 = browserCanPlay(
-                'video/webm; codecs="vp8, opus"'
             );
             const canVp9 = browserCanPlay(
                 'video/webm; codecs="vp9, opus"'
@@ -939,17 +963,6 @@ const resolveSources = async (
                         url: h264,
                         key: `${local.Id}-forced-h264`,
                         mode: 'transcode-h264'
-                    });
-                }
-            };
-
-            const pushVp8 = () => {
-                if (vp8 && canVp8) {
-                    sources.push({
-                        kind: 'video',
-                        url: vp8,
-                        key: `${local.Id}-forced-vp8`,
-                        mode: 'transcode-vp8'
                     });
                 }
             };
@@ -968,34 +981,19 @@ const resolveSources = async (
             const desktopShell =
                 isJellyfinDesktopShell();
 
-            const directCodecPlayable = (
-                [ 'mp4', 'm4v', 'mov' ].includes(container)
-                    ? canH264
-                    : container === 'webm'
-                        ? (
-                            videoCodec === 'vp8'
-                                ? canVp8
-                                : canVp9
-                        )
-                        : isLikelyBrowserSafe(local)
-            );
+            let directCodecPlayable = isLikelyBrowserSafe(local);
+
+            if ([ 'mp4', 'm4v', 'mov' ].includes(container)) {
+                directCodecPlayable = canH264;
+            } else if (container === 'webm') {
+                directCodecPlayable = videoCodec === 'vp9' && canVp9;
+            }
 
             if (desktopShell) {
-                /*
-                 * Local trailers are intentionally enabled again for the
-                 * native Minitiger Desktop test. Qt WebEngine often reports
-                 * no H264/AAC support, so prefer a royalty-free WebM
-                 * transcode (VP8, then VP9) before direct local playback.
-                 *
-                 * This restores the original local-trailer behavior so the
-                 * interaction with Intro Skipper / library analysis can be
-                 * tested under otherwise optimized frontend conditions.
-                 */
-                if (canVp8) {
-                    pushVp8();
-                } else {
-                    pushVp9();
-                }
+                // H.264 where Qt supports it; VP9/Opus otherwise.
+                // VP8 transcoding is intentionally removed.
+                pushH264();
+                pushVp9();
 
                 if (directCodecPlayable && direct) {
                     sources.push({
@@ -1014,8 +1012,6 @@ const resolveSources = async (
                         mode: 'download'
                     });
                 }
-
-                pushH264();
             } else if (isLikelyBrowserSafe(local)) {
                 if (direct) {
                     sources.push({
@@ -1036,11 +1032,9 @@ const resolveSources = async (
                 }
 
                 pushH264();
-                pushVp8();
                 pushVp9();
             } else {
                 pushH264();
-                pushVp8();
                 pushVp9();
 
                 if (direct) {
@@ -1094,7 +1088,7 @@ const resolveSources = async (
         }
     );
 
-    return sources;
+    return refreshTranscodeSessionIds(sources);
 };
 
 
@@ -1198,8 +1192,7 @@ const probeVideoSource = async (
         });
 
         const timeoutMs = (
-            source.mode === 'transcode-vp8'
-            || source.mode === 'transcode-vp9'
+            source.mode === 'transcode-vp9'
         ) ? 20_000 : 8_000;
 
         const timer = window.setTimeout(() => {
@@ -1242,7 +1235,6 @@ export const runMinitigerTrailerDiagnostic = async (
     lines.push(`ClientShell: ${isJellyfinDesktopShell() ? 'Jellyfin Desktop erkannt' : 'Browser/Web'}`);
     lines.push(`UserAgent: ${typeof navigator !== 'undefined' ? navigator.userAgent : '-'}`);
     lines.push(`canPlay H264/AAC MP4: ${browserCanPlay('video/mp4; codecs="avc1.42E01E, mp4a.40.2"')}`);
-    lines.push(`canPlay VP8/Opus WebM: ${browserCanPlay('video/webm; codecs="vp8, opus"')}`);
     lines.push(`canPlay VP9/Opus WebM: ${browserCanPlay('video/webm; codecs="vp9, opus"')}`);
     lines.push('');
 
@@ -1292,13 +1284,11 @@ export const runMinitigerTrailerDiagnostic = async (
         const direct = buildDirectVideoUrl(apiClient, trailer);
         const download = buildDownloadVideoUrl(apiClient, trailer);
         const h264 = buildForcedTranscodeUrl(apiClient, trailer, 'h264');
-        const vp8 = buildForcedTranscodeUrl(apiClient, trailer, 'vp8');
         const vp9 = buildForcedTranscodeUrl(apiClient, trailer, 'vp9');
 
         lines.push(`Generated Direct: ${sanitizeDiagnosticUrl(direct)}`);
         lines.push(`Generated Download: ${sanitizeDiagnosticUrl(download)}`);
         lines.push(`Generated H264 Transcode: ${sanitizeDiagnosticUrl(h264)}`);
-        lines.push(`Generated VP8 Transcode: ${sanitizeDiagnosticUrl(vp8)}`);
         lines.push(`Generated VP9 Transcode: ${sanitizeDiagnosticUrl(vp9)}`);
     });
 
@@ -1375,6 +1365,68 @@ const MinitigerInlineTrailer = ({
 
     const readyStateRef =
         useRef(false);
+
+    const stoppedEncodingSessionsRef = useRef<Set<string>>(new Set());
+
+    const releaseLocalVideo = React.useCallback((
+        video: HTMLVideoElement | null,
+        trailerSource: TrailerSource | undefined
+    ) => {
+        if (trailerSource?.kind !== 'video') {
+            return;
+        }
+
+        // First detach the media request, then terminate its own transcoder.
+        if (video) {
+            try {
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+            } catch {
+                // Never break navigation during media cleanup.
+            }
+        }
+
+        if (!apiClient || !trailerSource.mode.startsWith('transcode-')) {
+            return;
+        }
+
+        let sessionId: string | null = null;
+        try {
+            sessionId = new URL(
+                trailerSource.url,
+                window.location.href
+            ).searchParams.get('PlaySessionId');
+        } catch {
+            return;
+        }
+
+        if (!sessionId || stoppedEncodingSessionsRef.current.has(sessionId)) {
+            return;
+        }
+        const stoppedSessions = stoppedEncodingSessionsRef.current;
+        stoppedSessions.add(sessionId);
+
+        // Bound the bookkeeping set in long-running clients.
+        if (stoppedSessions.size > 128) {
+            const oldest = stoppedSessions.values().next().value;
+
+            if (oldest) {
+                stoppedSessions.delete(oldest);
+            }
+        }
+
+        // The promise chain also captures synchronous failures without
+        // throwing during React cleanup or trailer navigation.
+        void Promise.resolve()
+            .then(() => apiClient.stopActiveEncodings(sessionId))
+            .catch(error => {
+                console.warn(
+                    '[Minitiger Trailer] Transcoding-Sitzung konnte nicht beendet werden',
+                    error
+                );
+            });
+    }, [apiClient]);
 
     const [
         sources,
@@ -1556,6 +1608,7 @@ const MinitigerInlineTrailer = ({
         );
 
     const advance = () => {
+        releaseLocalVideo(videoRef.current, source);
         setReady(false);
 
         setSourceIndex(index => {
@@ -1611,6 +1664,19 @@ const MinitigerInlineTrailer = ({
         return () =>
             observer.disconnect();
     }, [source?.key]);
+
+    useEffect(() => {
+        if (!enabled || source?.kind !== 'video') return;
+
+        const video = videoRef.current;
+        return () => {
+            // React may replay effects while the same element is still mounted
+            // (StrictMode). Only detach an element being replaced or removed.
+            if (video && !video.isConnected) {
+                releaseLocalVideo(video, source);
+            }
+        };
+    }, [ enabled, source, releaseLocalVideo ]);
 
     useEffect(() => {
         if (
@@ -1775,8 +1841,7 @@ const MinitigerInlineTrailer = ({
 
         const key = source.key;
         const watchdogMs = (
-            source.mode === 'transcode-vp8'
-            || source.mode === 'transcode-vp9'
+            source.mode === 'transcode-vp9'
         ) ? 20_000 : 7_500;
 
         const watchdog = window.setTimeout(() => {
@@ -1876,7 +1941,7 @@ const MinitigerInlineTrailer = ({
                     videoRef.current = element;
                     visibilityRef.current = element;
                 }}
-                key={source.key}
+                key={`${source.key}:${source.url}`}
                 className={hostClass}
                 src={source.url}
                 autoPlay

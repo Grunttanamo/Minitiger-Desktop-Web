@@ -7,6 +7,8 @@ const CACHE_TTL_MS =
     24 * 60 * 60 * 1000;
 const CACHE_PREFIX =
     'Minitiger.HomeItems.v1';
+const CACHE_CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
+let lastCacheCleanupAt = 0;
 
 interface PersistedItemCache {
     version: 1;
@@ -59,6 +61,47 @@ const getCacheKey = (
     ),
     fingerprint || 'default'
 ].join(':');
+
+// Remove stale HomeItems snapshots without touching user settings or custom rows.
+const pruneExpiredHomeItemCaches = () => {
+    const now = Date.now();
+
+    if (now - lastCacheCleanupAt < CACHE_CLEANUP_INTERVAL_MS) {
+        return;
+    }
+
+    lastCacheCleanupAt = now;
+
+    for (let index = window.localStorage.length - 1; index >= 0; index--) {
+        const key = window.localStorage.key(index);
+
+        if (!key?.startsWith(`${CACHE_PREFIX}:`)) {
+            continue;
+        }
+
+        try {
+            const raw = window.localStorage.getItem(key);
+
+            if (!raw) {
+                continue;
+            }
+
+            const cached = JSON.parse(raw) as Partial<PersistedItemCache>;
+
+            if (
+                cached.version !== CACHE_VERSION
+                || !Array.isArray(cached.items)
+                || typeof cached.savedAt !== 'number'
+                || cached.savedAt > now
+                || now - cached.savedAt > CACHE_TTL_MS
+            ) {
+                window.localStorage.removeItem(key);
+            }
+        } catch {
+            window.localStorage.removeItem(key);
+        }
+    }
+};
 
 export const readMinitigerItemCache = (
     apiClient: ApiClient | undefined,
@@ -147,6 +190,8 @@ export const writeMinitigerItemCache = (
         );
 
     try {
+        pruneExpiredHomeItemCaches();
+
         // A fingerprint change means the configured contents changed. Keep
         // one current snapshot per scope instead of accumulating old virtual
         // library membership snapshots forever.
