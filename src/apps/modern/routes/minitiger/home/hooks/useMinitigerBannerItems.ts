@@ -275,7 +275,9 @@ export const useMinitigerBannerItems = (
          * The persistent cache above gives it an immediate hero while this
          * lightweight, item-limited query refreshes in the background.
          */
-        refetchOnMount: true,
+        // Re-sample the curated/random candidate pool on every Home visit.
+        // Keep cached artwork visible during the background refresh.
+        refetchOnMount: 'always',
         retry: 1,
         retryDelay: 900,
         refetchOnWindowFocus: false,
