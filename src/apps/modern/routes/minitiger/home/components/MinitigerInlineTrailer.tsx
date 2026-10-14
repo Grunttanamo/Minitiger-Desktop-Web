@@ -419,62 +419,115 @@ const getMediaCodecs = (
     };
 };
 
-const isLikelyBrowserSafe = (
-    trailer: TrailerItem
-) => {
+// This checks the HTML5 banner player, not the native MPV/libVLC player.
+// Direct Play requires a supported container, video codec AND audio codec.
+// VP8 may exist in source files, but is deliberately not offered here.
+const getDirectPlayMime = (trailer: TrailerItem) => {
     const {
         videoCodec,
         audioCodec,
         container
     } = getMediaCodecs(trailer);
+    const format = container.split(',')[0]?.trim();
 
-    const mp4Like =
-        [
-            'mp4',
-            'm4v',
-            'mov'
-        ].includes(container);
+    let mimeType = '';
+    let videoMimeCodec = '';
+    let audioMimeCodec = '';
 
-    const webmLike =
-        container === 'webm';
+    if ([ 'mp4', 'm4v', 'mov' ].includes(format)) {
+        mimeType = 'video/mp4';
 
-    const mp4Video =
-        [
-            'h264',
-            'avc',
-            'avc1'
-        ].includes(videoCodec);
+        if ([ 'h264', 'avc', 'avc1' ].includes(videoCodec)) {
+            videoMimeCodec = 'avc1.42E01E';
+        } else if ([ 'h265', 'hevc', 'hvc1', 'hev1' ].includes(videoCodec)) {
+            videoMimeCodec = 'hvc1.1.6.L93.B0';
+        } else if ([ 'av1', 'av01' ].includes(videoCodec)) {
+            videoMimeCodec = 'av01.0.05M.08';
+        }
 
-    const mp4Audio =
-        !audioCodec
-        || [
-            'aac',
-            'mp3'
-        ].includes(audioCodec);
+        if (audioCodec === 'aac') {
+            audioMimeCodec = 'mp4a.40.2';
+        } else if (audioCodec === 'mp3') {
+            audioMimeCodec = 'mp4a.6B';
+        } else if (audioCodec) {
+            return undefined;
+        }
+    } else if (format === 'webm') {
+        mimeType = 'video/webm';
 
-    const webmVideo =
-        [
-            'vp8',
-            'vp9',
-            'av1'
-        ].includes(videoCodec);
+        if ([ 'vp9', 'vp09' ].includes(videoCodec)) {
+            videoMimeCodec = 'vp9';
+        } else if ([ 'av1', 'av01' ].includes(videoCodec)) {
+            videoMimeCodec = 'av01.0.05M.08';
+        }
 
-    const webmAudio =
-        !audioCodec
-        || [
-            'opus',
-            'vorbis'
-        ].includes(audioCodec);
+        if ([ 'opus', 'vorbis' ].includes(audioCodec)) {
+            audioMimeCodec = audioCodec;
+        } else if (audioCodec) {
+            return undefined;
+        }
+    }
 
-    return (
-        mp4Like
-        && mp4Video
-        && mp4Audio
-    ) || (
-        webmLike
-        && webmVideo
-        && webmAudio
+    if (!mimeType || !videoMimeCodec) {
+        return undefined;
+    }
+
+    const combinedCodecs = [
+        videoMimeCodec,
+        audioMimeCodec
+    ].filter(Boolean).join(', ');
+
+    return {
+        combinedMime: `${mimeType}; codecs="${combinedCodecs}"`,
+        videoMime: `${mimeType}; codecs="${videoMimeCodec}"`
+    };
+};
+
+const canDirectPlayTrailer = async (
+    trailer: TrailerItem
+) => {
+    const mime = getDirectPlayMime(trailer);
+
+    if (!mime || !browserCanPlay(mime.combinedMime)) {
+        return false;
+    }
+
+    // MediaCapabilities reports estimated smoothness based on the actual
+    // rendering environment. It is optional: canPlayType remains the fallback
+    // for older Qt WebEngine implementations.
+    if (
+        typeof navigator === 'undefined'
+        || !navigator.mediaCapabilities?.decodingInfo
+    ) {
+        return true;
+    }
+
+    const source = trailer.MediaSources?.[0];
+    const videoStream = source?.MediaStreams?.find(stream =>
+        String(stream.Type ?? '').toLowerCase() === 'video'
     );
+
+    try {
+        const result = await navigator.mediaCapabilities.decodingInfo({
+            type: 'file',
+            video: {
+                contentType: mime.videoMime,
+                width: Number(videoStream?.Width) || 1280,
+                height: Number(videoStream?.Height) || 720,
+                bitrate: Number(source?.Bitrate) || 5_000_000,
+                framerate: Number(videoStream?.RealFrameRate)
+                    || Number(videoStream?.AverageFrameRate)
+                    || 30
+            }
+        });
+
+        return result.supported && result.smooth;
+    } catch {
+        // Some Qt builds do not implement decodingInfo for every codec.
+        // The earlier MIME capability check still provides a safe baseline,
+        // and HTML5 playback errors will fall back to another source.
+        return true;
+    }
 };
 
 const buildDirectVideoUrl = (
@@ -978,41 +1031,12 @@ const resolveSources = async (
                 }
             };
 
-            const desktopShell =
-                isJellyfinDesktopShell();
+            const directPlayable = await canDirectPlayTrailer(local);
 
-            let directCodecPlayable = isLikelyBrowserSafe(local);
-
-            if ([ 'mp4', 'm4v', 'mov' ].includes(container)) {
-                directCodecPlayable = canH264;
-            } else if (container === 'webm') {
-                directCodecPlayable = videoCodec === 'vp9' && canVp9;
-            }
-
-            if (desktopShell) {
-                // H.264 where Qt supports it; VP9/Opus otherwise.
-                // VP8 transcoding is intentionally removed.
-                pushH264();
-                pushVp9();
-
-                if (directCodecPlayable && direct) {
-                    sources.push({
-                        kind: 'video',
-                        url: direct,
-                        key: `${local.Id}-desktop-direct`,
-                        mode: 'direct'
-                    });
-                }
-
-                if (directCodecPlayable && download) {
-                    sources.push({
-                        kind: 'video',
-                        url: download,
-                        key: `${local.Id}-desktop-download`,
-                        mode: 'download'
-                    });
-                }
-            } else if (isLikelyBrowserSafe(local)) {
+            // An original trailer costs the server no video transcoding.
+            // Only offer this path if the *banner* decoder supports the
+            // actual video+audio+container combination, independent of MPV.
+            if (directPlayable) {
                 if (direct) {
                     sources.push({
                         kind: 'video',
@@ -1030,22 +1054,13 @@ const resolveSources = async (
                         mode: 'download'
                     });
                 }
-
-                pushH264();
-                pushVp9();
-            } else {
-                pushH264();
-                pushVp9();
-
-                if (direct) {
-                    sources.push({
-                        kind: 'video',
-                        url: direct,
-                        key: `${local.Id}-direct-last`,
-                        mode: 'direct'
-                    });
-                }
             }
+
+            // Fall back only to formats that this player can decode.
+            // On the current i5-13500 Jellyfin server, prefer H.264 over
+            // expensive software VP9/AV1 encoding. No VP8 transcode.
+            pushH264();
+            pushVp9();
         }
     } catch (error) {
         console.warn(
