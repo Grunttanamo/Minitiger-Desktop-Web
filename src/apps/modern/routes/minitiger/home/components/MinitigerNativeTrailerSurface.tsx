@@ -3,12 +3,13 @@ import React, { useEffect, useRef, useState } from 'react';
 type NativePreviewApi = {
     nativeTrailerPreviewAvailable: (callback: (available: boolean) => void) => void;
     nativeTrailerPreviewPlay: (
-        url: string, x: number, y: number, width: number, height: number,
+        url: string, loop: boolean, x: number, y: number, width: number, height: number,
         muted: boolean, callback: (started: boolean) => void
     ) => void;
     nativeTrailerPreviewGeometry: (x: number, y: number, width: number, height: number) => void;
     nativeTrailerPreviewMute: (muted: boolean) => void;
     nativeTrailerPreviewStop: () => void;
+    nativeTrailerPreviewEnded: (callback: (ended: boolean) => void) => void;
 };
 
 declare global {
@@ -23,6 +24,7 @@ interface Props {
     muted: boolean;
     loop: boolean;
     onReady: () => void;
+    onEnded: () => void;
     onError: () => void;
 }
 
@@ -31,7 +33,7 @@ const getNative = (): Partial<NativePreviewApi> | undefined =>
     (window as unknown as { api?: { system?: Partial<NativePreviewApi> } }).api?.system;
 
 const MinitigerNativeTrailerSurface = ({
-    url, className, muted, loop, onReady, onError
+    url, className, muted, loop, onReady, onEnded, onError
 }: Props) => {
     const elementRef = useRef<HTMLDivElement>(null);
     const ownerRef = useRef(`minitiger-trailer-${++nextOwnerId}`);
@@ -42,6 +44,8 @@ const MinitigerNativeTrailerSurface = ({
         let closed = false;
         let frame = 0;
         let started = false;
+        let endPoll = 0;
+        let sawPlayback = false;
         const owner = ownerRef.current;
         const system = getNative();
 
@@ -83,13 +87,28 @@ const MinitigerNativeTrailerSurface = ({
             system.nativeTrailerPreviewStop?.();
             window.__minitigerNativePreviewOwner = owner;
             system.nativeTrailerPreviewPlay!(
-                url, p.x, p.y, p.width, p.height, muted, success => {
+                url, loop, p.x, p.y, p.width, p.height, muted, success => {
                     if (closed || window.__minitigerNativePreviewOwner !== owner) return;
                     if (!success) { failed(); return; }
                     started = true;
                     setActive(true);
                     onReady();
                     frame = requestAnimationFrame(move);
+                    if (!loop && system.nativeTrailerPreviewEnded) {
+                        // EOF is exposed by the native MPV instance, not HTML5.
+                        endPoll = window.setInterval(() => {
+                            if (closed || window.__minitigerNativePreviewOwner !== owner) return;
+                            system.nativeTrailerPreviewEnded?.(ended => {
+                                if (closed || window.__minitigerNativePreviewOwner !== owner) return;
+                                if (ended && sawPlayback) {
+                                    window.clearInterval(endPoll);
+                                    onEnded();
+                                } else if (!ended) {
+                                    sawPlayback = true;
+                                }
+                            });
+                        }, 350);
+                    }
                 }
             );
         };
@@ -104,6 +123,7 @@ const MinitigerNativeTrailerSurface = ({
             window.removeEventListener('minitiger:native-preview-released', onReleased);
             closed = true;
             cancelAnimationFrame(frame);
+            window.clearInterval(endPoll);
             if (started && window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
@@ -130,6 +150,7 @@ const MinitigerNativeTrailerSurface = ({
                 preload='metadata'
                 disablePictureInPicture
                 onPlaying={onReady}
+                onEnded={onEnded}
                 onError={onError}
             />
         );
