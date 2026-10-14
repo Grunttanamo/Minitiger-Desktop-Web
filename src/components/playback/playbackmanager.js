@@ -2464,6 +2464,37 @@ export class PlaybackManager {
         }
 
         self.play = async function (options) {
+            // The native Pop-out uses a second WebEngine strictly as a browser.
+            // All videos MUST start in the original WebEngine; otherwise both
+            // Jellyfin instances independently report NowPlaying/Progress and
+            // the original OSD retains the previous episode title.
+            if (window.__minitigerBrowseOnly && window.api?.window?.playInPrimaryWindow) {
+                const items = options?.items;
+                const isVideoRequest = Array.isArray(items) && items.length > 0
+                    ? items.some(item =>
+                        item?.MediaType === 'Video' ||
+                        ['Movie', 'Episode', 'Video', 'Trailer', 'MusicVideo'].includes(item?.Type)
+                    )
+                    : Boolean(options?.fullscreen && (options?.ids?.length || options?.itemId));
+
+                if (isVideoRequest) {
+                    let payload;
+                    try {
+                        payload = JSON.stringify(options);
+                    } catch (error) {
+                        console.error('[Minitiger Pop-out] Could not serialize playback request:', error);
+                        throw error;
+                    }
+                    if (!payload) throw new Error('Leere Pop-out-Wiedergabeanforderung');
+                    const accepted = await window.api.window.playInPrimaryWindow(payload);
+                    if (!accepted) {
+                        throw new Error('Die Wiedergabe konnte nicht zum Videofenster übertragen werden.');
+                    }
+                    // The original view owns player.play(), OSD, reports and
+                    // cleanup; the browse-only view stays on the current page.
+                    return;
+                }
+            }
             normalizePlayOptions(options);
 
             if (self._currentPlayer) {
@@ -4794,6 +4825,21 @@ export class PlaybackManager {
 }
 
 export const playbackManager = new PlaybackManager();
+
+// Native QML invokes this only on the original playing WebEngineView.
+// Parse data rather than evaluating executable JS from the other view.
+window.__minitigerPlayFromBrowse = (payload) => {
+    try {
+        const options = JSON.parse(payload);
+        if (!options || (!options.items && !options.ids)) return;
+        void playbackManager.play(options).catch(error => {
+            console.error('[Minitiger Pop-out] Forwarded playback failed:', error);
+        });
+    } catch (error) {
+        console.error('[Minitiger Pop-out] Invalid playback payload:', error);
+    }
+};
+
 bindMediaSegmentManager(playbackManager);
 bindMediaSessionSubscriber(playbackManager);
 
