@@ -14,9 +14,6 @@ type NativePreviewApi = {
 declare global {
     interface Window {
         __minitigerNativePreviewOwner?: string;
-        api?: {
-            system?: Partial<NativePreviewApi>;
-        };
     }
 }
 
@@ -30,7 +27,8 @@ interface Props {
 }
 
 let nextOwnerId = 0;
-const getNative = () => window.api?.system;
+const getNative = (): Partial<NativePreviewApi> | undefined =>
+    (window as unknown as { api?: { system?: Partial<NativePreviewApi> } }).api?.system;
 
 const MinitigerNativeTrailerSurface = ({
     url, className, muted, loop, onReady, onError
