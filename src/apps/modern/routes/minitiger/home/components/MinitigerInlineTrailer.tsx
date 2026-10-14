@@ -1047,7 +1047,11 @@ const resolveSources = async (
                     });
                 }
 
-                if (download) {
+                // Automatic desktop previews must never hit Items/.../Download:
+                // Jellyfin records those requests as UserDownloadingContent.
+                // Use the original static stream first and codec fallbacks
+                // afterwards; retain download fallback for the browser only.
+                if (download && !isJellyfinDesktopShell()) {
                     sources.push({
                         kind: 'video',
                         url: download,
