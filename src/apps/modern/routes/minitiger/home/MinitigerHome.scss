@@ -6130,3 +6130,31 @@ iframe.minitigerInlineTrailer {
     background: rgba(8, 10, 12, 0.92);
     outline: none;
 }
+
+
+/* Native libmpv compositor: Qt FBO is BELOW the WebEngine so ALL DOM
+   controls remain clickable. Open just the active banner background.
+   Keep the shaded foreground, title, navigation and library cards intact. */
+html.minitigerNativeVideoCompositing,
+html.minitigerNativeVideoCompositing body,
+html.minitigerNativeVideoCompositing #reactRoot,
+html.minitigerNativeVideoCompositing .skinBody,
+html.minitigerNativeVideoCompositing .mainAnimatedPages,
+html.minitigerNativeVideoCompositing .backgroundContainer {
+    background-color: transparent !important;
+    background-image: none !important;
+}
+.minitigerHero.minitigerNativeTrailerActive,
+.minitigerHero.minitigerNativeTrailerActive .minitigerHeroMediaLayer,
+.minitigerHero.minitigerNativeTrailerActive .minitigerHeroBackdrop {
+    background: transparent !important;
+}
+.minitigerHero.minitigerNativeTrailerActive .minitigerHeroBackdrop > img {
+    visibility: hidden !important;
+}
+/* Do not transform the HTML placeholder: Qt uses the UNTRANSFORMED hero
+   rectangle to preserve object-fit and correct scroll clipping. */
+.minitigerHero .minitigerNativeTrailerSurface,
+.minitigerLargePreviewHero .minitigerNativeTrailerSurface {
+    transform: none !important;
+}
