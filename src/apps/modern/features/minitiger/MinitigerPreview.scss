@@ -1231,3 +1231,9 @@
 .minitigerLargePreview:has(.minitigerNativeTrailerActive) > .minitigerLargePreviewContent {
     background: #181818;
 }
+.minitigerLargePreview:has(.minitigerNativeTrailerActive) {
+    /* Darken everything OUTSIDE the dialog, not the actual native video
+       hole inside it. */
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.74),
+        0 28px 90px rgba(0, 0, 0, 0.84);
+}
