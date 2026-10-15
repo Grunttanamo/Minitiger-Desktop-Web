@@ -420,7 +420,7 @@ const getMediaCodecs = (
     };
 };
 
-// This checks the HTML5 banner player, not the native MPV/libVLC player.
+// This checks the HTML5 banner player, not the native VLC preview player.
 // Direct Play requires a supported container, video codec AND audio codec.
 // VP8 may exist in source files, but is deliberately not offered here.
 const getDirectPlayMime = (trailer: TrailerItem) => {
@@ -1036,7 +1036,7 @@ const resolveSources = async (
 
             // An original trailer costs the server no video transcoding.
             // Only offer this path if the *banner* decoder supports the
-            // actual video+audio+container combination, independent of MPV.
+            // actual video+audio+container combination, independent of VLC.
             if (directPlayable || isJellyfinDesktopShell()) {
                 if (direct) {
                     sources.push({
@@ -1077,7 +1077,7 @@ const resolveSources = async (
     }
 
     // A local Desktop trailer must never jump to the YouTube iframe after an
-    // MPV startup failure; that would mask a broken native preview.
+    // VLC startup failure; that would mask a broken native preview.
     if (allowYouTube && !(isJellyfinDesktopShell() && sources.some(entry => entry.kind === 'video'))) {
         for (
             const trailer
@@ -1278,17 +1278,17 @@ export const runMinitigerTrailerDiagnostic = async (
             resolve(Boolean(available));
         });
     });
-    lines.push(`Native MPV Preview: ${nativeAvailable ? 'verfügbar' : 'nicht verfügbar'}`);
-    lines.push('H264/VP9 canPlayType: nur HTML5-Decoder, NICHT MPV');
+    lines.push(`Native VLC Preview: ${nativeAvailable ? 'verfügbar' : 'nicht verfügbar'}`);
+    lines.push('H264/VP9 canPlayType: nur HTML5-Decoder, NICHT VLC');
     if (nativeAvailable && nativeApi?.nativeTrailerPreviewStatus) {
         const status = await new Promise<string>(resolve => {
-            const timeout = window.setTimeout(() => resolve('MPV-Status: Zeitüberschreitung'), 1500);
+            const timeout = window.setTimeout(() => resolve('VLC-Status: Zeitüberschreitung'), 1500);
             nativeApi.nativeTrailerPreviewStatus?.(value => {
                 window.clearTimeout(timeout);
-                resolve(value || 'MPV-Status: keine Daten');
+                resolve(value || 'VLC-Status: keine Daten');
             });
         });
-        lines.push('--- Tatsächlicher nativer MPV-Status ---');
+        lines.push('--- Tatsächlicher nativer VLC-Status ---');
         lines.push(status.replace(/(ApiKey|api_key|apiKey|token|access_token)=[^&\\s]+/gi, '$1=<redacted>'));
     }
     lines.push('');
@@ -1364,12 +1364,12 @@ export const runMinitigerTrailerDiagnostic = async (
     }
 
     if (nativeAvailable) {
-        lines.push('Player: Nativer MPV-Vorschau-Decoder (Banner & große Vorschaukarte)');
-        lines.push('Modus: Originalquelle zuerst (Direct Play); HTML5 nur Fallback');
-        lines.push('Die Diagnose startet KEINE weiteren MPV/FFmpeg-Streams neben dem laufenden Banner.');
+        lines.push('Player: Separater nativer libVLC-Trailerplayer (Banner & große Vorschaukarte)');
+        lines.push('Modus: Jellyfin-Originalquelle (Direct Play); keine HTML5-/MPV-Wiedergabe für lokale Desktop-Trailer');
+        lines.push('Die Diagnose startet KEINE weiteren VLC-/FFmpeg-Streams neben dem laufenden Banner.');
         lines.push(`Bevorzugte Quelle: ${videoSources[0]?.mode ?? '-'}`);
         lines.push(`Bevorzugte URL: ${sanitizeDiagnosticUrl(videoSources[0]?.url)}`);
-        lines.push('Hinweis: MPV-Verfügbarkeit beweist noch nicht die erfolgreiche Dekodierung jedes Codecs.');
+        lines.push('Hinweis: VLC-Verfügbarkeit beweist noch nicht die erfolgreiche Wiedergabe; Video-Frame-Status siehe oben.');
         lines.push('');
         lines.push('=== Ende Diagnose ===');
         return lines.join('\n');
