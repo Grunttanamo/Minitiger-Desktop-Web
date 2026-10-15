@@ -178,7 +178,7 @@ const MinitigerNativeTrailerSurface = ({
                 window.dispatchEvent(new Event('minitiger:native-preview-released'));
             }
         };
-    }, [url, loop, className]);
+    }, [url, loop]);
 
     useEffect(() => {
         if (active && window.__minitigerNativePreviewOwner === ownerRef.current) {
