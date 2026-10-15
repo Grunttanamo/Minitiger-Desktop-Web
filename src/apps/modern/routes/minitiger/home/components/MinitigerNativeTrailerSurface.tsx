@@ -10,6 +10,7 @@ type NativePreviewApi = {
     nativeTrailerPreviewMute: (muted: boolean) => void;
     nativeTrailerPreviewStop: () => void;
     nativeTrailerPreviewEnded: (callback: (ended: boolean) => void) => void;
+    nativeTrailerPreviewHasVideo: (callback: (decoded: boolean) => void) => void;
 };
 
 declare global {
@@ -46,6 +47,7 @@ const MinitigerNativeTrailerSurface = ({
         let lastBounds = '';
         let starting = false;
         let endPoll = 0;
+        let decodedTimer = 0;
         let sawPlayback = false;
         let retries = 0;
         let retryTimer = 0;
@@ -143,8 +145,31 @@ const MinitigerNativeTrailerSurface = ({
                 failed(); return;
             }
                     setActive(true);
-                    onReady();
                     geometryTimer = window.setTimeout(move, 200);
+                    // A successful "loadfile" command is NOT a decoded frame.
+                    // Keep the backdrop until the real libmpv decoder reports
+                    // a video track, instead of claiming playback too early.
+                    if (!system.nativeTrailerPreviewHasVideo) {
+                        failed();
+                        return;
+                    }
+                    let checks = 0;
+                    decodedTimer = window.setInterval(() => {
+                        if (closed || window.__minitigerNativePreviewOwner !== owner) {
+                            window.clearInterval(decodedTimer);
+                            return;
+                        }
+                        system.nativeTrailerPreviewHasVideo?.(decoded => {
+                            if (closed || window.__minitigerNativePreviewOwner !== owner) return;
+                            if (decoded) {
+                                window.clearInterval(decodedTimer);
+                                onReady();
+                            } else if (++checks >= 48) {
+                                window.clearInterval(decodedTimer);
+                                failed();
+                            }
+                        });
+                    }, 250);
                     if (!loop && system.nativeTrailerPreviewEnded) {
                         // EOF is exposed by the native MPV instance, not HTML5.
                         endPoll = window.setInterval(() => {
@@ -175,6 +200,7 @@ const MinitigerNativeTrailerSurface = ({
             closed = true;
             window.clearTimeout(retryTimer);
             window.clearTimeout(geometryTimer);
+            window.clearInterval(decodedTimer);
             window.clearInterval(endPoll);
             if (window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
