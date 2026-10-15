@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { useApi } from 'hooks/useApi';
 import {
     createWatchparty, getWatchparty, joinWatchparty, leaveWatchparty,
-    sendWatchpartyCommand, setWatchpartyReady, enqueueWatchpartyItem, removeWatchpartyQueuedItem, type WatchpartyRoom
+    sendWatchpartyCommand, setWatchpartyReady, enqueueWatchpartyItem, removeWatchpartyQueuedItem,
+    moveWatchpartyQueuedItem, type WatchpartyRoom
 } from './watchpartyApi';
 import { playbackManager } from 'components/playback/playbackmanager';
 import Groups from '@mui/icons-material/Groups';
@@ -88,7 +89,7 @@ const MinitigerWatchTogetherHost = () => {
     useEffect(() => {
         if (!apiClient || !room) return;
         let cancelled = false;
-        const uniqueIds = Array.from(new Set([room.ItemId, ...(room.Queue || [])]));
+        const uniqueIds = Array.from(new Set((room.Queue || []).filter(id => id && id !== '00000000-0000-0000-0000-000000000000')));
         void Promise.all(uniqueIds.map(async itemId => {
             try {
                 const item = await apiClient.getItem(apiClient.getCurrentUserId(), itemId);
@@ -103,10 +104,7 @@ const MinitigerWatchTogetherHost = () => {
     }, [apiClient, room?.Code, room?.ItemId, room?.Queue?.join(',')]);
 
     const ownReady = Boolean(room?.ReadyMembers?.includes(user?.Id || ''));
-    const current = playbackManager.getCurrentPlayer();
-    const currentItemId = current ? playbackManager.getPlayerState(current)?.NowPlayingItem?.Id : undefined;
     const choices = apiClient ? readSoloQueue(apiClient, activeSoloQueueProfileId(apiClient)) : [];
-    const createItemId = currentItemId || selectedItem || choices[0]?.itemId;
     // Each client plays the room's item through its own authenticated Jellyfin
     // connection. The server transmits commands/timeline, never video bytes.
     useEffect(() => {
@@ -164,32 +162,6 @@ const MinitigerWatchTogetherHost = () => {
         return () => { cancelled = true; };
     }, [apiClient, room?.Code, room?.Sequence, room?.LastAction, room?.ItemId, room?.PositionTicks]);
 
-    const createFromSelection = async (itemId: string) => {
-        if (!apiClient) return;
-        try {
-            let selected = await apiClient.getItem(apiClient.getCurrentUserId(), itemId);
-            if (selected?.Type === 'Series' || selected?.Type === 'Season') {
-                const episodes = await apiClient.getItems(apiClient.getCurrentUserId(), {
-                    ParentId: selected.Id,
-                    Recursive: selected.Type === 'Series',
-                    IncludeItemTypes: 'Episode',
-                    IsMissing: false,
-                    Limit: 1000,
-                    EnableTotalRecordCount: false
-                });
-                const playable = (episodes.Items || [])
-                    .filter(e => e.Id && e.LocationType !== 'Virtual' && e.LocationType !== 'Offline')
-                    .sort((a, b) => (a.ParentIndexNumber ?? 9999) - (b.ParentIndexNumber ?? 9999)
-                        || (a.IndexNumber ?? 9999) - (b.IndexNumber ?? 9999));
-                selected = playable.find(e => !e.UserData?.Played) || playable[0];
-            }
-            if (!selected?.Id) throw new Error('Kein abspielbarer Film oder Folge gefunden.');
-            await perform(() => createWatchparty(apiClient, selected.Id!));
-        } catch (error) {
-            setMessage('WatchTogether-Raumerstellung: ' + String(error));
-        }
-    };
-
     const change = async (action: 'play' | 'pause' | 'seek') => {
         if (!apiClient || !room || !host) return;
         const player = playbackManager.getCurrentPlayer();
@@ -227,12 +199,23 @@ const MinitigerWatchTogetherHost = () => {
                 <button type='button' disabled={busy} onClick={() => void perform(() => setWatchpartyReady(apiClient, room.Code, !ownReady))}>
                     {ownReady ? 'Bereitschaft zurücknehmen' : 'Ich bin bereit'}
                 </button>
-                <strong>Gemeinsame Warteschlange ({room.Queue?.length || 0})</strong>
+                <strong>Gemeinsame Wiedergabeliste ({room.Queue?.length || 0})</strong>
+                <small>Der erste Eintrag ist der Startfilm. Du kannst auch ihn verschieben oder entfernen.</small>
                 {(room.Queue || []).map((id, index) => <div key={index} className='minitigerWatchTogetherQueueRow'>
                     <img src={apiClient.getUrl('Items/' + encodeURIComponent(id) + '/Images/Primary', { maxWidth: 96 })} alt='' loading='lazy' />
-                    <small>{index + 1}. {queuedTitles[id] || choices.find(e => e.itemId === id)?.title || id}</small>
-                    {host && <button type='button' disabled={busy} onClick={() => void perform(() => removeWatchpartyQueuedItem(apiClient, room.Code, index))}>×</button>}
+                    <small>{index + 1}. {queuedTitles[id] || choices.find(e => e.itemId === id)?.title || id}
+                        {index === 0 && <em>Startinhalt</em>}
+                    </small>
+                    {host && <>
+                        <button type='button' aria-label='Nach oben' title='Nach oben' disabled={busy || index === 0}
+                            onClick={() => void perform(() => moveWatchpartyQueuedItem(apiClient, room.Code, index, index - 1))}>↑</button>
+                        <button type='button' aria-label='Nach unten' title='Nach unten' disabled={busy || index === room.Queue.length - 1}
+                            onClick={() => void perform(() => moveWatchpartyQueuedItem(apiClient, room.Code, index, index + 1))}>↓</button>
+                        <button type='button' aria-label='Entfernen' title='Entfernen' disabled={busy}
+                            onClick={() => void perform(() => removeWatchpartyQueuedItem(apiClient, room.Code, index))}>×</button>
+                    </>}
                 </div>)}
+                {!room.Queue?.length && <small>Noch leer. Wähle unten den ersten Film oder die erste Folge.</small>}
                 {choices.length > 0 && <>
                     <label>Inhalt zur WatchTogether-Warteschlange hinzufügen
                         <select value={selectedItem || choices[0].itemId}
@@ -244,31 +227,26 @@ const MinitigerWatchTogetherHost = () => {
                         <img src={apiClient.getUrl('Items/' + encodeURIComponent(selectedItem || choices[0].itemId) + '/Images/Primary', { maxWidth: 130 })} alt='' />
                         <span>{choices.find(entry => entry.itemId === (selectedItem || choices[0].itemId))?.title}</span>
                     </div>
-                    <button type='button' disabled={busy}
+                    <button type='button' disabled={busy || room.Queue.includes(selectedItem || choices[0].itemId)}
                         onClick={() => void perform(() => enqueueWatchpartyItem(apiClient, room.Code, selectedItem || choices[0].itemId))}>
-                        + Ausgewählten Inhalt einreihen
+                        {room.Queue.includes(selectedItem || choices[0].itemId) ? 'Bereits eingereiht' : '+ Ausgewählten Inhalt einreihen'}
                     </button>
                 </>}
 
                 {host && <div className='minitigerWatchTogetherActions'>
-                    <button type='button' disabled={busy || !room.AllReady} onClick={() => void change('play')}>▶ Gemeinsames Play</button>
+                    <button type='button' disabled={busy || !room.AllReady || !room.Queue?.length} onClick={() => void change('play')}>▶ Gemeinsames Play</button>
                     <button type='button' disabled={busy} onClick={() => void change('pause')}>Ⅱ Pause</button>
                 </div>}
                 <button type='button' disabled={busy} onClick={() => void exit()}>
                     {host ? 'WatchTogether beenden' : 'Raum verlassen'}
                 </button>
-                <p className='minitigerWatchTogetherNotice'>TEST: Gemeinsames Play startet den eigenen Jellyfin-Player jedes Teilnehmers. Die Bereitschaft wird derzeit manuell bestätigt; automatisches Puffern und präziser Gleichzeit-Start folgen.</p>
+                <p className='minitigerWatchTogetherNotice'>TEST: Alle Einträge einschließlich des Startfilms sind sichtbar und sortierbar. Jeder Teilnehmer verwendet seinen eigenen Jellyfin-Stream; die Bereitschaft wird noch manuell bestätigt.</p>
             </> : <>
-                {!currentItemId && choices.length > 0 && <label>Startmedium aus Warteschlange
-                    <select value={selectedItem || choices[0]?.itemId} onChange={event => setSelectedItem(event.target.value)}>
-                        {choices.map(item => <option key={item.id} value={item.itemId}>{item.title}</option>)}
-                    </select>
-                </label>}
-                <button type='button' disabled={busy || !createItemId}
-                    onClick={() => { if (createItemId) void createFromSelection(createItemId); }}>
-                    WatchTogether-Raum erstellen
+                <p>Erstelle zuerst einen leeren Raum. Danach können alle Teilnehmer Filme und Folgen in die gemeinsame Liste einreihen. Der erste sichtbare Eintrag wird beim Start abgespielt.</p>
+                <button type='button' disabled={busy}
+                    onClick={() => void perform(() => createWatchparty(apiClient))}>
+                    Leeren WatchTogether-Raum erstellen
                 </button>
-                {!createItemId && <small>Starte einen Film oder reihe zuerst einen Inhalt ein, um einen Raum zu erstellen.</small>}
                 <label>Mit Raumcode beitreten
                     <input value={code} onChange={event => setCode(event.target.value.toUpperCase())}
                         maxLength={8} placeholder='8-stelliger Code' />
