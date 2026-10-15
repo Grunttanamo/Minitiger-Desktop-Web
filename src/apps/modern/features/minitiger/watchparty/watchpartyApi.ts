@@ -51,8 +51,8 @@ const jsonRequest = async <T>(
     return response.json() as Promise<T>;
 };
 
-export const createWatchparty = (apiClient: ApiClient, itemId: string) =>
-    jsonRequest<WatchpartyRoom>(apiClient, 'Rooms', 'POST', { itemId });
+export const createWatchparty = (apiClient: ApiClient) =>
+    jsonRequest<WatchpartyRoom>(apiClient, 'Rooms', 'POST', {});
 
 export const joinWatchparty = (apiClient: ApiClient, code: string) =>
     jsonRequest<WatchpartyRoom>(apiClient, 'Rooms/Join', 'POST', {
@@ -94,3 +94,8 @@ export const enqueueWatchpartyItem = (apiClient: ApiClient, code: string, itemId
 
 export const removeWatchpartyQueuedItem = (apiClient: ApiClient, code: string, index: number) =>
     jsonRequest<WatchpartyRoom>(apiClient, 'Rooms/' + encodeURIComponent(code) + '/Queue/' + index, 'DELETE');
+
+export const moveWatchpartyQueuedItem = (apiClient: ApiClient, code: string, from: number, to: number) =>
+    jsonRequest<WatchpartyRoom>(
+        apiClient, 'Rooms/' + encodeURIComponent(code) + '/Queue/Move', 'POST', { from, to }
+    );
