@@ -73,9 +73,9 @@ const MinitigerWatchTogetherHost = () => {
     };
     const host = Boolean(room && user?.Id === room.HostUserId);
     useEffect(() => {
-        if (!apiClient || !room?.Queue?.length) return;
+        if (!apiClient || !room) return;
         let cancelled = false;
-        const uniqueIds = Array.from(new Set(room.Queue));
+        const uniqueIds = Array.from(new Set([room.ItemId, ...(room.Queue || [])]));
         void Promise.all(uniqueIds.map(async itemId => {
             try {
                 const item = await apiClient.getItem(apiClient.getCurrentUserId(), itemId);
@@ -87,7 +87,7 @@ const MinitigerWatchTogetherHost = () => {
             if (!cancelled) setQueuedTitles(Object.fromEntries(titles));
         });
         return () => { cancelled = true; };
-    }, [apiClient, room?.Code, room?.Queue?.join(',')]);
+    }, [apiClient, room?.Code, room?.ItemId, room?.Queue?.join(',')]);
 
     const ownReady = Boolean(room?.ReadyMembers?.includes(user?.Id || ''));
     const current = playbackManager.getCurrentPlayer();
@@ -233,7 +233,10 @@ const MinitigerWatchTogetherHost = () => {
                         + Ausgewählten Inhalt einreihen
                     </button>
                 </>}
-                <small>Medium: {room.ItemId}</small>
+                <div className='minitigerWatchTogetherQueuePreview'>
+                    <img src={apiClient.getUrl('Items/' + encodeURIComponent(room.ItemId) + '/Images/Primary', { maxWidth: 130 })} alt='' />
+                    <span>Aktuelles Medium: {queuedTitles[room.ItemId] || room.ItemId}</span>
+                </div>
                 {host && <div className='minitigerWatchTogetherActions'>
                     <button type='button' disabled={busy || !room.AllReady} onClick={() => void change('play')}>▶ Gemeinsames Play</button>
                     <button type='button' disabled={busy} onClick={() => void change('pause')}>Ⅱ Pause</button>
