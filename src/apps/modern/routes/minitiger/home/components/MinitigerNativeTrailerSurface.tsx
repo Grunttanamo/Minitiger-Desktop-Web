@@ -189,6 +189,9 @@ const MinitigerNativeTrailerSurface = ({
                     }
                     let checks = 0;
                     decodedTimer = window.setInterval(() => {
+                        // Scrolling intentionally pauses the native decoder.
+                        // Do not count those frames as decoding failures.
+                        if (scrollSuspended) return;
                         if (closed || window.__minitigerNativePreviewOwner !== owner) {
                             window.clearInterval(decodedTimer);
                             return;
@@ -243,6 +246,7 @@ const MinitigerNativeTrailerSurface = ({
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
                 delete window.__minitigerNativePreviewKind;
+                window.dispatchEvent(new Event('minitiger:native-preview-released'));
                 offscreen = true;
                 setActive(false);
                 return;
@@ -286,6 +290,14 @@ const MinitigerNativeTrailerSurface = ({
         // Capture wheel/touch input before Chromium draws the next scroll frame.
         window.addEventListener('wheel', scrollIntent, { capture: true, passive: true });
         window.addEventListener('touchmove', scrollIntent, { capture: true, passive: true });
+        const scrollKey = (event: KeyboardEvent) => {
+            const target = event.target as HTMLElement | null;
+            if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+            if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key))
+                scrollIntent();
+        };
+        window.addEventListener('keydown', scrollKey, true);
+        window.addEventListener('resize', scrollIntent);
         window.addEventListener('scroll', scrollIntent, true);
         window.addEventListener('scroll', onViewportReturn, true);
         window.addEventListener('resize', onViewportReturn);
@@ -295,6 +307,8 @@ const MinitigerNativeTrailerSurface = ({
             window.removeEventListener('minitiger:native-preview-released', onReleased);
             window.removeEventListener('wheel', scrollIntent, true);
             window.removeEventListener('touchmove', scrollIntent, true);
+            window.removeEventListener('keydown', scrollKey, true);
+            window.removeEventListener('resize', scrollIntent);
             window.removeEventListener('scroll', scrollIntent, true);
             window.removeEventListener('scroll', onViewportReturn, true);
             window.removeEventListener('resize', onViewportReturn);
