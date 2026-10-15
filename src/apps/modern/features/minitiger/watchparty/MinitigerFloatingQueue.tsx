@@ -7,6 +7,7 @@ import {
     readSoloQueue, removeSoloQueueItem, type SoloQueueEntry
 } from './soloQueue';
 
+import MinitigerConfirmDialog from 'apps/modern/routes/minitiger/home/components/MinitigerConfirmDialog';
 import './MinitigerFloatingQueue.scss';
 
 const MinitigerFloatingQueue = () => {
@@ -14,6 +15,7 @@ const MinitigerFloatingQueue = () => {
     const location = useLocation();
     const [entries, setEntries] = useState<SoloQueueEntry[]>([]);
     const [open, setOpen] = useState(false);
+    const [confirmClear, setConfirmClear] = useState(false);
     const [playing, setPlaying] = useState(false);
 
     useEffect(() => {
@@ -74,6 +76,12 @@ const MinitigerFloatingQueue = () => {
     };
 
     return <div className='minitigerFloatingQueue'>
+        <MinitigerConfirmDialog open={confirmClear} title='Warteschlange leeren?'
+            confirmLabel='Alles entfernen' cancelLabel='Behalten' danger
+            onCancel={() => setConfirmClear(false)}
+            onConfirm={() => { clearSoloQueue(apiClient, profile); setConfirmClear(false); setOpen(false); }}>
+            Alle Einträge deiner persönlichen Warteschlange entfernen? Das lässt sich nicht rückgängig machen.
+        </MinitigerConfirmDialog>
         {open && <section className='minitigerFloatingQueuePanel' aria-label='Meine Warteschlange'>
             <header><strong>Meine Warteschlange ({entries.length})</strong>
                 <button type='button' aria-label='Schließen' onClick={() => setOpen(false)}>×</button></header>
@@ -93,10 +101,7 @@ const MinitigerFloatingQueue = () => {
             </div>
             <footer>
                 <button type='button' onClick={() => void start()}>▶ Warteschlange starten</button>
-                <button type='button' onClick={() => {
-                    if (!window.confirm('Persönliche Warteschlange wirklich leeren?')) return;
-                    clearSoloQueue(apiClient, profile); setOpen(false);
-                }}>Liste leeren</button>
+                <button type='button' onClick={() => setConfirmClear(true)}>Liste leeren</button>
             </footer>
         </section>}
         <button type='button' className='minitigerFloatingQueueToggle'
