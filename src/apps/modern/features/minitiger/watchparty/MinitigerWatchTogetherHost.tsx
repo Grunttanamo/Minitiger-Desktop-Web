@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApi } from 'hooks/useApi';
 import {
     createWatchparty, getWatchparty, joinWatchparty, leaveWatchparty,
@@ -92,7 +93,7 @@ const MinitigerWatchTogetherHost = () => {
                 <Groups />
             </IconButton>
         </Tooltip>
-        {open && <section className='minitigerWatchTogetherPanel' aria-label='WatchTogether'>
+        {open && createPortal(<section className='minitigerWatchTogetherPanel' aria-label='WatchTogether'>
             <header><strong>🐯 WatchTogether</strong>
                 <button type='button' onClick={() => setOpen(false)} aria-label='Schließen'>×</button></header>
             {room ? <>
@@ -138,7 +139,7 @@ const MinitigerWatchTogetherHost = () => {
                     onClick={() => void perform(() => joinWatchparty(apiClient, code))}>Beitreten</button>
             </>}
             {message && <p role='status'>{message}</p>}
-        </section>}
+        </section>, document.body)}
     </div>;
 };
 
