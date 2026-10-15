@@ -3199,3 +3199,46 @@ a.minitigerDetailsParentTitle:focus-visible {
 }
 
 /* MINITIGER_PATCH_MARKER: USER_RATINGS_CAST_EDITOR_STYLE_V1 */
+
+
+/* Watchparty TEST: quiet season queue badge and fixed right-side controls. */
+.minitigerDetailsMeta .minitigerSeasonQueueBadge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.95rem;
+    padding: .2rem .45rem;
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 4px;
+    background: rgba(18,20,24,.72);
+    color: #ddd;
+    font-size: .84rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.minitigerDetailsMeta .minitigerSeasonQueueBadge:hover { border-color: var(--mt-accent); color: #fff; }
+.minitigerSeasonEpisodeItem { grid-template-columns: 42px minmax(180px,250px) minmax(0,1fr) 95px 132px; }
+.minitigerSeasonEpisodeActions {
+    grid-column: 5;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: .3rem;
+    min-width: 0;
+}
+.minitigerSeasonEpisodeActions > * { flex-shrink: 0; }
+.minitigerSeasonEpisodeActions .minitigerSeasonQueueAdd { font-size: 1.5rem; }
+.minitigerDetailsSeasonVisual .minitigerSeasonToggleOnlyOnHover {
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+.minitigerDetailsSeasonCard:hover .minitigerSeasonToggleOnlyOnHover,
+.minitigerDetailsSeasonCard:focus-within .minitigerSeasonToggleOnlyOnHover {
+    opacity: 1;
+}
+@media (max-width: 750px) {
+    .minitigerSeasonEpisodeItem { grid-template-columns: 32px minmax(95px,145px) minmax(0,1fr) 120px; }
+    .minitigerSeasonEpisodeRuntime { display:none; }
+    .minitigerSeasonEpisodeActions { grid-column:4; }
+}
