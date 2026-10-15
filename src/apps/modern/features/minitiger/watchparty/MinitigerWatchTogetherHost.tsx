@@ -5,6 +5,10 @@ import {
     sendWatchpartyCommand, type WatchpartyRoom
 } from './watchpartyApi';
 import { playbackManager } from 'components/playback/playbackmanager';
+import Groups from '@mui/icons-material/Groups';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import { activeSoloQueueProfileId, readSoloQueue } from './soloQueue';
 import './MinitigerWatchTogetherHost.scss';
 
 const ACTIVE_ROOM = 'minitiger.watchtogether.active.v1';
@@ -16,6 +20,7 @@ const MinitigerWatchTogetherHost = () => {
     const [room, setRoom] = useState<WatchpartyRoom | null>(null);
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
+    const [selectedItem, setSelectedItem] = useState('');
 
     const refresh = useCallback(async () => {
         if (!apiClient || !room?.Code) return;
@@ -55,6 +60,10 @@ const MinitigerWatchTogetherHost = () => {
         } finally { setBusy(false); }
     };
     const host = Boolean(room && user?.Id === room.HostUserId);
+    const current = playbackManager.getCurrentPlayer();
+    const currentItemId = current ? playbackManager.getPlayerState(current)?.NowPlayingItem?.Id : undefined;
+    const choices = readSoloQueue(apiClient, activeSoloQueueProfileId(apiClient));
+    const createItemId = currentItemId || selectedItem || choices[0]?.itemId;
     const change = async (action: 'play' | 'pause' | 'seek') => {
         if (!apiClient || !room || !host) return;
         const player = playbackManager.getCurrentPlayer();
@@ -76,8 +85,12 @@ const MinitigerWatchTogetherHost = () => {
     // because a polled state changed until the readiness protocol is integrated.
     if (!apiClient || !user?.Id) return null;
     return <div className='minitigerWatchTogether'>
-        <button type='button' className='minitigerWatchTogetherTrigger' onClick={() => setOpen(!open)}
-            aria-expanded={open} title='WatchTogether'>♧ {room ? 'WatchTogether' : 'Zusammen schauen'}</button>
+        <Tooltip title='WatchTogether'>
+            <IconButton color='inherit' size='large' onClick={() => setOpen(!open)}
+                aria-label='WatchTogether' aria-expanded={open}>
+                <Groups />
+            </IconButton>
+        </Tooltip>
         {open && <section className='minitigerWatchTogetherPanel' aria-label='WatchTogether'>
             <header><strong>🐯 WatchTogether</strong>
                 <button type='button' onClick={() => setOpen(false)} aria-label='Schließen'>×</button></header>
@@ -94,12 +107,16 @@ const MinitigerWatchTogetherHost = () => {
                 </button>
                 <p className='minitigerWatchTogetherNotice'>TEST-Vorschau: Räume und Befehle sind aktiv. Automatisches Player-Folgen und Bereit-Synchronisierung folgen separat.</p>
             </> : <>
-                <button type='button' disabled={busy || !playbackManager.getCurrentPlayer()}
-                    onClick={() => {
-                        const state = playbackManager.getPlayerState(playbackManager.getCurrentPlayer());
-                        const id = state?.NowPlayingItem?.Id;
-                        if (id) void perform(() => createWatchparty(apiClient, id));
-                    }}>Raum für aktuell laufenden Inhalt erstellen</button>
+                {!currentItemId && choices.length > 0 && <label>Startmedium aus Warteschlange
+                    <select value={selectedItem || choices[0]?.itemId} onChange={event => setSelectedItem(event.target.value)}>
+                        {choices.map(item => <option key={item.id} value={item.itemId}>{item.title}</option>)}
+                    </select>
+                </label>}
+                <button type='button' disabled={busy || !createItemId}
+                    onClick={() => { if (createItemId) void perform(() => createWatchparty(apiClient, createItemId)); }}>
+                    WatchTogether-Raum erstellen
+                </button>
+                {!createItemId && <small>Starte einen Film oder reihe zuerst einen Inhalt ein, um einen Raum zu erstellen.</small>}
                 <label>Mit Raumcode beitreten
                     <input value={code} onChange={event => setCode(event.target.value.toUpperCase())}
                         maxLength={8} placeholder='8-stelliger Code' />
