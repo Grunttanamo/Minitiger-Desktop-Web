@@ -1243,3 +1243,19 @@ html.minitigerNativeVideoCompositing .minitigerLargePreviewTrailerMuteButton {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
 }
+
+/* Keep EVERY part of the expanded-preview list/card opaque when video uses
+   the transparent native Qt punch-through. Only the media header is clear.
+   Prevents films/episodes from visually bleeding through the poster list. */
+.minitigerLargePreview:has(.minitigerNativeTrailerActive) > .minitigerLargePreviewContent {
+    position: relative;
+    z-index: 2;
+    background-color: #181818 !important;
+    isolation: isolate;
+}
+.minitigerLargePreview:has(.minitigerNativeTrailerActive) .minitigerLargePreviewHeroContent {
+    z-index: 7;
+}
+.minitigerLargePreview:has(.minitigerNativeTrailerActive) .minitigerLargePreviewShade {
+    pointer-events: none;
+}
