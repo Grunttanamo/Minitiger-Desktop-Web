@@ -3229,7 +3229,7 @@ a.minitigerDetailsParentTitle:focus-visible {
 }
 .minitigerSeasonEpisodeActions > * { flex-shrink: 0; }
 .minitigerSeasonEpisodeActions .minitigerSeasonQueueAdd { font-size: 1.5rem; }
-.minitigerDetailsSeasonVisual .minitigerSeasonToggleOnlyOnHover {
+.minitigerDetailsSeasonVisual .minitigerEpisodePlayedButton.minitigerSeasonToggleOnlyOnHover {
     opacity: 0;
     transition: opacity .15s ease;
 }
