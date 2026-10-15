@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useApi } from 'hooks/useApi';
 import {
     createWatchparty, getWatchparty, joinWatchparty, leaveWatchparty,
-    sendWatchpartyCommand, type WatchpartyRoom
+    sendWatchpartyCommand, setWatchpartyReady, enqueueWatchpartyItem, removeWatchpartyQueuedItem, type WatchpartyRoom
 } from './watchpartyApi';
 import { playbackManager } from 'components/playback/playbackmanager';
 import Groups from '@mui/icons-material/Groups';
@@ -60,6 +60,7 @@ const MinitigerWatchTogetherHost = () => {
         } finally { setBusy(false); }
     };
     const host = Boolean(room && user?.Id === room.HostUserId);
+    const ownReady = Boolean(room?.ReadyMembers?.includes(user?.Id || ''));
     const current = playbackManager.getCurrentPlayer();
     const currentItemId = current ? playbackManager.getPlayerState(current)?.NowPlayingItem?.Id : undefined;
     const choices = apiClient ? readSoloQueue(apiClient, activeSoloQueueProfileId(apiClient)) : [];
@@ -97,15 +98,27 @@ const MinitigerWatchTogetherHost = () => {
             {room ? <>
                 <p>Raumcode: <strong>{room.Code}</strong> · {host ? 'Gastgeber' : 'Teilnehmer'}</p>
                 <p>{room.Members.length} Teilnehmer · {room.Paused ? 'Pausiert' : 'Wiedergabe freigegeben'}</p>
+                <p>Bereit: {room.ReadyMembers?.length || 0}/{room.Members.length}</p>
+                <button type='button' disabled={busy} onClick={() => void perform(() => setWatchpartyReady(apiClient, room.Code, !ownReady))}>
+                    {ownReady ? 'Bereitschaft zurücknehmen' : 'Ich bin bereit'}
+                </button>
+                <strong>Gemeinsame Warteschlange ({room.Queue?.length || 0})</strong>
+                {(room.Queue || []).map((id, index) => <div key={index} className='minitigerWatchTogetherQueueRow'>
+                    <small>{index + 1}. {choices.find(e => e.itemId === id)?.title || id}</small>
+                    {host && <button type='button' disabled={busy} onClick={() => void perform(() => removeWatchpartyQueuedItem(apiClient, room.Code, index))}>×</button>}
+                </div>)}
+                {choices.length > 0 && <button type='button' disabled={busy} onClick={() => void perform(() => enqueueWatchpartyItem(apiClient, room.Code, selectedItem || choices[0].itemId))}>
+                    Ersten ausgewählten Warteschlangen-Inhalt hinzufügen
+                </button>}
                 <small>Medium: {room.ItemId}</small>
                 {host && <div className='minitigerWatchTogetherActions'>
-                    <button type='button' disabled={busy} onClick={() => void change('play')}>▶ Gemeinsames Play</button>
+                    <button type='button' disabled={busy || !room.AllReady} onClick={() => void change('play')}>▶ Gemeinsames Play</button>
                     <button type='button' disabled={busy} onClick={() => void change('pause')}>Ⅱ Pause</button>
                 </div>}
                 <button type='button' disabled={busy} onClick={() => void exit()}>
                     {host ? 'WatchTogether beenden' : 'Raum verlassen'}
                 </button>
-                <p className='minitigerWatchTogetherNotice'>TEST-Vorschau: Räume und Befehle sind aktiv. Automatisches Player-Folgen und Bereit-Synchronisierung folgen separat.</p>
+                <p className='minitigerWatchTogetherNotice'>TEST-Protokoll: Die Teilnehmer bestätigen ihre Bereitschaft manuell. Automatisches Stream-Laden und synchronisierte Player-Befehle sind noch nicht verbunden.</p>
             </> : <>
                 {!currentItemId && choices.length > 0 && <label>Startmedium aus Warteschlange
                     <select value={selectedItem || choices[0]?.itemId} onChange={event => setSelectedItem(event.target.value)}>
