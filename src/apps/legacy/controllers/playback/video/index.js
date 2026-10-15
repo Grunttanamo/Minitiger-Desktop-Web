@@ -275,6 +275,7 @@ export default function (view) {
 
     function showOsd(focusElement) {
         Events.trigger(document, EventType.SHOW_VIDEO_OSD, [ true ]);
+        window.dispatchEvent(new CustomEvent('minitiger:video-osd-visibility', { detail: true }));
         slideDownToShow(headerElement);
         showMainOsdControls(focusElement);
         resetIdle();
@@ -282,6 +283,7 @@ export default function (view) {
 
     function hideOsd() {
         Events.trigger(document, EventType.SHOW_VIDEO_OSD, [ false ]);
+        window.dispatchEvent(new CustomEvent('minitiger:video-osd-visibility', { detail: false }));
         slideUpToHide(headerElement);
         hideMainOsdControls();
         mouseManager.hideCursor();
