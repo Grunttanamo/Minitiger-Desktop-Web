@@ -13,3 +13,12 @@
 .minitigerWatchTogetherQueuePreview{display:flex;align-items:center;gap:10px;min-height:70px}
 .minitigerWatchTogetherQueuePreview img{width:46px;height:68px;object-fit:cover;border-radius:5px;background:#30323a}
 .minitigerWatchTogetherQueuePreview span{overflow-wrap:anywhere}
+
+
+/* One ordered playlist: the first visible poster is also the first to play. */
+.minitigerWatchTogetherQueueRow small { display: flex; flex-direction: column; gap: 2px; }
+.minitigerWatchTogetherQueueRow small em {
+  color: #fbd04f; font-style: normal; font-size: 10px; font-weight: 700;
+}
+.minitigerWatchTogetherQueueRow button { flex: 0 0 auto; padding: 5px 8px; }
+.minitigerWatchTogetherPanel > small { color: #bfc5d2; line-height: 1.5; }
