@@ -308,16 +308,16 @@ const MinitigerSeasonDetails = ({
                             </h1>
 
                             <div className='minitigerDetailsMeta'>
-                                {apiClient && <button type='button' className='minitigerSeasonQueueBadge'
-                                    title='Ganze Staffel einreihen'
-                                    onClick={() => addSoloQueueItem(apiClient, activeSoloQueueProfileId(apiClient), season)}>
-                                    + Staffel einreihen
-                                </button>}
                                 <span>
                                     {
                                         episodes.length
                                     } Folgen
                                 </span>
+                                {apiClient && <button type='button' className='minitigerSeasonQueueBadge'
+                                    title='Ganze Staffel einreihen'
+                                    onClick={() => addSoloQueueItem(apiClient, activeSoloQueueProfileId(apiClient), season)}>
+                                    + Staffel einreihen
+                                </button>}
                             </div>
 
                             {season.Overview && (
