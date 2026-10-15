@@ -100,7 +100,17 @@ const MinitigerNativeTrailerSurface = ({
         const start = (available: boolean) => {
             if (closed || starting || window.__minitigerNativePreviewOwner === owner) return;
             const p = bounds();
-            if (!available || !p) { failed(); return; }
+            if (!p) { failed(); return; }
+            if (!available) {
+                // MPV has a real asynchronous QtQuick render-context startup.
+                // A missing ready signal is not permission to use HTML5.
+                if (retries++ < 35) {
+                    retryTimer = window.setTimeout(() => system.nativeTrailerPreviewAvailable?.(start), 200);
+                    return;
+                }
+                failed();
+                return;
+            }
             // Only one native surface: newest banner/modal owns it.
             starting = true;
             system.nativeTrailerPreviewStop?.();
