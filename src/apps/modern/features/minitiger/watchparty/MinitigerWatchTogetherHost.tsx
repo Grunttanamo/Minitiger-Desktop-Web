@@ -13,6 +13,11 @@ import { activeSoloQueueProfileId, readSoloQueue } from './soloQueue';
 import './MinitigerWatchTogetherHost.scss';
 
 const ACTIVE_ROOM = 'minitiger.watchtogether.active.v1';
+// A toolbar remount must NEVER replay an old Play command after the user
+// intentionally closes the video player. Keep the cursor outside React state.
+const appliedSequenceKey = (server: string, user: string, roomCode: string) =>
+    'minitiger.watchtogether.applied.v1:' + server + ':' + user + ':' + roomCode;
+
 
 const MinitigerWatchTogetherHost = () => {
     const { user, __legacyApiClient__: apiClient } = useApi();
@@ -50,7 +55,15 @@ const MinitigerWatchTogetherHost = () => {
         if (!apiClient) return;
         const previous = sessionStorage.getItem(ACTIVE_ROOM);
         if (!previous) return;
-        void getWatchparty(apiClient, previous).then(setRoom).catch(() => {
+        void getWatchparty(apiClient, previous).then(snapshot => {
+            // Joining/reopening the toolbar observes existing state; only NEW
+            // commands issued afterwards should initiate playback.
+            const cursor = appliedSequenceKey(apiClient.serverId() || 'server', apiClient.getCurrentUserId() || 'user', snapshot.Code);
+            if (sessionStorage.getItem(cursor) === null) {
+                sessionStorage.setItem(cursor, String(snapshot.Sequence));
+            }
+            setRoom(snapshot);
+        }).catch(() => {
             sessionStorage.removeItem(ACTIVE_ROOM);
         });
     }, [apiClient]);
@@ -99,7 +112,12 @@ const MinitigerWatchTogetherHost = () => {
     useEffect(() => {
         if (!apiClient || !room || room.Sequence < 1) return;
         const key = room.Code + ':' + room.Sequence;
-        if (appliedSequence.current === key) return;
+        const cursor = appliedSequenceKey(apiClient.serverId() || 'server', apiClient.getCurrentUserId() || 'user', room.Code);
+        const seen = Number(sessionStorage.getItem(cursor) ?? '0');
+        if (appliedSequence.current === key || room.Sequence <= seen) return;
+        // Mark command as handled BEFORE async player startup. Even if the
+        // React toolbar unmounts, the old command cannot launch a film again.
+        sessionStorage.setItem(cursor, String(room.Sequence));
         appliedSequence.current = key;
         let cancelled = false;
         const apply = async () => {
@@ -191,8 +209,6 @@ const MinitigerWatchTogetherHost = () => {
         } catch (e) { setMessage(String(e)); }
         finally { setBusy(false); }
     };
-    // This is a room-management preview: do not modify local playback just
-    // because a polled state changed until the readiness protocol is integrated.
     if (!apiClient || !user?.Id) return null;
     return <div className='minitigerWatchTogether'>
         <Tooltip title='WatchTogether'>
@@ -233,10 +249,7 @@ const MinitigerWatchTogetherHost = () => {
                         + Ausgewählten Inhalt einreihen
                     </button>
                 </>}
-                <div className='minitigerWatchTogetherQueuePreview'>
-                    <img src={apiClient.getUrl('Items/' + encodeURIComponent(room.ItemId) + '/Images/Primary', { maxWidth: 130 })} alt='' />
-                    <span>Aktuelles Medium: {queuedTitles[room.ItemId] || room.ItemId}</span>
-                </div>
+
                 {host && <div className='minitigerWatchTogetherActions'>
                     <button type='button' disabled={busy || !room.AllReady} onClick={() => void change('play')}>▶ Gemeinsames Play</button>
                     <button type='button' disabled={busy} onClick={() => void change('pause')}>Ⅱ Pause</button>
