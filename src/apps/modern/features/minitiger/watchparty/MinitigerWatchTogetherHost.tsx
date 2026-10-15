@@ -22,6 +22,15 @@ const MinitigerWatchTogetherHost = () => {
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
     const [selectedItem, setSelectedItem] = useState('');
+    const [playerOsdVisible, setPlayerOsdVisible] = useState(true);
+
+    useEffect(() => {
+        const onVisibility = (event: Event) => {
+            setPlayerOsdVisible(Boolean((event as CustomEvent<boolean>).detail));
+        };
+        window.addEventListener('minitiger:video-osd-visibility', onVisibility);
+        return () => window.removeEventListener('minitiger:video-osd-visibility', onVisibility);
+    }, []);
 
     const refresh = useCallback(async () => {
         if (!apiClient || !room?.Code) return;
@@ -93,7 +102,7 @@ const MinitigerWatchTogetherHost = () => {
                 <Groups />
             </IconButton>
         </Tooltip>
-        {open && createPortal(<section className='minitigerWatchTogetherPanel' aria-label='WatchTogether'>
+        {open && playerOsdVisible && createPortal(<section className='minitigerWatchTogetherPanel' aria-label='WatchTogether'>
             <header><strong>🐯 WatchTogether</strong>
                 <button type='button' onClick={() => setOpen(false)} aria-label='Schließen'>×</button></header>
             {room ? <>
