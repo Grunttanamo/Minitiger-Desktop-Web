@@ -26,11 +26,15 @@ const jsonRequest = async <T>(
     method: 'GET' | 'POST' | 'DELETE',
     body?: object
 ): Promise<T> => {
+    const token = apiClient.accessToken();
+    if (!token) throw new Error('Kein Jellyfin-Zugriffstoken im Desktop-Client verfügbar.');
     const response = await fetch(endpoint(apiClient, path), {
         method,
+        credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/json',
-            'X-Emby-Token': apiClient.accessToken() || ''
+            'X-Emby-Token': token,
+            'Authorization': 'MediaBrowser Token="' + token.replace(/"/g, '') + '"'
         },
         ...(body ? { body: JSON.stringify(body) } : {})
     });
