@@ -44,6 +44,7 @@ const MinitigerNativeTrailerSurface = ({
         let closed = false;
         let frame = 0;
         let started = false;
+        let starting = false;
         let endPoll = 0;
         let sawPlayback = false;
         const owner = ownerRef.current;
@@ -64,6 +65,13 @@ const MinitigerNativeTrailerSurface = ({
             if (closed || window.__minitigerNativePreviewOwner !== owner) return;
             const p = bounds();
             if (p) system?.nativeTrailerPreviewGeometry?.(p.x, p.y, p.width, p.height);
+            else {
+                // Do not leave an offscreen native decoder playing audio.
+                system?.nativeTrailerPreviewStop?.();
+                delete window.__minitigerNativePreviewOwner;
+                setActive(false);
+                return;
+            }
             frame = requestAnimationFrame(move);
         };
         const failed = () => {
@@ -80,14 +88,18 @@ const MinitigerNativeTrailerSurface = ({
             return;
         }
         const start = (available: boolean) => {
-            if (closed) return;
+            if (closed || starting || window.__minitigerNativePreviewOwner === owner) return;
+            // Another active preview must not be stolen by a background banner.
+            if (window.__minitigerNativePreviewOwner) return;
             const p = bounds();
             if (!available || !p) { failed(); return; }
             // Only one native surface: newest banner/modal owns it.
+            starting = true;
             system.nativeTrailerPreviewStop?.();
             window.__minitigerNativePreviewOwner = owner;
             system.nativeTrailerPreviewPlay!(
                 url, loop, p.x, p.y, p.width, p.height, muted, success => {
+                    starting = false;
                     if (closed || window.__minitigerNativePreviewOwner !== owner) return;
                     if (!success) { failed(); return; }
                     started = true;
@@ -124,13 +136,13 @@ const MinitigerNativeTrailerSurface = ({
             closed = true;
             cancelAnimationFrame(frame);
             window.clearInterval(endPoll);
-            if (started && window.__minitigerNativePreviewOwner === owner) {
+            if (window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
                 window.dispatchEvent(new Event('minitiger:native-preview-released'));
             }
         };
-    }, [url]);
+    }, [url, loop]);
 
     useEffect(() => {
         if (active && window.__minitigerNativePreviewOwner === ownerRef.current) {
