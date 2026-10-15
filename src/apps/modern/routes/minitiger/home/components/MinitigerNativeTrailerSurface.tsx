@@ -16,6 +16,7 @@ type NativePreviewApi = {
 declare global {
     interface Window {
         __minitigerNativePreviewOwner?: string;
+        __minitigerNativePreviewKind?: 'banner' | 'preview';
     }
 }
 
@@ -54,6 +55,7 @@ const MinitigerNativeTrailerSurface = ({
         let registeredTransparency = false;
         let activeContainer: Element | null = null;
         const owner = ownerRef.current;
+        const isPreview = className.includes('minitigerLargePreviewTrailerMedia');
         const system = getNative();
 
         const bounds = () => {
@@ -94,6 +96,7 @@ const MinitigerNativeTrailerSurface = ({
                 }
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
+                delete window.__minitigerNativePreviewKind;
                 setActive(false);
                 return;
             }
@@ -123,6 +126,10 @@ const MinitigerNativeTrailerSurface = ({
         }
         const start = (available: boolean) => {
             if (closed || starting || window.__minitigerNativePreviewOwner === owner) return;
+            // An open preview card takes precedence over the background hero.
+            // A delayed banner callback must never steal its decoder.
+            if (!isPreview && window.__minitigerNativePreviewKind === 'preview'
+                && window.__minitigerNativePreviewOwner) return;
             const p = bounds();
             if (!p) { failed(); return; }
             if (!available) {
@@ -139,6 +146,7 @@ const MinitigerNativeTrailerSurface = ({
             starting = true;
             system.nativeTrailerPreviewStop?.();
             window.__minitigerNativePreviewOwner = owner;
+            window.__minitigerNativePreviewKind = isPreview ? 'preview' : 'banner';
             system.nativeTrailerPreviewPlay!(
                 url, loop, p.x, p.y, p.width, p.height, muted, success => {
                     starting = false;
