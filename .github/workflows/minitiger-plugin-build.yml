@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - minitiger-desktop-v12.1
+      - test/watchparty-same-server-20261014
     paths:
       - 'tools/MinitigerVirtualSync/**'
       - '.github/workflows/minitiger-plugin-build.yml'
