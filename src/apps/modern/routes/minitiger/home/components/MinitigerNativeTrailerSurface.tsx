@@ -52,6 +52,7 @@ const MinitigerNativeTrailerSurface = ({
         let retries = 0;
         let retryTimer = 0;
         let registeredTransparency = false;
+        let activeContainer: Element | null = null;
         const owner = ownerRef.current;
         const system = getNative();
 
@@ -98,7 +99,8 @@ const MinitigerNativeTrailerSurface = ({
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
             }
-            if (registeredTransparency) {
+            if (registeredTransparency && window.__minitigerNativePreviewOwner === owner) {
+                activeContainer?.classList.remove('minitigerNativeTrailerActive');
                 document.documentElement.classList.remove('minitigerNativeVideoCompositing');
                 document.body.classList.remove('minitigerNativeVideoCompositing');
                 registeredTransparency = false;
@@ -163,6 +165,10 @@ const MinitigerNativeTrailerSurface = ({
                             if (closed || window.__minitigerNativePreviewOwner !== owner) return;
                             if (decoded) {
                                 window.clearInterval(decodedTimer);
+                                document.querySelectorAll('.minitigerNativeTrailerActive')
+                                    .forEach(element => element.classList.remove('minitigerNativeTrailerActive'));
+                                activeContainer = elementRef.current?.closest('.minitigerHero, .minitigerLargePreviewHero') || null;
+                                activeContainer?.classList.add('minitigerNativeTrailerActive');
                                 registeredTransparency = true;
                                 document.documentElement.classList.add('minitigerNativeVideoCompositing');
                                 document.body.classList.add('minitigerNativeVideoCompositing');
@@ -205,7 +211,8 @@ const MinitigerNativeTrailerSurface = ({
             window.clearTimeout(geometryTimer);
             window.clearInterval(decodedTimer);
             window.clearInterval(endPoll);
-            if (registeredTransparency) {
+            if (registeredTransparency && window.__minitigerNativePreviewOwner === owner) {
+                activeContainer?.classList.remove('minitigerNativeTrailerActive');
                 document.documentElement.classList.remove('minitigerNativeVideoCompositing');
                 document.body.classList.remove('minitigerNativeVideoCompositing');
             }
@@ -225,7 +232,7 @@ const MinitigerNativeTrailerSurface = ({
 
     if (failedNative) return null;
 
-    return <div ref={elementRef} className={className} aria-hidden='true' />;
+    return <div ref={elementRef} className={`${className} minitigerNativeTrailerSurface`} aria-hidden='true' />;
 };
 
 export default MinitigerNativeTrailerSurface;
