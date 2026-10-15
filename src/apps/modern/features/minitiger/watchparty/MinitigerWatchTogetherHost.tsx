@@ -146,11 +146,39 @@ const MinitigerWatchTogetherHost = () => {
         return () => { cancelled = true; };
     }, [apiClient, room?.Code, room?.Sequence, room?.LastAction, room?.ItemId, room?.PositionTicks]);
 
+    const createFromSelection = async (itemId: string) => {
+        if (!apiClient) return;
+        try {
+            let selected = await apiClient.getItem(apiClient.getCurrentUserId(), itemId);
+            if (selected?.Type === 'Series' || selected?.Type === 'Season') {
+                const episodes = await apiClient.getItems(apiClient.getCurrentUserId(), {
+                    ParentId: selected.Id,
+                    Recursive: selected.Type === 'Series',
+                    IncludeItemTypes: 'Episode',
+                    IsMissing: false,
+                    Limit: 1000,
+                    EnableTotalRecordCount: false
+                });
+                const playable = (episodes.Items || [])
+                    .filter(e => e.Id && e.LocationType !== 'Virtual' && e.LocationType !== 'Offline')
+                    .sort((a, b) => (a.ParentIndexNumber ?? 9999) - (b.ParentIndexNumber ?? 9999)
+                        || (a.IndexNumber ?? 9999) - (b.IndexNumber ?? 9999));
+                selected = playable.find(e => !e.UserData?.Played) || playable[0];
+            }
+            if (!selected?.Id) throw new Error('Kein abspielbarer Film oder Folge gefunden.');
+            await perform(() => createWatchparty(apiClient, selected.Id!));
+        } catch (error) {
+            setMessage('WatchTogether-Raumerstellung: ' + String(error));
+        }
+    };
+
     const change = async (action: 'play' | 'pause' | 'seek') => {
         if (!apiClient || !room || !host) return;
         const player = playbackManager.getCurrentPlayer();
         const state = player ? playbackManager.getPlayerState(player) : null;
-        const ticks = Number(state?.PlayState?.PositionTicks || room.PositionTicks);
+        const ticks = state?.NowPlayingItem?.Id === room.ItemId
+            ? Number(state.PlayState?.PositionTicks ?? room.PositionTicks)
+            : room.PositionTicks;
         await perform(() => sendWatchpartyCommand(apiClient, room.Code, action, ticks, action !== 'play'));
     };
     const exit = async () => {
@@ -221,7 +249,7 @@ const MinitigerWatchTogetherHost = () => {
                     </select>
                 </label>}
                 <button type='button' disabled={busy || !createItemId}
-                    onClick={() => { if (createItemId) void perform(() => createWatchparty(apiClient, createItemId)); }}>
+                    onClick={() => { if (createItemId) void createFromSelection(createItemId); }}>
                     WatchTogether-Raum erstellen
                 </button>
                 {!createItemId && <small>Starte einen Film oder reihe zuerst einen Inhalt ein, um einen Raum zu erstellen.</small>}
