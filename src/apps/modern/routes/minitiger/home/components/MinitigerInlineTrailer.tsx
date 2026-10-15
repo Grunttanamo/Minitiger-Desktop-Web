@@ -1064,8 +1064,10 @@ const resolveSources = async (
             // Fall back only to formats that this player can decode.
             // On the current i5-13500 Jellyfin server, prefer H.264 over
             // expensive software VP9/AV1 encoding. No VP8 transcode.
-            pushH264();
-            pushVp9();
+            if (!isJellyfinDesktopShell()) {
+                pushH264();
+                pushVp9();
+            }
         }
     } catch (error) {
         console.warn(
