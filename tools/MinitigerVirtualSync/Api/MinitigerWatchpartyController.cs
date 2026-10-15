@@ -16,7 +16,8 @@ public sealed class MinitigerWatchpartyController : ControllerBase
     private static readonly TimeSpan RoomTtl = TimeSpan.FromHours(6);
     private static readonly object Gate = new();
 
-    public sealed record CreateRequest(Guid ItemId);
+    public sealed record CreateRequest(Guid? ItemId);
+    public sealed record MoveQueueRequest(int From, int To);
     public sealed record CommandRequest(string Action, long PositionTicks, bool Paused);
     public sealed record JoinRequest(string Code);
     public sealed record ReadyRequest(bool Ready);
@@ -25,7 +26,7 @@ public sealed class MinitigerWatchpartyController : ControllerBase
     {
         public string Code { get; init; } = "";
         public Guid HostUserId { get; init; }
-        public Guid ItemId { get; init; }
+        public Guid ItemId { get; set; }
         public HashSet<Guid> Members { get; } = [];
         public HashSet<Guid> ReadyMembers { get; } = [];
         public List<Guid> Queue { get; } = [];
@@ -67,14 +68,15 @@ public sealed class MinitigerWatchpartyController : ControllerBase
     public IActionResult Create([FromBody] CreateRequest request)
     {
         if (!Identity(out var user)) return Unauthorized();
-        if (request.ItemId == Guid.Empty) return BadRequest("itemId required");
         lock (Gate)
         {
             Prune();
             string code;
             do { code = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(4)); }
             while (Rooms.ContainsKey(code));
-            var room = new Room { Code = code, HostUserId = user, ItemId = request.ItemId };
+            // New rooms start with an EMPTY visible queue. No hidden start item.
+            // The host and guests explicitly add the first title like any other.
+            var room = new Room { Code = code, HostUserId = user };
             room.Members.Add(user);
             Rooms[code] = room;
             return Ok(Snapshot(room));
@@ -126,6 +128,8 @@ public sealed class MinitigerWatchpartyController : ControllerBase
             var action = request.Action?.ToLowerInvariant();
             if (action is not ("play" or "pause" or "seek" or "skip")) return BadRequest("invalid action");
             if (request.PositionTicks < 0) return BadRequest("invalid position");
+            if (action == "play" && room.Queue.Count == 0)
+                return Conflict("queue is empty");
             if (action == "play" && !room.Members.All(room.ReadyMembers.Contains))
                 return Conflict("not all participants ready");
             room.PositionTicks = request.PositionTicks;
@@ -162,7 +166,35 @@ public sealed class MinitigerWatchpartyController : ControllerBase
             if (!Rooms.TryGetValue(code.ToUpperInvariant(), out var room)) return NotFound();
             if (!room.Members.Contains(user)) return Forbid();
             if (room.Queue.Count >= 150) return Conflict("queue full");
+            if (room.Queue.Contains(request.ItemId)) return Conflict("item already queued");
             room.Queue.Add(request.ItemId);
+            room.ItemId = room.Queue[0];
+            room.ReadyMembers.Clear();
+            room.Paused = true;
+            room.UpdatedUtc = DateTimeOffset.UtcNow;
+            return Ok(Snapshot(room));
+        }
+    }
+
+    [HttpPost("Rooms/{code}/Queue/Move")]
+    public IActionResult MoveQueue(string code, [FromBody] MoveQueueRequest request)
+    {
+        if (!Identity(out var user)) return Unauthorized();
+        lock (Gate)
+        {
+            if (!Rooms.TryGetValue(code.ToUpperInvariant(), out var room)) return NotFound();
+            if (!room.Members.Contains(user)) return Forbid();
+            if (room.HostUserId != user) return Forbid();
+            if (request.From < 0 || request.To < 0
+                || request.From >= room.Queue.Count || request.To >= room.Queue.Count)
+                return BadRequest("invalid queue position");
+            if (request.From == request.To) return Ok(Snapshot(room));
+            var media = room.Queue[request.From];
+            room.Queue.RemoveAt(request.From);
+            room.Queue.Insert(request.To, media);
+            room.ItemId = room.Queue[0];
+            room.ReadyMembers.Clear();
+            room.Paused = true;
             room.UpdatedUtc = DateTimeOffset.UtcNow;
             return Ok(Snapshot(room));
         }
@@ -179,6 +211,9 @@ public sealed class MinitigerWatchpartyController : ControllerBase
             if (room.HostUserId != user) return Forbid();
             if (index < 0 || index >= room.Queue.Count) return BadRequest("invalid index");
             room.Queue.RemoveAt(index);
+            room.ItemId = room.Queue.Count > 0 ? room.Queue[0] : Guid.Empty;
+            room.ReadyMembers.Clear();
+            room.Paused = true;
             room.UpdatedUtc = DateTimeOffset.UtcNow;
             return Ok(Snapshot(room));
         }
