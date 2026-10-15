@@ -5,10 +5,13 @@ export interface WatchpartyRoom {
     ItemId: string;
     HostUserId: string;
     Members: string[];
+    ReadyMembers: string[];
+    AllReady: boolean;
+    Queue: string[];
     Sequence: number;
     PositionTicks: number;
     Paused: boolean;
-    LastAction: 'play' | 'pause' | 'seek';
+    LastAction: 'play' | 'pause' | 'seek' | 'skip';
     UpdatedUtc: string;
 }
 
@@ -70,3 +73,12 @@ export const leaveWatchparty = (apiClient: ApiClient, code: string) =>
 export const shouldApplyWatchpartyState = (
     lastSequence: number, state: WatchpartyRoom
 ) => state.Sequence > lastSequence;
+
+export const setWatchpartyReady = (apiClient: ApiClient, code: string, ready: boolean) =>
+    jsonRequest<WatchpartyRoom>(apiClient, 'Rooms/' + encodeURIComponent(code) + '/Ready', 'POST', { ready });
+
+export const enqueueWatchpartyItem = (apiClient: ApiClient, code: string, itemId: string) =>
+    jsonRequest<WatchpartyRoom>(apiClient, 'Rooms/' + encodeURIComponent(code) + '/Queue', 'POST', { itemId });
+
+export const removeWatchpartyQueuedItem = (apiClient: ApiClient, code: string, index: number) =>
+    jsonRequest<WatchpartyRoom>(apiClient, 'Rooms/' + encodeURIComponent(code) + '/Queue/' + index, 'DELETE');
