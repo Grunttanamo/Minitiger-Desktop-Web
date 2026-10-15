@@ -107,7 +107,7 @@ const MinitigerWatchTogetherHost = () => {
             const state = player ? playbackManager.getPlayerState(player) : null;
             const playingId = state?.NowPlayingItem?.Id;
             if (room.LastAction === 'pause') {
-                if (player && !playbackManager.paused(player)) playbackManager.pause(player);
+                if (player && playingId === room.ItemId && !playbackManager.paused(player)) playbackManager.pause(player);
                 return;
             }
             if (room.LastAction === 'play' && (!player || playingId !== room.ItemId)) {
@@ -133,7 +133,7 @@ const MinitigerWatchTogetherHost = () => {
                     .catch(error => setMessage('Wiedergabestart fehlgeschlagen: ' + String(error)));
                 return;
             }
-            if (player) {
+            if (player && playingId === room.ItemId) {
                 if (room.LastAction === 'seek' || room.LastAction === 'skip') {
                     playbackManager.seek(room.PositionTicks, player);
                 }
