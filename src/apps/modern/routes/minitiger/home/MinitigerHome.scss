@@ -6158,3 +6158,17 @@ html.minitigerNativeVideoCompositing .backgroundContainer {
 .minitigerLargePreviewHero .minitigerNativeTrailerSurface {
     transform: none !important;
 }
+
+/* Native MPV and WebEngine share the same GPU. Expensive Chromium
+   backdrop filters force full-screen readbacks/recomposition of the
+   changing video texture, even when the elements are far below the hero.
+   Disable only those filters during an active local MPV preview. */
+html.minitigerNativeVideoCompositing .minitigerHome .minitigerLibraryCard,
+html.minitigerNativeVideoCompositing .minitigerHome .minitigerMediaCard .minitigerQuickPlay,
+html.minitigerNativeVideoCompositing .minitigerHome .minitigerCardBadges span,
+html.minitigerNativeVideoCompositing .minitigerHome .minitigerHeroTrailerAudioButton,
+html.minitigerNativeVideoCompositing .minitigerHome .minitigerHeroTrailerMeta,
+html.minitigerNativeVideoCompositing .minitigerHome .minitigerEpisodePlayedButton {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
