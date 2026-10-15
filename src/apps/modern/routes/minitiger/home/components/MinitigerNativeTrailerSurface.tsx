@@ -89,8 +89,6 @@ const MinitigerNativeTrailerSurface = ({
         }
         const start = (available: boolean) => {
             if (closed || starting || window.__minitigerNativePreviewOwner === owner) return;
-            // Another active preview must not be stolen by a background banner.
-            if (window.__minitigerNativePreviewOwner) return;
             const p = bounds();
             if (!available || !p) { failed(); return; }
             // Only one native surface: newest banner/modal owns it.
