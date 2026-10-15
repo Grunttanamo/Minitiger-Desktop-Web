@@ -41,3 +41,33 @@ jobs:
 
       - name: Build plugin
         run: dotnet build tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csproj --configuration Release --no-restore
+
+      - name: Package WatchTogether TEST companion
+        if: github.ref == 'refs/heads/test/watchparty-same-server-20261014'
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/minitiger-watchtogether-plugin"
+          mkdir -p "$OUT"
+          dotnet publish tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csproj \
+            --configuration Release --no-restore \
+            --output "$OUT" \
+            -p:Version=1.6.23.0 \
+            -p:AssemblyVersion=1.6.23.0 \
+            -p:FileVersion=1.6.23.0
+          test -s "$OUT/Jellyfin.Plugin.MinitigerVirtualSync.dll"
+          mkdir -p "$RUNNER_TEMP/minitiger-test-package"
+          cp "$OUT/Jellyfin.Plugin.MinitigerVirtualSync.dll" "$RUNNER_TEMP/minitiger-test-package/"
+          (
+            cd "$RUNNER_TEMP/minitiger-test-package"
+            zip -9 "$RUNNER_TEMP/Minitiger.VirtualSync_1.6.23.0-WatchTogether-TEST.zip" Jellyfin.Plugin.MinitigerVirtualSync.dll
+          )
+
+      - name: Upload installable WatchTogether TEST ZIP
+        if: github.ref == 'refs/heads/test/watchparty-same-server-20261014'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Minitiger-VirtualSync-1.6.23.0-WatchTogether-TEST
+          path: ${{ runner.temp }}/Minitiger.VirtualSync_1.6.23.0-WatchTogether-TEST.zip
+          if-no-files-found: error
+          retention-days: 14
