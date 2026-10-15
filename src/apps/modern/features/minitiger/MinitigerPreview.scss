@@ -1237,3 +1237,9 @@
     box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.74),
         0 28px 90px rgba(0, 0, 0, 0.84);
 }
+
+/* Avoid a second live backdrop-blur composition pass around the Qt MPV FBO. */
+html.minitigerNativeVideoCompositing .minitigerLargePreviewTrailerMuteButton {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
