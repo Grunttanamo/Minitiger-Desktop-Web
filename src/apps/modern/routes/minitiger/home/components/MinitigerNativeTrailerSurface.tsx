@@ -55,10 +55,19 @@ const MinitigerNativeTrailerSurface = ({
         const bounds = () => {
             const rect = elementRef.current?.getBoundingClientRect();
             if (!rect) return null;
-            const x = Math.max(0, Math.round(rect.left));
+            // The mpv FBO renders ABOVE Chromium. Reserve the left-side
+            // titles/buttons and bottom-right audio/navigation controls;
+            // unlike an underlying FBO, it cannot show HTML overlays through
+            // its opaque video texture.
+            const isHero = className.includes('minitigerHeroTrailerMedia');
+            const isLargePreview = className.includes('minitigerLargePreviewTrailerMedia');
+            const isOverlay = isHero || isLargePreview;
+            const leftCrop = isOverlay ? Math.round(rect.width * (isHero ? 0.34 : 0.28)) : 0;
+            const bottomCrop = isOverlay ? Math.round(rect.height * (isHero ? 0.19 : 0.22)) : 0;
+            const x = Math.max(0, Math.round(rect.left) + leftCrop);
             const y = Math.max(0, Math.round(rect.top));
-            const width = Math.max(0, Math.round(rect.width));
-            const height = Math.max(0, Math.round(rect.height));
+            const width = Math.max(0, Math.round(rect.width) - leftCrop);
+            const height = Math.max(0, Math.round(rect.height) - bottomCrop);
             if (!width || !height || x + width > window.innerWidth + 2
                 || y + height > window.innerHeight + 2) return null;
             return { x, y, width, height };
@@ -169,7 +178,7 @@ const MinitigerNativeTrailerSurface = ({
                 window.dispatchEvent(new Event('minitiger:native-preview-released'));
             }
         };
-    }, [url, loop]);
+    }, [url, loop, className]);
 
     useEffect(() => {
         if (active && window.__minitigerNativePreviewOwner === ownerRef.current) {
