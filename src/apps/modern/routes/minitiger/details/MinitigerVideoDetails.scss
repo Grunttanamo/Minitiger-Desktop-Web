@@ -3242,3 +3242,15 @@ a.minitigerDetailsParentTitle:focus-visible {
     .minitigerSeasonEpisodeRuntime { display:none; }
     .minitigerSeasonEpisodeActions { grid-column:4; }
 }
+
+
+/* Completed season: hide the redundant lower-right toggle after hover ends,
+   including the native button's own isActive hover styling. */
+.minitigerDetailsSeasonVisual .minitigerEpisodePlayedButton.isSeason.minitigerSeasonToggleOnlyOnHover:not(:hover):not(:focus-visible) {
+    opacity: 0 !important;
+    pointer-events: auto;
+}
+.minitigerDetailsSeasonCard:hover .minitigerEpisodePlayedButton.isSeason.minitigerSeasonToggleOnlyOnHover,
+.minitigerDetailsSeasonCard:focus-within .minitigerEpisodePlayedButton.isSeason.minitigerSeasonToggleOnlyOnHover {
+    opacity: 1 !important;
+}
