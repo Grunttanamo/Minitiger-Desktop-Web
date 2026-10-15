@@ -37,7 +37,7 @@ const MinitigerNativeTrailerSurface = ({
 }: Props) => {
     const elementRef = useRef<HTMLDivElement>(null);
     const ownerRef = useRef(`minitiger-trailer-${++nextOwnerId}`);
-    const [fallback, setFallback] = useState(false);
+    const [failedNative, setFailedNative] = useState(false);
     const [active, setActive] = useState(false);
 
     useEffect(() => {
@@ -46,6 +46,8 @@ const MinitigerNativeTrailerSurface = ({
         let starting = false;
         let endPoll = 0;
         let sawPlayback = false;
+        let retries = 0;
+        let retryTimer = 0;
         const owner = ownerRef.current;
         const system = getNative();
 
@@ -79,11 +81,13 @@ const MinitigerNativeTrailerSurface = ({
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
             }
-            setFallback(true);
+            setFailedNative(true);
+            onError();
         };
 
         if (!system?.nativeTrailerPreviewAvailable || !system.nativeTrailerPreviewPlay) {
-            setFallback(true);
+            setFailedNative(true);
+            onError();
             return;
         }
         const start = (available: boolean) => {
@@ -98,7 +102,16 @@ const MinitigerNativeTrailerSurface = ({
                 url, loop, p.x, p.y, p.width, p.height, muted, success => {
                     starting = false;
                     if (closed || window.__minitigerNativePreviewOwner !== owner) return;
-                    if (!success) { failed(); return; }
+                    if (!success) {
+                // Native QML/MPV may still be initializing. Never route a
+                // supposedly native trailer into the Qt HTML5 decoder.
+                if (retries++ < 24) {
+                    if (window.__minitigerNativePreviewOwner === owner) delete window.__minitigerNativePreviewOwner;
+                    retryTimer = window.setTimeout(() => system.nativeTrailerPreviewAvailable?.(start), 200);
+                    return;
+                }
+                failed(); return;
+            }
                     setActive(true);
                     onReady();
                     frame = requestAnimationFrame(move);
@@ -130,6 +143,7 @@ const MinitigerNativeTrailerSurface = ({
         return () => {
             window.removeEventListener('minitiger:native-preview-released', onReleased);
             closed = true;
+            window.clearTimeout(retryTimer);
             cancelAnimationFrame(frame);
             window.clearInterval(endPoll);
             if (window.__minitigerNativePreviewOwner === owner) {
@@ -146,23 +160,7 @@ const MinitigerNativeTrailerSurface = ({
         }
     }, [muted, active]);
 
-    if (fallback) {
-        return (
-            <video
-                className={className}
-                src={url}
-                autoPlay
-                muted={muted}
-                loop={loop}
-                playsInline
-                preload='metadata'
-                disablePictureInPicture
-                onPlaying={onReady}
-                onEnded={onEnded}
-                onError={onError}
-            />
-        );
-    }
+    if (failedNative) return null;
 
     return <div ref={elementRef} className={className} aria-hidden='true' />;
 };
