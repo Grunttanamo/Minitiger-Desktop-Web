@@ -8,6 +8,7 @@ type NativePreviewApi = {
     ) => void;
     nativeTrailerPreviewGeometry: (x: number, y: number, width: number, height: number) => void;
     nativeTrailerPreviewMute: (muted: boolean) => void;
+    nativeTrailerPreviewSuspend: (suspended: boolean) => void;
     nativeTrailerPreviewStop: () => void;
     nativeTrailerPreviewEnded: (callback: (ended: boolean) => void) => void;
     nativeTrailerPreviewHasVideo: (callback: (decoded: boolean) => void) => void;
@@ -55,6 +56,9 @@ const MinitigerNativeTrailerSurface = ({
         let offscreen = false;
         let registeredTransparency = false;
         let activeContainer: Element | null = null;
+        let scrollSuspended = false;
+        let scrollResumeTimer = 0;
+        let decodedVideo = false;
         const owner = ownerRef.current;
         const isPreview = className.includes('minitigerLargePreviewTrailerMedia');
         const system = getNative();
@@ -77,8 +81,25 @@ const MinitigerNativeTrailerSurface = ({
                 || x + width <= 0 || y + height <= 0) return null;
             return { x, y, width, height };
         };
+        const hideCompositing = () => {
+            activeContainer?.classList.remove('minitigerNativeTrailerActive');
+            document.documentElement.classList.remove('minitigerNativeVideoCompositing');
+            document.body.classList.remove('minitigerNativeVideoCompositing');
+            registeredTransparency = false;
+        };
+        const showCompositing = () => {
+            if (closed || scrollSuspended || !decodedVideo ||
+                window.__minitigerNativePreviewOwner !== owner) return;
+            document.querySelectorAll('.minitigerNativeTrailerActive')
+                .forEach(element => element.classList.remove('minitigerNativeTrailerActive'));
+            activeContainer = elementRef.current?.closest('.minitigerHero, .minitigerLargePreviewHero') || null;
+            activeContainer?.classList.add('minitigerNativeTrailerActive');
+            document.documentElement.classList.add('minitigerNativeVideoCompositing');
+            document.body.classList.add('minitigerNativeVideoCompositing');
+            registeredTransparency = true;
+        };
         const move = () => {
-            if (closed || window.__minitigerNativePreviewOwner !== owner) return;
+            if (closed || scrollSuspended || window.__minitigerNativePreviewOwner !== owner) return;
             const p = bounds();
             if (p) {
                 const current = [p.x, p.y, p.width, p.height].join(':');
@@ -89,12 +110,7 @@ const MinitigerNativeTrailerSurface = ({
             }
             else {
                 // Entire container left the viewport: stop and release it.
-                if (registeredTransparency) {
-                    activeContainer?.classList.remove('minitigerNativeTrailerActive');
-                    document.documentElement.classList.remove('minitigerNativeVideoCompositing');
-                    document.body.classList.remove('minitigerNativeVideoCompositing');
-                    registeredTransparency = false;
-                }
+                if (registeredTransparency) hideCompositing();
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
                 delete window.__minitigerNativePreviewKind;
@@ -106,12 +122,7 @@ const MinitigerNativeTrailerSurface = ({
         };
         const failed = () => {
             if (closed) return;
-            if (registeredTransparency && window.__minitigerNativePreviewOwner === owner) {
-                activeContainer?.classList.remove('minitigerNativeTrailerActive');
-                document.documentElement.classList.remove('minitigerNativeVideoCompositing');
-                document.body.classList.remove('minitigerNativeVideoCompositing');
-                registeredTransparency = false;
-            }
+            if (registeredTransparency && window.__minitigerNativePreviewOwner === owner) hideCompositing();
             if (window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
@@ -186,13 +197,8 @@ const MinitigerNativeTrailerSurface = ({
                             if (closed || window.__minitigerNativePreviewOwner !== owner) return;
                             if (decoded) {
                                 window.clearInterval(decodedTimer);
-                                document.querySelectorAll('.minitigerNativeTrailerActive')
-                                    .forEach(element => element.classList.remove('minitigerNativeTrailerActive'));
-                                activeContainer = elementRef.current?.closest('.minitigerHero, .minitigerLargePreviewHero') || null;
-                                activeContainer?.classList.add('minitigerNativeTrailerActive');
-                                registeredTransparency = true;
-                                document.documentElement.classList.add('minitigerNativeVideoCompositing');
-                                document.body.classList.add('minitigerNativeVideoCompositing');
+                                decodedVideo = true;
+                                showCompositing();
                                 onReady();
                             } else if (++checks >= 48) {
                                 window.clearInterval(decodedTimer);
@@ -218,6 +224,55 @@ const MinitigerNativeTrailerSurface = ({
                 }
             );
         };
+        const resumeAfterScroll = () => {
+            scrollResumeTimer = 0;
+            if (closed) return;
+            if (offscreen) {
+                if (bounds() && !window.__minitigerNativePreviewOwner) {
+                    offscreen = false;
+                    system?.nativeTrailerPreviewAvailable?.(start);
+                }
+                return;
+            }
+            if (!scrollSuspended || window.__minitigerNativePreviewOwner !== owner) return;
+            const p = bounds();
+            if (!p) {
+                // Fully offscreen: leave native decoding off and show artwork.
+                hideCompositing();
+                scrollSuspended = false;
+                system?.nativeTrailerPreviewStop?.();
+                delete window.__minitigerNativePreviewOwner;
+                delete window.__minitigerNativePreviewKind;
+                offscreen = true;
+                setActive(false);
+                return;
+            }
+            // Only ONE geometry update, after scroll has completely settled.
+            const current = [p.x, p.y, p.width, p.height].join(':');
+            system?.nativeTrailerPreviewGeometry?.(p.x, p.y, p.width, p.height);
+            lastBounds = current;
+            scrollSuspended = false;
+            system?.nativeTrailerPreviewSuspend?.(false);
+            showCompositing();
+            geometryTimer = window.setTimeout(move, 250);
+        };
+        const scrollIntent = () => {
+            if (closed) return;
+            window.clearTimeout(scrollResumeTimer);
+            if (window.__minitigerNativePreviewOwner === owner && system?.nativeTrailerPreviewSuspend) {
+                if (!scrollSuspended) {
+                    scrollSuspended = true;
+                    window.clearTimeout(geometryTimer);
+                    // Hide the FBO and restore the normal Chromium backdrop
+                    // BEFORE the scroll frame is composited, avoiding stale
+                    // texture copies all over the home screen.
+                    if (registeredTransparency) hideCompositing();
+                    system?.nativeTrailerPreviewSuspend?.(true);
+                }
+            }
+            if (scrollSuspended || offscreen)
+                scrollResumeTimer = window.setTimeout(resumeAfterScroll, 420);
+        };
         const onReleased = () => {
             if (!closed && !window.__minitigerNativePreviewOwner && elementRef.current?.isConnected
                 && bounds()) {
@@ -226,32 +281,34 @@ const MinitigerNativeTrailerSurface = ({
             }
         };
         const onViewportReturn = () => {
-            if (offscreen && !closed && bounds()) {
-                offscreen = false;
-                system.nativeTrailerPreviewAvailable?.(start);
-            }
+            if (offscreen && !closed) scrollIntent();
         };
+        // Capture wheel/touch input before Chromium draws the next scroll frame.
+        window.addEventListener('wheel', scrollIntent, { capture: true, passive: true });
+        window.addEventListener('touchmove', scrollIntent, { capture: true, passive: true });
+        window.addEventListener('scroll', scrollIntent, true);
         window.addEventListener('scroll', onViewportReturn, true);
         window.addEventListener('resize', onViewportReturn);
         window.addEventListener('minitiger:native-preview-released', onReleased);
         system.nativeTrailerPreviewAvailable(start);
         return () => {
             window.removeEventListener('minitiger:native-preview-released', onReleased);
+            window.removeEventListener('wheel', scrollIntent, true);
+            window.removeEventListener('touchmove', scrollIntent, true);
+            window.removeEventListener('scroll', scrollIntent, true);
             window.removeEventListener('scroll', onViewportReturn, true);
             window.removeEventListener('resize', onViewportReturn);
             closed = true;
             window.clearTimeout(retryTimer);
+            window.clearTimeout(scrollResumeTimer);
             window.clearTimeout(geometryTimer);
             window.clearInterval(decodedTimer);
             window.clearInterval(endPoll);
-            if (registeredTransparency && window.__minitigerNativePreviewOwner === owner) {
-                activeContainer?.classList.remove('minitigerNativeTrailerActive');
-                document.documentElement.classList.remove('minitigerNativeVideoCompositing');
-                document.body.classList.remove('minitigerNativeVideoCompositing');
-            }
+            if (registeredTransparency && window.__minitigerNativePreviewOwner === owner) hideCompositing();
             if (window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
+                delete window.__minitigerNativePreviewKind;
                 window.dispatchEvent(new Event('minitiger:native-preview-released'));
             }
         };
