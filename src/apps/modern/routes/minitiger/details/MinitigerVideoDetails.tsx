@@ -1359,11 +1359,13 @@ const MinitigerVideoDetails = () => {
                                                         title='Staffel-Menü'
                                                     />
 
-                                                    <MinitigerEpisodePlayedButton
-                                                        item={season}
-                                                        itemLabel='Staffel'
-                                                        className='isSeason'
-                                                    />
+                                                    <div className={seasonPlayed ? 'minitigerSeasonToggleOnlyOnHover' : ''}>
+                                                        <MinitigerEpisodePlayedButton
+                                                            item={season}
+                                                            itemLabel='Staffel'
+                                                            className='isSeason'
+                                                        />
+                                                    </div>
 
                                                     {seasonPoster ? (
                                                         <img
