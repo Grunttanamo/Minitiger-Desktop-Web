@@ -64,12 +64,16 @@ const MinitigerNativeTrailerSurface = ({
             const isOverlay = isHero || isLargePreview;
             const leftCrop = isOverlay ? Math.round(rect.width * (isHero ? 0.34 : 0.28)) : 0;
             const bottomCrop = isOverlay ? Math.round(rect.height * (isHero ? 0.19 : 0.22)) : 0;
+            // Transform, overscan and DPI can put a CSS media rectangle a
+            // few pixels outside the native Qt window. Clip to the viewport
+            // instead of rejecting the entire native MPV playback.
             const x = Math.max(0, Math.round(rect.left) + leftCrop);
             const y = Math.max(0, Math.round(rect.top));
-            const width = Math.max(0, Math.round(rect.width) - leftCrop);
-            const height = Math.max(0, Math.round(rect.height) - bottomCrop);
-            if (!width || !height || x + width > window.innerWidth + 2
-                || y + height > window.innerHeight + 2) return null;
+            const right = Math.min(window.innerWidth - 2, Math.round(rect.right));
+            const bottom = Math.min(window.innerHeight - 2, Math.round(rect.bottom) - bottomCrop);
+            const width = Math.max(0, right - x);
+            const height = Math.max(0, bottom - y);
+            if (width < 32 || height < 32) return null;
             return { x, y, width, height };
         };
         const move = () => {
