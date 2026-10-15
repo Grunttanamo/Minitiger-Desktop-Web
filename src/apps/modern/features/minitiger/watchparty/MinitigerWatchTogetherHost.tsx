@@ -62,7 +62,7 @@ const MinitigerWatchTogetherHost = () => {
     const host = Boolean(room && user?.Id === room.HostUserId);
     const current = playbackManager.getCurrentPlayer();
     const currentItemId = current ? playbackManager.getPlayerState(current)?.NowPlayingItem?.Id : undefined;
-    const choices = readSoloQueue(apiClient, activeSoloQueueProfileId(apiClient));
+    const choices = apiClient ? readSoloQueue(apiClient, activeSoloQueueProfileId(apiClient)) : [];
     const createItemId = currentItemId || selectedItem || choices[0]?.itemId;
     const change = async (action: 'play' | 'pause' | 'seek') => {
         if (!apiClient || !room || !host) return;
