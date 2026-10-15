@@ -1260,6 +1260,7 @@ export const runMinitigerTrailerDiagnostic = async (
         api?: { system?: {
             nativeTrailerPreviewAvailable?: (cb: (available: boolean) => void) => void;
             nativeTrailerPreviewEnded?: (cb: (ended: boolean) => void) => void;
+            nativeTrailerPreviewStatus?: (cb: (status: string) => void) => void;
         } }
     }).api?.system;
     const nativeAvailable = await new Promise<boolean>(resolve => {
@@ -1275,6 +1276,17 @@ export const runMinitigerTrailerDiagnostic = async (
     });
     lines.push(`Native MPV Preview: ${nativeAvailable ? 'verfügbar' : 'nicht verfügbar'}`);
     lines.push('H264/VP9 canPlayType: nur HTML5-Decoder, NICHT MPV');
+    if (nativeAvailable && nativeApi?.nativeTrailerPreviewStatus) {
+        const status = await new Promise<string>(resolve => {
+            const timeout = window.setTimeout(() => resolve('MPV-Status: Zeitüberschreitung'), 1500);
+            nativeApi.nativeTrailerPreviewStatus?.(value => {
+                window.clearTimeout(timeout);
+                resolve(value || 'MPV-Status: keine Daten');
+            });
+        });
+        lines.push('--- Tatsächlicher nativer MPV-Status ---');
+        lines.push(status.replace(/(ApiKey|api_key|apiKey|token|access_token)=[^&\\s]+/gi, '$1=<redacted>'));
+    }
     lines.push('');
 
     const trailers = await resolveMinitigerLocalTrailers(
