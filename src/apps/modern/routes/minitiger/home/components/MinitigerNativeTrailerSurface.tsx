@@ -64,7 +64,7 @@ const MinitigerNativeTrailerSurface = ({
         const system = getNative();
 
         const bounds = () => {
-            // Qt renders its own full-size FBO behind WebEngine. Use the exact
+            // Qt paints VLC video frames behind WebEngine. Use the exact
             // DOM media CONTAINER, not the CSS-overscanned placeholder or a
             // cropped viewport fragment. Qt naturally clips the FBO at the
             // window edge without changing the video's aspect ratio.
@@ -147,7 +147,7 @@ const MinitigerNativeTrailerSurface = ({
             const p = bounds();
             if (!p) { failed(); return; }
             if (!available) {
-                // MPV has a real asynchronous QtQuick render-context startup.
+                // VLC initializes libVLC and its Qt video surface asynchronously.
                 // A missing ready signal is not permission to use HTML5.
                 if (retries++ < 35) {
                     retryTimer = window.setTimeout(() => system.nativeTrailerPreviewAvailable?.(start), 200);
@@ -166,7 +166,7 @@ const MinitigerNativeTrailerSurface = ({
                     starting = false;
                     if (closed || window.__minitigerNativePreviewOwner !== owner) return;
                     if (!success) {
-                // Native QML/MPV may still be initializing. Never route a
+                // The VLC preview surface may still be initializing. Never route a
                 // supposedly native trailer into the Qt HTML5 decoder.
                 if (retries++ < 24) {
                     if (window.__minitigerNativePreviewOwner === owner) {
@@ -181,7 +181,7 @@ const MinitigerNativeTrailerSurface = ({
                     setActive(true);
                     geometryTimer = window.setTimeout(move, 200);
                     // A successful "loadfile" command is NOT a decoded frame.
-                    // Keep the backdrop until the real libmpv decoder reports
+                    // Keep the backdrop until the real libVLC decoder reports
                     // a video track, instead of claiming playback too early.
                     if (!system.nativeTrailerPreviewHasVideo) {
                         failed();
@@ -210,7 +210,7 @@ const MinitigerNativeTrailerSurface = ({
                         });
                     }, 250);
                     if (!loop && system.nativeTrailerPreviewEnded) {
-                        // EOF is exposed by the native MPV instance, not HTML5.
+                        // EOF is exposed by the native VLC instance, not HTML5.
                         endPoll = window.setInterval(() => {
                             if (closed || window.__minitigerNativePreviewOwner !== owner) return;
                             system.nativeTrailerPreviewEnded?.(ended => {
