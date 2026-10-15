@@ -3254,3 +3254,14 @@ a.minitigerDetailsParentTitle:focus-visible {
 .minitigerDetailsSeasonCard:focus-within .minitigerEpisodePlayedButton.isSeason.minitigerSeasonToggleOnlyOnHover {
     opacity: 1 !important;
 }
+
+
+/* Focus-within persisted after clicking; only genuine hover or keyboard focus
+   should reveal the lower-right completed-season control. */
+.minitigerDetailsSeasonCard:not(:hover) .minitigerEpisodePlayedButton.isSeason.minitigerSeasonToggleOnlyOnHover:not(:focus-visible) {
+    opacity: 0 !important;
+}
+.minitigerDetailsSeasonCard:hover .minitigerEpisodePlayedButton.isSeason.minitigerSeasonToggleOnlyOnHover,
+.minitigerDetailsSeasonCard .minitigerEpisodePlayedButton.isSeason.minitigerSeasonToggleOnlyOnHover:focus-visible {
+    opacity: 1 !important;
+}
