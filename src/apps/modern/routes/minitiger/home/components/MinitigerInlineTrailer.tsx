@@ -1076,7 +1076,9 @@ const resolveSources = async (
         );
     }
 
-    if (allowYouTube) {
+    // A local Desktop trailer must never jump to the YouTube iframe after an
+    // MPV startup failure; that would mask a broken native preview.
+    if (allowYouTube && !(isJellyfinDesktopShell() && sources.some(entry => entry.kind === 'video'))) {
         for (
             const trailer
             of item.RemoteTrailers ?? []
