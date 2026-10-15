@@ -34,7 +34,15 @@ const jsonRequest = async <T>(
         },
         ...(body ? { body: JSON.stringify(body) } : {})
     });
-    if (!response.ok) throw new Error('Watchparty HTTP ' + response.status);
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error('HTTP 401 – Jellyfin hat die WatchTogether-Anmeldung abgewiesen. Companion 1.6.23.0 und Server-Neustart prüfen.');
+        }
+        if (response.status === 404) {
+            throw new Error('HTTP 404 – WatchTogether-Endpunkt nicht gefunden. Companion-Version prüfen.');
+        }
+        throw new Error('Watchparty HTTP ' + response.status);
+    }
     if (response.status === 204) return undefined as T;
     return response.json() as Promise<T>;
 };
