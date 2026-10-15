@@ -85,7 +85,13 @@ const MinitigerNativeTrailerSurface = ({
                 }
             }
             else {
-                // Do not leave an offscreen native decoder playing audio.
+                // Entire container left the viewport: stop and release it.
+                if (registeredTransparency) {
+                    activeContainer?.classList.remove('minitigerNativeTrailerActive');
+                    document.documentElement.classList.remove('minitigerNativeVideoCompositing');
+                    document.body.classList.remove('minitigerNativeVideoCompositing');
+                    registeredTransparency = false;
+                }
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
                 setActive(false);
@@ -95,15 +101,16 @@ const MinitigerNativeTrailerSurface = ({
         };
         const failed = () => {
             if (closed) return;
-            if (window.__minitigerNativePreviewOwner === owner) {
-                system?.nativeTrailerPreviewStop?.();
-                delete window.__minitigerNativePreviewOwner;
-            }
             if (registeredTransparency && window.__minitigerNativePreviewOwner === owner) {
                 activeContainer?.classList.remove('minitigerNativeTrailerActive');
                 document.documentElement.classList.remove('minitigerNativeVideoCompositing');
                 document.body.classList.remove('minitigerNativeVideoCompositing');
                 registeredTransparency = false;
+            }
+            if (window.__minitigerNativePreviewOwner === owner) {
+                system?.nativeTrailerPreviewStop?.();
+                delete window.__minitigerNativePreviewOwner;
+                window.dispatchEvent(new Event('minitiger:native-preview-released'));
             }
             setFailedNative(true);
             onError();
