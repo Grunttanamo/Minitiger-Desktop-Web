@@ -2,3 +2,7 @@
 .minitigerWatchTogether{position:relative;inset:auto;display:inline-flex;align-items:center;z-index:1801}
 .minitigerWatchTogetherPanel{top:calc(100% + 12px);right:0}
 .minitigerWatchTogetherPanel select{padding:9px;background:#252935;color:white;border:1px solid #ffffff44;border-radius:6px;width:100%}
+
+/* Video OSD lives in a clipped Qt WebEngine hierarchy. Fix popover in viewport. */
+.minitigerWatchTogetherPanel{position:fixed!important;top:64px!important;right:14px!important;left:auto!important;max-height:calc(100dvh - 84px);overflow-y:auto;overscroll-behavior:contain;z-index:99999}
+@media(max-width:600px){.minitigerWatchTogetherPanel{top:56px!important;right:8px!important;max-height:calc(100dvh - 66px)}}
