@@ -1213,3 +1213,21 @@
 .minitigerSeriesSeasonDivider:first-child {
     margin-top: 0.2rem;
 }
+
+
+/* Transparent punch-through for standalone Qt libmpv FBO, preserving the
+   preview's DOM controls above the video rather than covering them. */
+.minitigerLargePreviewBackdrop:has(.minitigerNativeTrailerActive) {
+    background: transparent !important;
+}
+.minitigerLargePreview:has(.minitigerNativeTrailerActive),
+.minitigerLargePreviewHero.minitigerNativeTrailerActive {
+    background: transparent !important;
+}
+.minitigerLargePreviewHero.minitigerNativeTrailerActive > img,
+.minitigerLargePreviewHero.minitigerNativeTrailerActive .minitigerLargePreviewFallback {
+    visibility: hidden !important;
+}
+.minitigerLargePreview:has(.minitigerNativeTrailerActive) > .minitigerLargePreviewContent {
+    background: #181818;
+}
