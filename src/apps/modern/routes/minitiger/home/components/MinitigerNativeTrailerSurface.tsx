@@ -113,6 +113,7 @@ const MinitigerNativeTrailerSurface = ({
             if (window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
+                delete window.__minitigerNativePreviewKind;
                 window.dispatchEvent(new Event('minitiger:native-preview-released'));
             }
             setFailedNative(true);
@@ -155,7 +156,10 @@ const MinitigerNativeTrailerSurface = ({
                 // Native QML/MPV may still be initializing. Never route a
                 // supposedly native trailer into the Qt HTML5 decoder.
                 if (retries++ < 24) {
-                    if (window.__minitigerNativePreviewOwner === owner) delete window.__minitigerNativePreviewOwner;
+                    if (window.__minitigerNativePreviewOwner === owner) {
+                        delete window.__minitigerNativePreviewOwner;
+                        delete window.__minitigerNativePreviewKind;
+                    }
                     retryTimer = window.setTimeout(() => system.nativeTrailerPreviewAvailable?.(start), 200);
                     return;
                 }
