@@ -22,6 +22,7 @@ const MinitigerWatchTogetherHost = () => {
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
     const [selectedItem, setSelectedItem] = useState('');
+    const [queuedTitles, setQueuedTitles] = useState<Record<string, string>>({});
     const appliedSequence = useRef<string>('');
     const [playerOsdVisible, setPlayerOsdVisible] = useState(true);
 
@@ -71,6 +72,23 @@ const MinitigerWatchTogetherHost = () => {
         } finally { setBusy(false); }
     };
     const host = Boolean(room && user?.Id === room.HostUserId);
+    useEffect(() => {
+        if (!apiClient || !room?.Queue?.length) return;
+        let cancelled = false;
+        const uniqueIds = Array.from(new Set(room.Queue));
+        void Promise.all(uniqueIds.map(async itemId => {
+            try {
+                const item = await apiClient.getItem(apiClient.getCurrentUserId(), itemId);
+                return [itemId, item?.Name || itemId] as const;
+            } catch {
+                return [itemId, itemId] as const;
+            }
+        })).then(titles => {
+            if (!cancelled) setQueuedTitles(Object.fromEntries(titles));
+        });
+        return () => { cancelled = true; };
+    }, [apiClient, room?.Code, room?.Queue?.join(',')]);
+
     const ownReady = Boolean(room?.ReadyMembers?.includes(user?.Id || ''));
     const current = playbackManager.getCurrentPlayer();
     const currentItemId = current ? playbackManager.getPlayerState(current)?.NowPlayingItem?.Id : undefined;
@@ -168,7 +186,7 @@ const MinitigerWatchTogetherHost = () => {
                 <strong>Gemeinsame Warteschlange ({room.Queue?.length || 0})</strong>
                 {(room.Queue || []).map((id, index) => <div key={index} className='minitigerWatchTogetherQueueRow'>
                     <img src={apiClient.getUrl('Items/' + encodeURIComponent(id) + '/Images/Primary', { maxWidth: 96 })} alt='' loading='lazy' />
-                    <small>{index + 1}. {choices.find(e => e.itemId === id)?.title || id}</small>
+                    <small>{index + 1}. {queuedTitles[id] || choices.find(e => e.itemId === id)?.title || id}</small>
                     {host && <button type='button' disabled={busy} onClick={() => void perform(() => removeWatchpartyQueuedItem(apiClient, room.Code, index))}>×</button>}
                 </div>)}
                 {choices.length > 0 && <>
