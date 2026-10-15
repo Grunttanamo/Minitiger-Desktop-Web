@@ -284,9 +284,6 @@ const MinitigerNativeTrailerSurface = ({
                 system.nativeTrailerPreviewAvailable?.(start);
             }
         };
-        const onViewportReturn = () => {
-            if (offscreen && !closed) scrollIntent();
-        };
         // Capture wheel/touch input before Chromium draws the next scroll frame.
         window.addEventListener('wheel', scrollIntent, { capture: true, passive: true });
         window.addEventListener('touchmove', scrollIntent, { capture: true, passive: true });
@@ -299,8 +296,6 @@ const MinitigerNativeTrailerSurface = ({
         window.addEventListener('keydown', scrollKey, true);
         window.addEventListener('resize', scrollIntent);
         window.addEventListener('scroll', scrollIntent, true);
-        window.addEventListener('scroll', onViewportReturn, true);
-        window.addEventListener('resize', onViewportReturn);
         window.addEventListener('minitiger:native-preview-released', onReleased);
         system.nativeTrailerPreviewAvailable(start);
         return () => {
@@ -310,8 +305,6 @@ const MinitigerNativeTrailerSurface = ({
             window.removeEventListener('keydown', scrollKey, true);
             window.removeEventListener('resize', scrollIntent);
             window.removeEventListener('scroll', scrollIntent, true);
-            window.removeEventListener('scroll', onViewportReturn, true);
-            window.removeEventListener('resize', onViewportReturn);
             closed = true;
             window.clearTimeout(retryTimer);
             window.clearTimeout(scrollResumeTimer);
