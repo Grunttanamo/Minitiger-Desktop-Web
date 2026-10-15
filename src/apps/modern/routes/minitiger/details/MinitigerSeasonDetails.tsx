@@ -307,11 +307,12 @@ const MinitigerSeasonDetails = ({
                                 }
                             </h1>
 
-                            {apiClient && <button type='button' title='Ganze Staffel einreihen'
-                                onClick={() => addSoloQueueItem(apiClient, activeSoloQueueProfileId(apiClient), season)}>
-                                ⊕ Staffel einreihen
-                            </button>}
                             <div className='minitigerDetailsMeta'>
+                                {apiClient && <button type='button' className='minitigerSeasonQueueBadge'
+                                    title='Ganze Staffel einreihen'
+                                    onClick={() => addSoloQueueItem(apiClient, activeSoloQueueProfileId(apiClient), season)}>
+                                    + Staffel einreihen
+                                </button>}
                                 <span>
                                     {
                                         episodes.length
@@ -448,19 +449,19 @@ const MinitigerSeasonDetails = ({
                                                         }
                                                     </strong>
 
-                                                    {apiClient && <button type='button'
-                                                        className='minitigerSeasonEpisodeMenu'
-                                                        title='Folge einreihen'
-                                                        aria-label='Folge einreihen'
-                                                        onClick={() => addSoloQueueItem(apiClient, activeSoloQueueProfileId(apiClient), episode)}>
-                                                        ⊕
-                                                    </button>}
-                                                    <MinitigerEpisodePlayedButton
-                                                        item={episode}
-                                                        placement='inline'
-                                                    />
-
-                                                    <button
+                                                    <div className='minitigerSeasonEpisodeActions'>
+                                                        {apiClient && <button type='button'
+                                                            className='minitigerSeasonEpisodeMenu minitigerSeasonQueueAdd'
+                                                            title='Folge einreihen'
+                                                            aria-label='Folge einreihen'
+                                                            onClick={() => addSoloQueueItem(apiClient, activeSoloQueueProfileId(apiClient), episode)}>
+                                                            +
+                                                        </button>}
+                                                        <MinitigerEpisodePlayedButton
+                                                            item={episode}
+                                                            placement='inline'
+                                                        />
+                                                        <button
                                                         type='button'
                                                         className='minitigerSeasonEpisodeMenu'
                                                         title='Mehr'
@@ -473,7 +474,8 @@ const MinitigerSeasonDetails = ({
                                                         }
                                                     >
                                                         ⋮
-                                                    </button>
+                                                        </button>
+                                                    </div>
                                                 </article>
                                             );
                                         }
