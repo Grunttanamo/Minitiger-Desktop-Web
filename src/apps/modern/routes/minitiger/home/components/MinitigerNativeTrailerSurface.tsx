@@ -43,7 +43,6 @@ const MinitigerNativeTrailerSurface = ({
     useEffect(() => {
         let closed = false;
         let frame = 0;
-        let started = false;
         let starting = false;
         let endPoll = 0;
         let sawPlayback = false;
@@ -100,7 +99,6 @@ const MinitigerNativeTrailerSurface = ({
                     starting = false;
                     if (closed || window.__minitigerNativePreviewOwner !== owner) return;
                     if (!success) { failed(); return; }
-                    started = true;
                     setActive(true);
                     onReady();
                     frame = requestAnimationFrame(move);
