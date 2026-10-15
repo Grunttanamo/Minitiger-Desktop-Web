@@ -52,6 +52,7 @@ const MinitigerNativeTrailerSurface = ({
         let sawPlayback = false;
         let retries = 0;
         let retryTimer = 0;
+        let offscreen = false;
         let registeredTransparency = false;
         let activeContainer: Element | null = null;
         const owner = ownerRef.current;
@@ -97,6 +98,7 @@ const MinitigerNativeTrailerSurface = ({
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
                 delete window.__minitigerNativePreviewKind;
+                offscreen = true;
                 setActive(false);
                 return;
             }
@@ -217,14 +219,26 @@ const MinitigerNativeTrailerSurface = ({
             );
         };
         const onReleased = () => {
-            if (!closed && !window.__minitigerNativePreviewOwner && elementRef.current?.isConnected) {
+            if (!closed && !window.__minitigerNativePreviewOwner && elementRef.current?.isConnected
+                && bounds()) {
+                offscreen = false;
                 system.nativeTrailerPreviewAvailable?.(start);
             }
         };
+        const onViewportReturn = () => {
+            if (offscreen && !closed && bounds()) {
+                offscreen = false;
+                system.nativeTrailerPreviewAvailable?.(start);
+            }
+        };
+        window.addEventListener('scroll', onViewportReturn, true);
+        window.addEventListener('resize', onViewportReturn);
         window.addEventListener('minitiger:native-preview-released', onReleased);
         system.nativeTrailerPreviewAvailable(start);
         return () => {
             window.removeEventListener('minitiger:native-preview-released', onReleased);
+            window.removeEventListener('scroll', onViewportReturn, true);
+            window.removeEventListener('resize', onViewportReturn);
             closed = true;
             window.clearTimeout(retryTimer);
             window.clearTimeout(geometryTimer);
