@@ -51,31 +51,26 @@ const MinitigerNativeTrailerSurface = ({
         let sawPlayback = false;
         let retries = 0;
         let retryTimer = 0;
+        let registeredTransparency = false;
         const owner = ownerRef.current;
         const system = getNative();
 
         const bounds = () => {
-            const rect = elementRef.current?.getBoundingClientRect();
-            if (!rect) return null;
-            // The mpv FBO renders ABOVE Chromium. Reserve the left-side
-            // titles/buttons and bottom-right audio/navigation controls;
-            // unlike an underlying FBO, it cannot show HTML overlays through
-            // its opaque video texture.
-            const isHero = className.includes('minitigerHeroTrailerMedia');
-            const isLargePreview = className.includes('minitigerLargePreviewTrailerMedia');
-            const isOverlay = isHero || isLargePreview;
-            const leftCrop = isOverlay ? Math.round(rect.width * (isHero ? 0.34 : 0.28)) : 0;
-            const bottomCrop = isOverlay ? Math.round(rect.height * (isHero ? 0.19 : 0.22)) : 0;
-            // Transform, overscan and DPI can put a CSS media rectangle a
-            // few pixels outside the native Qt window. Clip to the viewport
-            // instead of rejecting the entire native MPV playback.
-            const x = Math.max(0, Math.round(rect.left) + leftCrop);
-            const y = Math.max(0, Math.round(rect.top));
-            const right = Math.min(window.innerWidth - 2, Math.round(rect.right));
-            const bottom = Math.min(window.innerHeight - 2, Math.round(rect.bottom) - bottomCrop);
-            const width = Math.max(0, right - x);
-            const height = Math.max(0, bottom - y);
-            if (width < 32 || height < 32) return null;
+            // Qt renders its own full-size FBO behind WebEngine. Use the exact
+            // DOM media CONTAINER, not the CSS-overscanned placeholder or a
+            // cropped viewport fragment. Qt naturally clips the FBO at the
+            // window edge without changing the video's aspect ratio.
+            const element = elementRef.current;
+            if (!element) return null;
+            const container = element.closest('.minitigerHero, .minitigerLargePreviewHero') || element;
+            const rect = container.getBoundingClientRect();
+            const x = Math.round(rect.left);
+            const y = Math.round(rect.top);
+            const width = Math.round(rect.width);
+            const height = Math.round(rect.height);
+            if (width < 32 || height < 32
+                || x >= window.innerWidth || y >= window.innerHeight
+                || x + width <= 0 || y + height <= 0) return null;
             return { x, y, width, height };
         };
         const move = () => {
@@ -102,6 +97,11 @@ const MinitigerNativeTrailerSurface = ({
             if (window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
+            }
+            if (registeredTransparency) {
+                document.documentElement.classList.remove('minitigerNativeVideoCompositing');
+                document.body.classList.remove('minitigerNativeVideoCompositing');
+                registeredTransparency = false;
             }
             setFailedNative(true);
             onError();
@@ -163,6 +163,9 @@ const MinitigerNativeTrailerSurface = ({
                             if (closed || window.__minitigerNativePreviewOwner !== owner) return;
                             if (decoded) {
                                 window.clearInterval(decodedTimer);
+                                registeredTransparency = true;
+                                document.documentElement.classList.add('minitigerNativeVideoCompositing');
+                                document.body.classList.add('minitigerNativeVideoCompositing');
                                 onReady();
                             } else if (++checks >= 48) {
                                 window.clearInterval(decodedTimer);
@@ -202,6 +205,10 @@ const MinitigerNativeTrailerSurface = ({
             window.clearTimeout(geometryTimer);
             window.clearInterval(decodedTimer);
             window.clearInterval(endPoll);
+            if (registeredTransparency) {
+                document.documentElement.classList.remove('minitigerNativeVideoCompositing');
+                document.body.classList.remove('minitigerNativeVideoCompositing');
+            }
             if (window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
                 delete window.__minitigerNativePreviewOwner;
