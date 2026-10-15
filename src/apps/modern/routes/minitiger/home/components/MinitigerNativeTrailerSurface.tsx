@@ -42,7 +42,8 @@ const MinitigerNativeTrailerSurface = ({
 
     useEffect(() => {
         let closed = false;
-        let frame = 0;
+        let geometryTimer = 0;
+        let lastBounds = '';
         let starting = false;
         let endPoll = 0;
         let sawPlayback = false;
@@ -65,7 +66,13 @@ const MinitigerNativeTrailerSurface = ({
         const move = () => {
             if (closed || window.__minitigerNativePreviewOwner !== owner) return;
             const p = bounds();
-            if (p) system?.nativeTrailerPreviewGeometry?.(p.x, p.y, p.width, p.height);
+            if (p) {
+                const current = [p.x, p.y, p.width, p.height].join(':');
+                if (current !== lastBounds) {
+                    lastBounds = current;
+                    system?.nativeTrailerPreviewGeometry?.(p.x, p.y, p.width, p.height);
+                }
+            }
             else {
                 // Do not leave an offscreen native decoder playing audio.
                 system?.nativeTrailerPreviewStop?.();
@@ -73,7 +80,7 @@ const MinitigerNativeTrailerSurface = ({
                 setActive(false);
                 return;
             }
-            frame = requestAnimationFrame(move);
+            geometryTimer = window.setTimeout(move, 200);
         };
         const failed = () => {
             if (closed) return;
@@ -114,7 +121,7 @@ const MinitigerNativeTrailerSurface = ({
             }
                     setActive(true);
                     onReady();
-                    frame = requestAnimationFrame(move);
+                    geometryTimer = window.setTimeout(move, 200);
                     if (!loop && system.nativeTrailerPreviewEnded) {
                         // EOF is exposed by the native MPV instance, not HTML5.
                         endPoll = window.setInterval(() => {
@@ -144,7 +151,7 @@ const MinitigerNativeTrailerSurface = ({
             window.removeEventListener('minitiger:native-preview-released', onReleased);
             closed = true;
             window.clearTimeout(retryTimer);
-            cancelAnimationFrame(frame);
+            window.clearTimeout(geometryTimer);
             window.clearInterval(endPoll);
             if (window.__minitigerNativePreviewOwner === owner) {
                 system?.nativeTrailerPreviewStop?.();
