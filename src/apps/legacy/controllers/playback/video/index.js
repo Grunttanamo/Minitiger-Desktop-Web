@@ -1742,6 +1742,11 @@ export default function (view) {
         currentVisibleMenu = 'minitigerQueue';
         showOsd();
     });
+    // Close is inside the video view; stop its pointer/click before
+    // the view-level play/pause handler can interpret it as video input.
+    ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick'].forEach(type => {
+        mtQueuePanel.addEventListener(type, event => event.stopPropagation());
+    });
     mtQueueClose.addEventListener('click', closeMinitigerQueue);
     mtQueueClear.addEventListener('click', () => {
         const context = getMinitigerQueueContext();
@@ -2097,7 +2102,7 @@ export default function (view) {
         // Never forward popup/episode-preview interactions to the video's
         // global play/pause click handler (including close/move controls).
         if (e.target?.closest?.(
-            '.minitigerEpisodePreviewPanel, .minitigerFloatingQueuePanel, .minitigerWatchTogetherPanel, .minitigerFloatingQueue, .minitigerWatchTogether, button, input, select, textarea, [role="dialog"]'
+            '.minitigerQueueOsdPanel, .minitigerQueueOsdCard, .minitigerEpisodePreviewPanel, .minitigerFloatingQueuePanel, .minitigerWatchTogetherPanel, .minitigerFloatingQueue, .minitigerWatchTogether, button, input, select, textarea, [role="dialog"]'
         ) || dom.parentWithClass(e.target, ['videoOsdBottom', 'upNextContainer', 'minitigerEpisodePreviewPanel'])) {
             showOsd();
             return;
