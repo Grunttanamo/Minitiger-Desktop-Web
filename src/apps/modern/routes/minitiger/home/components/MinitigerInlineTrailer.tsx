@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 
 import type { ItemDto } from 'types/base/models/item-dto';
-import MinitigerNativeTrailerSurface from './MinitigerNativeTrailerSurface';
 
 import {
     getMinitigerAccessToken
@@ -27,6 +26,7 @@ type TrailerSource =
             | 'direct'
             | 'download'
             | 'transcode-h264'
+            | 'transcode-vp8'
             | 'transcode-vp9';
     }
     | {
@@ -106,24 +106,6 @@ const trailerCache =
     new Map<string, TrailerCacheEntry>();
 
 const CACHE_MS = 60_000;
-const MAX_TRAILER_CACHE_ENTRIES = 96;
-
-// Expired trailers should not retain old URLs and session metadata.
-const pruneTrailerCache = () => {
-    const now = Date.now();
-    for (const [ key, entry ] of trailerCache) {
-        if (now - entry.timestamp >= CACHE_MS) {
-            trailerCache.delete(key);
-        }
-    }
-    while (trailerCache.size >= MAX_TRAILER_CACHE_ENTRIES) {
-        const oldest = trailerCache.keys().next().value;
-        if (!oldest) {
-            break;
-        }
-        trailerCache.delete(oldest);
-    }
-};
 
 export const notifyMinitigerLocalTrailerChanged = (
     apiClient: ApiClient,
@@ -328,25 +310,6 @@ const createPlaySessionId = () => {
     }
 };
 
-// Cached transcoding URLs must not reuse a previous PlaySessionId.
-const refreshTranscodeSessionIds = (entries: TrailerSource[]): TrailerSource[] =>
-    entries.map(source => {
-        if (source.kind !== 'video' || !source.mode.startsWith('transcode-')) {
-            return source;
-        }
-        const sessionId = createPlaySessionId();
-        if (!sessionId) {
-            return source;
-        }
-        try {
-            const url = new URL(source.url, window.location.href);
-            url.searchParams.set('PlaySessionId', sessionId);
-            return { ...source, url: url.toString() };
-        } catch {
-            return source;
-        }
-    });
-
 const browserCanPlay = (
     mime: string
 ) => {
@@ -420,115 +383,62 @@ const getMediaCodecs = (
     };
 };
 
-// This checks the HTML5 banner player, not the native VLC preview player.
-// Direct Play requires a supported container, video codec AND audio codec.
-// VP8 may exist in source files, but is deliberately not offered here.
-const getDirectPlayMime = (trailer: TrailerItem) => {
+const isLikelyBrowserSafe = (
+    trailer: TrailerItem
+) => {
     const {
         videoCodec,
         audioCodec,
         container
     } = getMediaCodecs(trailer);
-    const format = container.split(',')[0]?.trim() ?? '';
 
-    let mimeType = '';
-    let videoMimeCodec = '';
-    let audioMimeCodec = '';
+    const mp4Like =
+        [
+            'mp4',
+            'm4v',
+            'mov'
+        ].includes(container);
 
-    if ([ 'mp4', 'm4v', 'mov' ].includes(format)) {
-        mimeType = 'video/mp4';
+    const webmLike =
+        container === 'webm';
 
-        if ([ 'h264', 'avc', 'avc1' ].includes(videoCodec)) {
-            videoMimeCodec = 'avc1.42E01E';
-        } else if ([ 'h265', 'hevc', 'hvc1', 'hev1' ].includes(videoCodec)) {
-            videoMimeCodec = 'hvc1.1.6.L93.B0';
-        } else if ([ 'av1', 'av01' ].includes(videoCodec)) {
-            videoMimeCodec = 'av01.0.05M.08';
-        }
+    const mp4Video =
+        [
+            'h264',
+            'avc',
+            'avc1'
+        ].includes(videoCodec);
 
-        if (audioCodec === 'aac') {
-            audioMimeCodec = 'mp4a.40.2';
-        } else if (audioCodec === 'mp3') {
-            audioMimeCodec = 'mp4a.6B';
-        } else if (audioCodec) {
-            return undefined;
-        }
-    } else if (format === 'webm') {
-        mimeType = 'video/webm';
+    const mp4Audio =
+        !audioCodec
+        || [
+            'aac',
+            'mp3'
+        ].includes(audioCodec);
 
-        if ([ 'vp9', 'vp09' ].includes(videoCodec)) {
-            videoMimeCodec = 'vp9';
-        } else if ([ 'av1', 'av01' ].includes(videoCodec)) {
-            videoMimeCodec = 'av01.0.05M.08';
-        }
+    const webmVideo =
+        [
+            'vp8',
+            'vp9',
+            'av1'
+        ].includes(videoCodec);
 
-        if ([ 'opus', 'vorbis' ].includes(audioCodec)) {
-            audioMimeCodec = audioCodec;
-        } else if (audioCodec) {
-            return undefined;
-        }
-    }
+    const webmAudio =
+        !audioCodec
+        || [
+            'opus',
+            'vorbis'
+        ].includes(audioCodec);
 
-    if (!mimeType || !videoMimeCodec) {
-        return undefined;
-    }
-
-    const combinedCodecs = [
-        videoMimeCodec,
-        audioMimeCodec
-    ].filter(Boolean).join(', ');
-
-    return {
-        combinedMime: `${mimeType}; codecs="${combinedCodecs}"`,
-        videoMime: `${mimeType}; codecs="${videoMimeCodec}"`
-    };
-};
-
-const canDirectPlayTrailer = async (
-    trailer: TrailerItem
-) => {
-    const mime = getDirectPlayMime(trailer);
-
-    if (!mime || !browserCanPlay(mime.combinedMime)) {
-        return false;
-    }
-
-    // MediaCapabilities reports estimated smoothness based on the actual
-    // rendering environment. It is optional: canPlayType remains the fallback
-    // for older Qt WebEngine implementations.
-    if (
-        typeof navigator === 'undefined'
-        || !navigator.mediaCapabilities?.decodingInfo
-    ) {
-        return true;
-    }
-
-    const source = trailer.MediaSources?.[0];
-    const videoStream = source?.MediaStreams?.find(stream =>
-        String(stream.Type ?? '').toLowerCase() === 'video'
+    return (
+        mp4Like
+        && mp4Video
+        && mp4Audio
+    ) || (
+        webmLike
+        && webmVideo
+        && webmAudio
     );
-
-    try {
-        const result = await navigator.mediaCapabilities.decodingInfo({
-            type: 'file',
-            video: {
-                contentType: mime.videoMime,
-                width: Number(videoStream?.Width) || 1280,
-                height: Number(videoStream?.Height) || 720,
-                bitrate: Number(source?.Bitrate) || 5_000_000,
-                framerate: Number(videoStream?.RealFrameRate)
-                    || Number(videoStream?.AverageFrameRate)
-                    || 30
-            }
-        });
-
-        return result.supported && result.smooth;
-    } catch {
-        // Some Qt builds do not implement decodingInfo for every codec.
-        // The earlier MIME capability check still provides a safe baseline,
-        // and HTML5 playback errors will fall back to another source.
-        return true;
-    }
 };
 
 const buildDirectVideoUrl = (
@@ -593,7 +503,7 @@ const buildDownloadVideoUrl = (
 const buildForcedTranscodeUrl = (
     apiClient: ApiClient,
     trailer: TrailerItem,
-    target: 'h264' | 'vp9'
+    target: 'h264' | 'vp8' | 'vp9'
 ) => {
     if (!trailer.Id) {
         return undefined;
@@ -607,9 +517,13 @@ const buildForcedTranscodeUrl = (
             apiClient
         );
 
-    const isWebm = target === 'vp9';
+    const isWebm = target === 'vp8' || target === 'vp9';
     const container = isWebm ? 'webm' : 'mp4';
-    const videoBitRate = isWebm ? 2_000_000 : 5_000_000;
+    const videoBitRate = target === 'vp8'
+        ? 1_100_000
+        : target === 'vp9'
+            ? 2_000_000
+            : 5_000_000;
     const maxWidth = isWebm ? 640 : 1280;
     const maxHeight = isWebm ? 360 : 720;
 
@@ -929,9 +843,7 @@ const resolveSources = async (
     }
 
     const cacheKey =
-        `${apiClient.serverId?.() ?? 'server'}:${item.Id}:user-${apiClient.getCurrentUserId?.() ?? 'user'}:local-${allowLocal ? '1' : '0'}:youtube-${allowYouTube ? '1' : '0'}`;
-
-    pruneTrailerCache();
+        `${apiClient.serverId?.() ?? 'server'}:${item.Id}:local-${allowLocal ? '1' : '0'}:youtube-${allowYouTube ? '1' : '0'}`;
 
     const cached =
         trailerCache.get(cacheKey);
@@ -942,7 +854,7 @@ const resolveSources = async (
             - cached.timestamp
             < CACHE_MS
     ) {
-        return refreshTranscodeSessionIds(cached.sources);
+        return cached.sources;
     }
 
     const sources:
@@ -996,6 +908,13 @@ const resolveSources = async (
                     'h264'
                 );
 
+            const vp8 =
+                buildForcedTranscodeUrl(
+                    apiClient,
+                    local,
+                    'vp8'
+                );
+
             const vp9 =
                 buildForcedTranscodeUrl(
                     apiClient,
@@ -1005,6 +924,9 @@ const resolveSources = async (
 
             const canH264 = browserCanPlay(
                 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
+            );
+            const canVp8 = browserCanPlay(
+                'video/webm; codecs="vp8, opus"'
             );
             const canVp9 = browserCanPlay(
                 'video/webm; codecs="vp9, opus"'
@@ -1021,6 +943,17 @@ const resolveSources = async (
                 }
             };
 
+            const pushVp8 = () => {
+                if (vp8 && canVp8) {
+                    sources.push({
+                        kind: 'video',
+                        url: vp8,
+                        key: `${local.Id}-forced-vp8`,
+                        mode: 'transcode-vp8'
+                    });
+                }
+            };
+
             const pushVp9 = () => {
                 if (vp9 && canVp9) {
                     sources.push({
@@ -1032,12 +965,58 @@ const resolveSources = async (
                 }
             };
 
-            const directPlayable = await canDirectPlayTrailer(local);
+            const desktopShell =
+                isJellyfinDesktopShell();
 
-            // An original trailer costs the server no video transcoding.
-            // Only offer this path if the *banner* decoder supports the
-            // actual video+audio+container combination, independent of VLC.
-            if (directPlayable || isJellyfinDesktopShell()) {
+            const directCodecPlayable = (
+                [ 'mp4', 'm4v', 'mov' ].includes(container)
+                    ? canH264
+                    : container === 'webm'
+                        ? (
+                            videoCodec === 'vp8'
+                                ? canVp8
+                                : canVp9
+                        )
+                        : isLikelyBrowserSafe(local)
+            );
+
+            if (desktopShell) {
+                /*
+                 * Local trailers are intentionally enabled again for the
+                 * native Minitiger Desktop test. Qt WebEngine often reports
+                 * no H264/AAC support, so prefer a royalty-free WebM
+                 * transcode (VP8, then VP9) before direct local playback.
+                 *
+                 * This restores the original local-trailer behavior so the
+                 * interaction with Intro Skipper / library analysis can be
+                 * tested under otherwise optimized frontend conditions.
+                 */
+                if (canVp8) {
+                    pushVp8();
+                } else {
+                    pushVp9();
+                }
+
+                if (directCodecPlayable && direct) {
+                    sources.push({
+                        kind: 'video',
+                        url: direct,
+                        key: `${local.Id}-desktop-direct`,
+                        mode: 'direct'
+                    });
+                }
+
+                if (directCodecPlayable && download) {
+                    sources.push({
+                        kind: 'video',
+                        url: download,
+                        key: `${local.Id}-desktop-download`,
+                        mode: 'download'
+                    });
+                }
+
+                pushH264();
+            } else if (isLikelyBrowserSafe(local)) {
                 if (direct) {
                     sources.push({
                         kind: 'video',
@@ -1047,11 +1026,7 @@ const resolveSources = async (
                     });
                 }
 
-                // Automatic desktop previews must never hit Items/.../Download:
-                // Jellyfin records those requests as UserDownloadingContent.
-                // Use the original static stream first and codec fallbacks
-                // afterwards; retain download fallback for the browser only.
-                if (download && !isJellyfinDesktopShell()) {
+                if (download) {
                     sources.push({
                         kind: 'video',
                         url: download,
@@ -1059,14 +1034,23 @@ const resolveSources = async (
                         mode: 'download'
                     });
                 }
-            }
 
-            // Fall back only to formats that this player can decode.
-            // On the current i5-13500 Jellyfin server, prefer H.264 over
-            // expensive software VP9/AV1 encoding. No VP8 transcode.
-            if (!isJellyfinDesktopShell()) {
                 pushH264();
+                pushVp8();
                 pushVp9();
+            } else {
+                pushH264();
+                pushVp8();
+                pushVp9();
+
+                if (direct) {
+                    sources.push({
+                        kind: 'video',
+                        url: direct,
+                        key: `${local.Id}-direct-last`,
+                        mode: 'direct'
+                    });
+                }
             }
         }
     } catch (error) {
@@ -1076,9 +1060,7 @@ const resolveSources = async (
         );
     }
 
-    // A local Desktop trailer must never jump to the YouTube iframe after an
-    // VLC startup failure; that would mask a broken native preview.
-    if (allowYouTube && !(isJellyfinDesktopShell() && sources.some(entry => entry.kind === 'video'))) {
+    if (allowYouTube) {
         for (
             const trailer
             of item.RemoteTrailers ?? []
@@ -1112,7 +1094,7 @@ const resolveSources = async (
         }
     );
 
-    return refreshTranscodeSessionIds(sources);
+    return sources;
 };
 
 
@@ -1216,7 +1198,8 @@ const probeVideoSource = async (
         });
 
         const timeoutMs = (
-            source.mode === 'transcode-vp9'
+            source.mode === 'transcode-vp8'
+            || source.mode === 'transcode-vp9'
         ) ? 20_000 : 8_000;
 
         const timer = window.setTimeout(() => {
@@ -1259,38 +1242,8 @@ export const runMinitigerTrailerDiagnostic = async (
     lines.push(`ClientShell: ${isJellyfinDesktopShell() ? 'Jellyfin Desktop erkannt' : 'Browser/Web'}`);
     lines.push(`UserAgent: ${typeof navigator !== 'undefined' ? navigator.userAgent : '-'}`);
     lines.push(`canPlay H264/AAC MP4: ${browserCanPlay('video/mp4; codecs="avc1.42E01E, mp4a.40.2"')}`);
+    lines.push(`canPlay VP8/Opus WebM: ${browserCanPlay('video/webm; codecs="vp8, opus"')}`);
     lines.push(`canPlay VP9/Opus WebM: ${browserCanPlay('video/webm; codecs="vp9, opus"')}`);
-    const nativeApi = (window as unknown as {
-        api?: { system?: {
-            nativeTrailerPreviewAvailable?: (cb: (available: boolean) => void) => void;
-            nativeTrailerPreviewEnded?: (cb: (ended: boolean) => void) => void;
-            nativeTrailerPreviewStatus?: (cb: (status: string) => void) => void;
-        } }
-    }).api?.system;
-    const nativeAvailable = await new Promise<boolean>(resolve => {
-        if (!isJellyfinDesktopShell() || !nativeApi?.nativeTrailerPreviewAvailable) {
-            resolve(false);
-            return;
-        }
-        const timeout = window.setTimeout(() => resolve(false), 1500);
-        nativeApi.nativeTrailerPreviewAvailable(available => {
-            window.clearTimeout(timeout);
-            resolve(Boolean(available));
-        });
-    });
-    lines.push(`Native VLC Preview: ${nativeAvailable ? 'verfügbar' : 'nicht verfügbar'}`);
-    lines.push('H264/VP9 canPlayType: nur HTML5-Decoder, NICHT VLC');
-    if (nativeAvailable && nativeApi?.nativeTrailerPreviewStatus) {
-        const status = await new Promise<string>(resolve => {
-            const timeout = window.setTimeout(() => resolve('VLC-Status: Zeitüberschreitung'), 1500);
-            nativeApi.nativeTrailerPreviewStatus?.(value => {
-                window.clearTimeout(timeout);
-                resolve(value || 'VLC-Status: keine Daten');
-            });
-        });
-        lines.push('--- Tatsächlicher nativer VLC-Status ---');
-        lines.push(status.replace(/(ApiKey|api_key|apiKey|token|access_token)=[^&\\s]+/gi, '$1=<redacted>'));
-    }
     lines.push('');
 
     const trailers = await resolveMinitigerLocalTrailers(
@@ -1339,11 +1292,13 @@ export const runMinitigerTrailerDiagnostic = async (
         const direct = buildDirectVideoUrl(apiClient, trailer);
         const download = buildDownloadVideoUrl(apiClient, trailer);
         const h264 = buildForcedTranscodeUrl(apiClient, trailer, 'h264');
+        const vp8 = buildForcedTranscodeUrl(apiClient, trailer, 'vp8');
         const vp9 = buildForcedTranscodeUrl(apiClient, trailer, 'vp9');
 
         lines.push(`Generated Direct: ${sanitizeDiagnosticUrl(direct)}`);
         lines.push(`Generated Download: ${sanitizeDiagnosticUrl(download)}`);
         lines.push(`Generated H264 Transcode: ${sanitizeDiagnosticUrl(h264)}`);
+        lines.push(`Generated VP8 Transcode: ${sanitizeDiagnosticUrl(vp8)}`);
         lines.push(`Generated VP9 Transcode: ${sanitizeDiagnosticUrl(vp9)}`);
     });
 
@@ -1363,19 +1318,6 @@ export const runMinitigerTrailerDiagnostic = async (
         lines.push('Keine lokale Videoquelle wurde erzeugt.');
     }
 
-    if (nativeAvailable) {
-        lines.push('Player: Separater nativer libVLC-Trailerplayer (Banner & große Vorschaukarte)');
-        lines.push('Modus: Jellyfin-Originalquelle (Direct Play); keine HTML5-/MPV-Wiedergabe für lokale Desktop-Trailer');
-        lines.push('Die Diagnose startet KEINE weiteren VLC-/FFmpeg-Streams neben dem laufenden Banner.');
-        lines.push(`Bevorzugte Quelle: ${videoSources[0]?.mode ?? '-'}`);
-        lines.push(`Bevorzugte URL: ${sanitizeDiagnosticUrl(videoSources[0]?.url)}`);
-        lines.push('Hinweis: VLC-Verfügbarkeit beweist noch nicht die erfolgreiche Wiedergabe; Video-Frame-Status siehe oben.');
-        lines.push('');
-        lines.push('=== Ende Diagnose ===');
-        return lines.join('\n');
-    }
-
-    lines.push('HTML5-Fallback: Wiedergabeproben mit Browser-Videoelement');
     for (let index = 0; index < videoSources.length; index++) {
         const source = videoSources[index];
         lines.push(`Probe ${index + 1}: mode=${source.mode}`);
@@ -1433,68 +1375,6 @@ const MinitigerInlineTrailer = ({
 
     const readyStateRef =
         useRef(false);
-
-    const stoppedEncodingSessionsRef = useRef<Set<string>>(new Set());
-
-    const releaseLocalVideo = React.useCallback((
-        video: HTMLVideoElement | null,
-        trailerSource: TrailerSource | undefined
-    ) => {
-        if (trailerSource?.kind !== 'video') {
-            return;
-        }
-
-        // First detach the media request, then terminate its own transcoder.
-        if (video) {
-            try {
-                video.pause();
-                video.removeAttribute('src');
-                video.load();
-            } catch {
-                // Never break navigation during media cleanup.
-            }
-        }
-
-        if (!apiClient || !trailerSource.mode.startsWith('transcode-')) {
-            return;
-        }
-
-        let sessionId: string | null = null;
-        try {
-            sessionId = new URL(
-                trailerSource.url,
-                window.location.href
-            ).searchParams.get('PlaySessionId');
-        } catch {
-            return;
-        }
-
-        if (!sessionId || stoppedEncodingSessionsRef.current.has(sessionId)) {
-            return;
-        }
-        const stoppedSessions = stoppedEncodingSessionsRef.current;
-        stoppedSessions.add(sessionId);
-
-        // Bound the bookkeeping set in long-running clients.
-        if (stoppedSessions.size > 128) {
-            const oldest = stoppedSessions.values().next().value;
-
-            if (oldest) {
-                stoppedSessions.delete(oldest);
-            }
-        }
-
-        // The promise chain also captures synchronous failures without
-        // throwing during React cleanup or trailer navigation.
-        void Promise.resolve()
-            .then(() => apiClient.stopActiveEncodings(sessionId))
-            .catch(error => {
-                console.warn(
-                    '[Minitiger Trailer] Transcoding-Sitzung konnte nicht beendet werden',
-                    error
-                );
-            });
-    }, [apiClient]);
 
     const [
         sources,
@@ -1676,7 +1556,6 @@ const MinitigerInlineTrailer = ({
         );
 
     const advance = () => {
-        releaseLocalVideo(videoRef.current, source);
         setReady(false);
 
         setSourceIndex(index => {
@@ -1732,19 +1611,6 @@ const MinitigerInlineTrailer = ({
         return () =>
             observer.disconnect();
     }, [source?.key]);
-
-    useEffect(() => {
-        if (!enabled || source?.kind !== 'video') return;
-
-        const video = videoRef.current;
-        return () => {
-            // React may replay effects while the same element is still mounted
-            // (StrictMode). Only detach an element being replaced or removed.
-            if (video && !video.isConnected) {
-                releaseLocalVideo(video, source);
-            }
-        };
-    }, [ enabled, source, releaseLocalVideo ]);
 
     useEffect(() => {
         if (
@@ -1909,7 +1775,8 @@ const MinitigerInlineTrailer = ({
 
         const key = source.key;
         const watchdogMs = (
-            source.mode === 'transcode-vp9'
+            source.mode === 'transcode-vp8'
+            || source.mode === 'transcode-vp9'
         ) ? 20_000 : 7_500;
 
         const watchdog = window.setTimeout(() => {
@@ -2002,22 +1869,6 @@ const MinitigerInlineTrailer = ({
         return null;
     }
 
-    if (source.kind === 'video' && isJellyfinDesktopShell()
-        && (source.mode === 'direct' || source.mode === 'download')) {
-        return (
-            <MinitigerNativeTrailerSurface
-                key={source.url}
-                url={source.url}
-                className={hostClass}
-                muted={muted}
-                loop={loop}
-                onReady={() => setReady(true)}
-                onEnded={() => onEndedRef.current?.()}
-                onError={advance}
-            />
-        );
-    }
-
     if (source.kind === 'video') {
         return (
             <video
@@ -2025,7 +1876,7 @@ const MinitigerInlineTrailer = ({
                     videoRef.current = element;
                     visibilityRef.current = element;
                 }}
-                key={`${source.key}:${source.url}`}
+                key={source.key}
                 className={hostClass}
                 src={source.url}
                 autoPlay
