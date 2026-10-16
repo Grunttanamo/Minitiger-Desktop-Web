@@ -143,6 +143,7 @@ const MinitigerHero = ({
     const [ trailerLoading, setTrailerLoading ] = useState(false);
     const [ trailerReady, setTrailerReady ] = useState(false);
     const [ trailerMuted, setTrailerMuted ] = useState(false);
+    const [ trailerVolume, setTrailerVolume ] = useState(1);
     const paused = trailerDebugOpen || (trailerLoading && autoRotateMs !== -1000);
     const [ backdropFailed, setBackdropFailed ] = useState(false);
     const [ logoFailed, setLogoFailed ] = useState(false);
@@ -442,6 +443,7 @@ const MinitigerHero = ({
                     loop={autoRotateMs !== -1000}
                     onEnded={() => { if (autoRotateMs === -1000) showNext(); }}
                     muted={trailerMuted}
+                    volume={trailerVolume}
                     allowYouTube={youtubeTrailersEnabled}
                     allowLocal={localTrailersEnabled}
                 />
@@ -587,6 +589,19 @@ const MinitigerHero = ({
             {showFsk && ratingLabel && (
                 <div className='minitigerHeroFskFloating'>
                     {ratingLabel}
+                </div>
+            )}
+
+            {trailerReady && (
+                <div className='minitigerHeroVolumeControl' aria-label='Trailer-Lautstärke'>
+                    <input type='range' min='0' max='100' step='1'
+                        aria-label='Trailer-Lautstärke' orient='vertical'
+                        value={Math.round(trailerVolume * 100)}
+                        onChange={event => {
+                            const next = Number(event.currentTarget.value) / 100;
+                            setTrailerVolume(next);
+                            setTrailerMuted(next === 0);
+                        }} />
                 </div>
             )}
 
