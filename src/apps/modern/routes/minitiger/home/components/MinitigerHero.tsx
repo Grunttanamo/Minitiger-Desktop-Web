@@ -142,7 +142,7 @@ const MinitigerHero = ({
     const [ trailerDebugOpen, setTrailerDebugOpen ] = useState(false);
     const [ trailerLoading, setTrailerLoading ] = useState(false);
     const [ trailerReady, setTrailerReady ] = useState(false);
-    const [ trailerMuted, setTrailerMuted ] = useState(true);
+    const [ trailerMuted, setTrailerMuted ] = useState(false);
     const paused = trailerDebugOpen || (trailerLoading && autoRotateMs !== -1000);
     const [ backdropFailed, setBackdropFailed ] = useState(false);
     const [ logoFailed, setLogoFailed ] = useState(false);
@@ -177,7 +177,7 @@ const MinitigerHero = ({
         (detailedItem ?? activeCandidate) as ItemDto | undefined;
 
     useEffect(() => {
-        setTrailerMuted(true);
+        setTrailerMuted(false);
         setTrailerReady(false);
     }, [heroItem?.Id]);
 
