@@ -998,14 +998,14 @@ const LargePreview = ({
     const [
         trailerMuted,
         setTrailerMuted
-    ] = useState(true);
+    ] = useState(false);
     const [
         trailerReady,
         setTrailerReady
     ] = useState(false);
 
     useEffect(() => {
-        setTrailerMuted(true);
+        setTrailerMuted(false);
         setTrailerReady(false);
     }, [heroItem.Id]);
 
