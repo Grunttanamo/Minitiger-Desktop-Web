@@ -595,7 +595,7 @@ const MinitigerHero = ({
             {trailerReady && (
                 <div className='minitigerHeroVolumeControl' aria-label='Trailer-Lautstärke'>
                     <input type='range' min='0' max='100' step='1'
-                        aria-label='Trailer-Lautstärke' orient='vertical'
+                        aria-label='Trailer-Lautstärke'
                         value={Math.round(trailerVolume * 100)}
                         onChange={event => {
                             const next = Number(event.currentTarget.value) / 100;
