@@ -45,6 +45,38 @@ const copyText = async (text: string) => {
     }
 };
 
+// A concise reading for nontechnical users; the complete raw report stays
+// available below and can be copied without losing any troubleshooting data.
+const summarizeTrailerReport = (report: string, running: boolean) => {
+    if (running) return { title: 'Diagnose läuft', message: 'Minitiger prüft gerade die Trailerquelle und den Playerstatus.', color: '#e7b326' };
+    if (!report) return { title: 'Noch keine Diagnose', message: 'Starte einen Test, um den aktuellen Trailer zu prüfen.', color: '#aaaaaa' };
+    if (/DIAGNOSE FEHLGESCHLAGEN|TRAILER-NEUEINLESEN FEHLGESCHLAGEN/.test(report)) {
+        return { title: 'Fehler bei der Diagnose', message: 'Die Messung konnte nicht abgeschlossen werden. Die technischen Details stehen unten.', color: '#ff7777' };
+    }
+    if (/Lokale Trailer erkannt: 0|keinen lokalen Trailer/.test(report)) {
+        return { title: 'Kein lokaler Trailer', message: 'Jellyfin liefert für diesen Titel keinen lokalen Trailer. Nutze gegebenenfalls „Trailer neu einlesen“.', color: '#ffbf5e' };
+    }
+    if (/previewPaused=yes|previewSuspended=true/.test(report)) {
+        return { title: 'Trailer pausiert', message: 'Der native VLC-Player ist aktuell pausiert. Prüfe, ob der Trailer sichtbar ist und ob ein Scrollereignis die Pause ausgelöst hat.', color: '#ffbf5e' };
+    }
+    const first = report.match(/firstFrameMs=(-?\d+)/);
+    const fps = report.match(/decoderCallbackFpsApprox=([\d.]+)/);
+    const visible = report.match(/previewVisible=(yes|no)/);
+    if (first && Number(first[1]) < 0) {
+        return { title: 'Warte auf Videobild', message: 'Der VLC-Player ist gestartet, aber es wurde bislang noch kein erstes Bild gemeldet.', color: '#ffbf5e' };
+    }
+    if (first && Number(first[1]) > 3000) {
+        return { title: 'Langsamer Trailerstart', message: `Das erste Videobild kam erst nach ${(Number(first[1]) / 1000).toFixed(1)} Sekunden. Ein Initialisierungsproblem ist möglich.`, color: '#ffbf5e' };
+    }
+    if (fps && Number(fps[1]) > 0 && Number(fps[1]) < 12 && visible?.[1] === 'yes') {
+        return { title: 'Niedrige Decoder-Bildrate', message: `VLC meldet derzeit nur ungefähr ${fps[1]} decodierte Bilder pro Sekunde. Das ist nicht die tatsächliche Bildschirm-FPS-Zahl.`, color: '#ffbf5e' };
+    }
+    if (/Video frame received: yes/.test(report)) {
+        return { title: 'Trailerbilder werden empfangen', message: 'VLC meldet Videobilder. Ob die Anzeige wirklich flüssig ist, kann diese Messung allein nicht bestätigen. Bitte zusätzlich auf Ruckler und Layoutfehler achten.', color: '#83d5a0' };
+    }
+    return { title: 'Diagnose vorhanden', message: 'Die erfassten Rohdaten stehen unten. Noch kein eindeutiger Wiedergabestatus ableitbar.', color: '#aaaaaa' };
+};
+
 const MinitigerTrailerDebugPanel = ({
     apiClient,
     item,
@@ -55,6 +87,8 @@ const MinitigerTrailerDebugPanel = ({
     const [ refreshing, setRefreshing ] = useState(false);
     const [ report, setReport ] = useState('');
     const [ copyState, setCopyState ] = useState('Kopieren');
+    const [ showDetails, setShowDetails ] = useState(false);
+    const summary = summarizeTrailerReport(report, running || refreshing);
 
     const run = useCallback(async () => {
         if (!apiClient || !item) {
@@ -227,13 +261,21 @@ ${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}`
                             Der Test nutzt exakt dieselben lokalen Quellen wie die Banner-Vorschau. Zugangstokens werden vor der Anzeige automatisch entfernt.
                         </p>
 
-                        <textarea
+                        <div style={{ background: '#191b20', borderLeft: `4px solid ${summary.color}`, padding: '14px 16px', borderRadius: 8, marginBottom: 12 }} role='status'>
+                            <strong style={{ color: summary.color, display: 'block', marginBottom: 8 }}>Einfach erklärt: {summary.title}</strong>
+                            <p style={{ margin: 0, lineHeight: 1.5 }}>{summary.message}</p>
+                            <p style={{ opacity: 0.75, fontSize: '0.85em', margin: '8px 0 0' }}>Hinweis: Ein grüner Playerstatus bestätigt noch keine störungsfreie Darstellung. Fade-, Scroll- und Vorschaukartenfehler bleiben separat zu prüfen.</p>
+                        </div>
+                        <button type='button' className='minitigerHeroButton' onClick={() => setShowDetails(value => !value)} aria-expanded={showDetails} style={{ marginBottom: 10 }}>
+                            {showDetails ? '▾ Technische Details ausblenden' : '▸ Technische Details für Fehlersuche anzeigen'}
+                        </button>
+                        {showDetails && <textarea
                             className='minitigerTrailerDebugOutput'
                             value={report}
                             readOnly
                             spellCheck={false}
-                            aria-label='Trailer-Diagnose Ergebnis'
-                        />
+                            aria-label='Trailer-Diagnose technische Details'
+                        />}
 
                         <footer className='minitigerTrailerDebugActions'>
                             <button
