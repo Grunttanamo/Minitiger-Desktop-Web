@@ -59,6 +59,26 @@ const summarizeTrailerReport = (report: string, running: boolean) => {
     if (/previewPaused=yes|previewSuspended=true/.test(report)) {
         return { title: 'Trailer pausiert', message: 'Der native VLC-Player ist aktuell pausiert. Prüfe, ob der Trailer sichtbar ist und ob ein Scrollereignis die Pause ausgelöst hat.', color: '#ffbf5e' };
     }
+    const paintRate = report.match(/qtPaintFpsApprox=([\d.]+)/);
+    const callbackRate = report.match(/decoderCallbackFpsApprox=([\d.]+)/);
+    const paintTime = report.match(/qtPaintAverageMs=([\d.]+)/);
+    const mutexTime = report.match(/frameMutexWaitAverageMs=([\d.]+)/);
+    if (paintRate && callbackRate && Number(paintRate[1]) > 0
+        && Number(paintRate[1]) < 8 && Number(callbackRate[1]) >= 15) {
+        return { title: 'VLC liefert Bilder, Qt zeichnet zu langsam',
+            message: `VLC liefert ungefähr ${callbackRate[1]} Bilder/s, Qt zeichnet jedoch nur etwa ${paintRate[1]} Mal/s. Zeichenzeit: ${paintTime?.[1] ?? '?'} ms, Pufferwartezeit: ${mutexTime?.[1] ?? '?'} ms. Die Ursache liegt wahrscheinlich im Zeichnen oder in der Oberflächen-Komposition.`,
+            color: '#ffbf5e' };
+    }
+    if (paintTime && Number(paintTime[1]) > 25) {
+        return { title: 'Langsamer Qt-Zeichenvorgang',
+            message: `Ein Zeichenvorgang dauert durchschnittlich ${paintTime[1]} ms. VLC decodiert unabhängig davon; die Bildausgabe könnte die Oberfläche ausbremsen.`,
+            color: '#ffbf5e' };
+    }
+    if (mutexTime && Number(mutexTime[1]) > 10) {
+        return { title: 'VLC-Puffer bremst Qt',
+            message: `Qt wartet durchschnittlich ${mutexTime[1]} ms auf den Framepuffer. Das weist auf Konkurrenz zwischen Decoder und Bildausgabe hin.`,
+            color: '#ffbf5e' };
+    }
     const first = report.match(/firstFrameMs=(-?\d+)/);
     const fps = report.match(/decoderCallbackFpsApprox=([\d.]+)/);
     const visible = report.match(/previewVisible=(yes|no)/);
