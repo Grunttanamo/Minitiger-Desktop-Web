@@ -2094,7 +2094,11 @@ export default function (view) {
     let lastPointerDown = 0;
     /* eslint-disable-next-line compat/compat */
     dom.addEventListener(view, window.PointerEvent ? 'pointerdown' : 'click', function (e) {
-        if (dom.parentWithClass(e.target, ['videoOsdBottom', 'upNextContainer', 'minitigerEpisodePreviewPanel'])) {
+        // Never forward popup/episode-preview interactions to the video's
+        // global play/pause click handler (including close/move controls).
+        if (e.target?.closest?.(
+            '.minitigerEpisodePreviewPanel, .minitigerFloatingQueuePanel, .minitigerWatchTogetherPanel, .minitigerFloatingQueue, .minitigerWatchTogether, button, input, select, textarea, [role="dialog"]'
+        ) || dom.parentWithClass(e.target, ['videoOsdBottom', 'upNextContainer', 'minitigerEpisodePreviewPanel'])) {
             showOsd();
             return;
         }
