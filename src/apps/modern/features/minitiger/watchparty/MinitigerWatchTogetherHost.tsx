@@ -4,9 +4,10 @@ import { useApi } from 'hooks/useApi';
 import {
     createWatchparty, getWatchparty, joinWatchparty, leaveWatchparty,
     sendWatchpartyCommand, setWatchpartyReady, enqueueWatchpartyItem, removeWatchpartyQueuedItem,
-    moveWatchpartyQueuedItem, type WatchpartyRoom
+    moveWatchpartyQueuedItem, advanceWatchpartyQueuedItem, type WatchpartyRoom
 } from './watchpartyApi';
 import { playbackManager } from 'components/playback/playbackmanager';
+import Events from 'utils/events';
 import Groups from '@mui/icons-material/Groups';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -102,6 +103,32 @@ const MinitigerWatchTogetherHost = () => {
         });
         return () => { cancelled = true; };
     }, [apiClient, room?.Code, room?.ItemId, room?.Queue?.join(',')]);
+
+    // Only the host advances the server's active item when the player
+    // naturally completes it. All clients receive the resulting new sequence.
+    const liveRoom = useRef(room);
+    liveRoom.current = room;
+    useEffect(() => {
+        if (!apiClient) return;
+        const advancing = new Set<string>();
+        const onStop = (_event: unknown, info: { state?: { NowPlayingItem?: { Id?: string }; PlayState?: { PositionTicks?: number } } }) => {
+            const active = liveRoom.current;
+            if (!active || !user?.Id || active.HostUserId !== user.Id || active.Paused || active.Queue.length < 2) return;
+            const finished = info?.state?.NowPlayingItem?.Id;
+            if (!finished || finished !== active.ItemId || advancing.has(finished)) return;
+            // A manual stop is not an EOF; avoid surprising queue advances.
+            const ticks = Number(info.state?.PlayState?.PositionTicks || 0);
+            const runtime = Number((info.state?.NowPlayingItem as { RunTimeTicks?: number } | undefined)?.RunTimeTicks || 0);
+            if (runtime <= 0 || ticks < runtime - 30_000_000) return;
+            advancing.add(finished);
+            void advanceWatchpartyQueuedItem(apiClient, active.Code, finished)
+                .then(next => setRoom(next))
+                .catch(error => setMessage('Automatischer WatchTogether-Wechsel fehlgeschlagen: ' + String(error)))
+                .finally(() => advancing.delete(finished));
+        };
+        Events.on(playbackManager, 'playbackstop', onStop);
+        return () => Events.off(playbackManager, 'playbackstop', onStop);
+    }, [apiClient, user?.Id]);
 
     const ownReady = Boolean(room?.ReadyMembers?.includes(user?.Id || ''));
     const choices = apiClient ? readSoloQueue(apiClient, activeSoloQueueProfileId(apiClient)) : [];
