@@ -146,7 +146,19 @@ const MinitigerWatchTogetherHost = () => {
                 if (!item?.Id || cancelled) return;
                 // Player start promises can remain pending for the media lifetime.
                 void playbackManager.play({ items: [item], startPositionTicks: room.PositionTicks })
-                    .catch(error => setMessage('Wiedergabestart fehlgeschlagen: ' + String(error)));
+                    .catch(error => {
+                        if (!cancelled) setMessage('Wiedergabestart fehlgeschlagen: ' + String(error));
+                    });
+                // A native player can remain on a loading screen without
+                // settling play(). Surface a retry path instead of a silent lock.
+                window.setTimeout(() => {
+                    if (cancelled) return;
+                    const current = playbackManager.getCurrentPlayer();
+                    const playing = current ? playbackManager.getPlayerState(current)?.NowPlayingItem?.Id : null;
+                    if (playing !== item.Id) {
+                        setMessage('Der Film wurde nicht gestartet. Bitte „Gemeinsames Play“ erneut drücken; kein Client-Neustart nötig.');
+                    }
+                }, 10000);
                 return;
             }
             if (player && playingId === room.ItemId) {
@@ -189,7 +201,12 @@ const MinitigerWatchTogetherHost = () => {
                 <Groups />
             </IconButton>
         </Tooltip>
-        {open && playerOsdVisible && createPortal(<section className='minitigerWatchTogetherPanel' aria-label='WatchTogether'>
+        {open && playerOsdVisible && createPortal(<section className='minitigerWatchTogetherPanel' aria-label='WatchTogether'
+            onPointerDown={event => event.stopPropagation()}
+            onPointerUp={event => event.stopPropagation()}
+            onMouseDown={event => event.stopPropagation()}
+            onMouseUp={event => event.stopPropagation()}
+            onClick={event => event.stopPropagation()}>
             <header><strong>🐯 WatchTogether</strong>
                 <button type='button' onClick={() => setOpen(false)} aria-label='Schließen'>×</button></header>
             {room ? <>
