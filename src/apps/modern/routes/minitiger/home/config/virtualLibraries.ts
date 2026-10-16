@@ -1,9 +1,8 @@
 export type MinitigerVirtualDisplay = 'poster' | 'landscape';
 
-export type MinitigerVirtualRowId =
-    | 'virtual1'
-    | 'virtual2'
-    | 'virtual3';
+export type MinitigerVirtualRowId = `virtual${number}`;
+export const MAX_VIRTUAL_ROWS = 24;
+export const VIRTUAL_ROW_IDS = Array.from({ length: MAX_VIRTUAL_ROWS }, (_, i) => `virtual${i + 1}` as MinitigerVirtualRowId);
 
 export interface MinitigerVirtualLibrary {
     id: string;
@@ -18,6 +17,7 @@ export interface MinitigerVirtualLibrary {
     enabled: boolean;
     showCaption: boolean;
     itemIds: string[];
+    rowId: MinitigerVirtualRowId;
 }
 
 export interface MinitigerVirtualLibrariesConfig {
@@ -41,21 +41,9 @@ export const DEFAULT_VIRTUAL_LIBRARIES: MinitigerVirtualLibrariesConfig = {
     pagePosterWidth: 320,
     pageLandscapeWidth: 520,
     pageGap: 23,
-    rowEnabled: {
-        virtual1: true,
-        virtual2: true,
-        virtual3: true
-    },
-    rowTitles: {
-        virtual1: 'Virtuelle Bibliotheken',
-        virtual2: 'Virtuelle Bibliotheken',
-        virtual3: 'Virtuelle Bibliotheken'
-    },
-    rowTitleVisible: {
-        virtual1: true,
-        virtual2: true,
-        virtual3: true
-    }
+    rowEnabled: Object.fromEntries(VIRTUAL_ROW_IDS.map(id => [id, true])) as Record<MinitigerVirtualRowId, boolean>,
+    rowTitles: Object.fromEntries(VIRTUAL_ROW_IDS.map(id => [id, 'Virtuelle Bibliotheken'])) as Record<MinitigerVirtualRowId, string>,
+    rowTitleVisible: Object.fromEntries(VIRTUAL_ROW_IDS.map(id => [id, true])) as Record<MinitigerVirtualRowId, boolean>
 };
 
 const cleanId = (value: unknown, fallback: string) => {
@@ -168,7 +156,10 @@ export const normalizeVirtualLibraries = (
                 : 'poster',
             enabled: raw.enabled !== false,
             showCaption: raw.showCaption !== false,
-            itemIds
+            itemIds,
+            rowId: VIRTUAL_ROW_IDS.includes(raw.rowId as MinitigerVirtualRowId)
+                ? raw.rowId as MinitigerVirtualRowId
+                : VIRTUAL_ROW_IDS[Math.min(2, Math.floor(index / 8))]
         });
     });
 
@@ -187,35 +178,9 @@ export const normalizeVirtualLibraries = (
         ...libraries.map(library => library.id)
     ]));
 
-    const rowEnabled = {
-        virtual1: source.rowEnabled?.virtual1 !== false,
-        virtual2: source.rowEnabled?.virtual2 !== false,
-        virtual3: source.rowEnabled?.virtual3 !== false
-    };
-
-    const rowTitles = {
-        virtual1: String(
-            source.rowTitles?.virtual1
-            ?? DEFAULT_VIRTUAL_LIBRARIES.rowTitles.virtual1
-        ).slice(0, 80),
-        virtual2: String(
-            source.rowTitles?.virtual2
-            ?? DEFAULT_VIRTUAL_LIBRARIES.rowTitles.virtual2
-        ).slice(0, 80),
-        virtual3: String(
-            source.rowTitles?.virtual3
-            ?? DEFAULT_VIRTUAL_LIBRARIES.rowTitles.virtual3
-        ).slice(0, 80)
-    };
-
-    const rowTitleVisible = {
-        virtual1:
-            source.rowTitleVisible?.virtual1 !== false,
-        virtual2:
-            source.rowTitleVisible?.virtual2 !== false,
-        virtual3:
-            source.rowTitleVisible?.virtual3 !== false
-    };
+    const rowEnabled = Object.fromEntries(VIRTUAL_ROW_IDS.map(id => [id, source.rowEnabled?.[id] !== false])) as Record<MinitigerVirtualRowId, boolean>;
+    const rowTitles = Object.fromEntries(VIRTUAL_ROW_IDS.map(id => [id, String(source.rowTitles?.[id] ?? 'Virtuelle Bibliotheken').slice(0, 80)])) as Record<MinitigerVirtualRowId, string>;
+    const rowTitleVisible = Object.fromEntries(VIRTUAL_ROW_IDS.map(id => [id, source.rowTitleVisible?.[id] !== false])) as Record<MinitigerVirtualRowId, boolean>;
 
     return {
         libraries,
