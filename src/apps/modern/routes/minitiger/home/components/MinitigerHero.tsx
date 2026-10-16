@@ -144,6 +144,7 @@ const MinitigerHero = ({
     const [ trailerReady, setTrailerReady ] = useState(false);
     const [ trailerMuted, setTrailerMuted ] = useState(false);
     const [ trailerVolume, setTrailerVolume ] = useState(1);
+    const [ bannerHovered, setBannerHovered ] = useState(false);
     const paused = trailerDebugOpen || (trailerLoading && autoRotateMs !== -1000);
     const [ backdropFailed, setBackdropFailed ] = useState(false);
     const [ logoFailed, setLogoFailed ] = useState(false);
@@ -420,6 +421,9 @@ const MinitigerHero = ({
     return (
         <section
             className='minitigerHero'
+            onMouseEnter={() => setBannerHovered(true)}
+            onMouseLeave={() => setBannerHovered(false)}
+            onMouseMove={() => { if (!bannerHovered) setBannerHovered(true); }}
         >
             <div className='minitigerHeroMediaLayer'>
                 <div className='minitigerHeroBackdrop'>
@@ -592,7 +596,7 @@ const MinitigerHero = ({
             )}
 
             {trailerReady && (
-                <div className='minitigerHeroVolumeControl' aria-label='Trailer-Lautstärke'>
+                <div className={`minitigerHeroVolumeControl${bannerHovered ? ' isBannerHovered' : ''}`} aria-label='Trailer-Lautstärke'>
                     <input type='range' min='0' max='100' step='1'
                         aria-label='Trailer-Lautstärke'
                         value={Math.round(trailerVolume * 100)}
