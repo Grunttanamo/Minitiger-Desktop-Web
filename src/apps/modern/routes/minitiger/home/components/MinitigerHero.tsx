@@ -145,11 +145,6 @@ const MinitigerHero = ({
     const [ trailerMuted, setTrailerMuted ] = useState(true);
     const paused = trailerDebugOpen || (trailerLoading && autoRotateMs !== -1000);
     const [ backdropFailed, setBackdropFailed ] = useState(false);
-    const [ backdropRetry, setBackdropRetry ] = useState(0);
-    const [ backdropLoaded, setBackdropLoaded ] = useState(false);
-    const [ lastSuccessfulBackdrop, setLastSuccessfulBackdrop ] =
-        useState<string | undefined>();
-    const backdropRetryTimerRef = useRef<number | undefined>();
     const [ logoFailed, setLogoFailed ] = useState(false);
     const [ favorite, setFavorite ] = useState(false);
 
@@ -180,9 +175,6 @@ const MinitigerHero = ({
 
     const heroItem =
         (detailedItem ?? activeCandidate) as ItemDto | undefined;
-    const backdropUrl = heroItem
-        ? getBackdropImageUrl(apiClient, heroItem)
-        : undefined;
 
     useEffect(() => {
         setTrailerMuted(true);
@@ -198,22 +190,7 @@ const MinitigerHero = ({
     }, [ activeIndex, candidates.length ]);
 
     useEffect(() => {
-        if (backdropRetryTimerRef.current !== undefined) {
-            window.clearTimeout(backdropRetryTimerRef.current);
-            backdropRetryTimerRef.current = undefined;
-        }
         setBackdropFailed(false);
-        setBackdropRetry(0);
-        setBackdropLoaded(false);
-    }, [ heroItem?.Id, backdropUrl ]);
-
-    useEffect(() => () => {
-        if (backdropRetryTimerRef.current !== undefined) {
-            window.clearTimeout(backdropRetryTimerRef.current);
-        }
-    }, []);
-
-    useEffect(() => {
         setLogoFailed(false);
         setFavorite(Boolean(heroItem?.UserData?.IsFavorite));
     }, [ heroItem?.Id, heroItem?.UserData?.IsFavorite ]);
@@ -407,6 +384,7 @@ const MinitigerHero = ({
         );
     }
 
+    const backdropUrl = getBackdropImageUrl(apiClient, heroItem);
     const logoUrl = getLogoImageUrl(apiClient, heroItem);
     const overview = shortOverview(heroItem.Overview);
     const playbackPosition =
@@ -445,41 +423,12 @@ const MinitigerHero = ({
         >
             <div className='minitigerHeroMediaLayer'>
                 <div className='minitigerHeroBackdrop'>
-                {lastSuccessfulBackdrop && !backdropLoaded && (
-                    <img
-                        className='minitigerHeroBackdropPrevious'
-                        src={lastSuccessfulBackdrop}
-                        alt=''
-                        aria-hidden='true'
-                    />
-                )}
                 {backdropUrl && !backdropFailed && (
                     <img
-                        className='minitigerHeroBackdropCurrent'
-                        key={`${heroItem.Id}-backdrop-${backdropRetry}`}
-                        src={backdropRetry > 0
-                            ? `${backdropUrl}${backdropUrl.includes('?') ? '&' : '?'}minitigerBackdropRetry=${backdropRetry}`
-                            : backdropUrl}
+                        key={`${heroItem.Id}-backdrop`}
+                        src={backdropUrl}
                         alt=''
-                        onLoad={() => {
-                            setBackdropLoaded(true);
-                            setLastSuccessfulBackdrop(backdropUrl);
-                        }}
-                        onError={() => {
-                            if (backdropRetry >= 2) {
-                                setBackdropFailed(true);
-                                return;
-                            }
-
-                            if (backdropRetryTimerRef.current !== undefined) {
-                                window.clearTimeout(backdropRetryTimerRef.current);
-                            }
-
-                            backdropRetryTimerRef.current = window.setTimeout(
-                                () => setBackdropRetry(previous => previous + 1),
-                                backdropRetry === 0 ? 500 : 1200
-                            );
-                        }}
+                        onError={() => setBackdropFailed(true)}
                     />
                 )}
 
