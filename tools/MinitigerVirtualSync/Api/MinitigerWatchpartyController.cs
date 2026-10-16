@@ -176,6 +176,29 @@ public sealed class MinitigerWatchpartyController : ControllerBase
         }
     }
 
+    // Advance once, atomically. The expected item prevents duplicate host
+    // callbacks and preserves the exact order selected in the room.
+    [HttpPost("Rooms/{code}/Next")]
+    public IActionResult Next(string code, [FromBody] QueueRequest request)
+    {
+        if (!Identity(out var user)) return Unauthorized();
+        lock (Gate)
+        {
+            if (!Rooms.TryGetValue(code.ToUpperInvariant(), out var room)) return NotFound();
+            if (!room.Members.Contains(user) || room.HostUserId != user) return Forbid();
+            if (room.Queue.Count == 0 || room.Queue[0] != request.ItemId)
+                return Conflict("active item already advanced");
+            room.Queue.RemoveAt(0);
+            room.ItemId = room.Queue.Count > 0 ? room.Queue[0] : Guid.Empty;
+            room.PositionTicks = 0;
+            room.Paused = room.Queue.Count == 0;
+            room.LastAction = room.Queue.Count > 0 ? "play" : "pause";
+            room.Sequence++;
+            room.UpdatedUtc = DateTimeOffset.UtcNow;
+            return Ok(Snapshot(room));
+        }
+    }
+
     [HttpPost("Rooms/{code}/Queue/Move")]
     public IActionResult MoveQueue(string code, [FromBody] MoveQueueRequest request)
     {
