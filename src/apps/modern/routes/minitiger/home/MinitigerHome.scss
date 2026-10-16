@@ -6141,7 +6141,7 @@ iframe.minitigerInlineTrailer {
     padding: 13px 9px;
     border-radius: 999px;
     background: rgba(12, 14, 18, .56);
-    border: 1px solid color-mix(in srgb, var(--md-theme-primary, #ffcb00) 45%, transparent);
+    border: 1px solid color-mix(in srgb, var(--mt-accent, #ffcb00) 45%, transparent);
     opacity: 0;
     pointer-events: none;
     transition: opacity .2s ease;
@@ -6158,5 +6158,5 @@ iframe.minitigerInlineTrailer {
     width: 19px;
     height: 100%;
     cursor: pointer;
-    accent-color: var(--md-theme-primary, #ffcb00);
+    accent-color: var(--mt-accent, #ffcb00);
 }
