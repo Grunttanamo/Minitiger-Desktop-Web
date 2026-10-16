@@ -69,6 +69,7 @@ interface MinitigerHomeBuilderSettingsProps {
             display: MinitigerVirtualDisplay;
             enabled: boolean;
             showCaption: boolean;
+            rowId: MinitigerVirtualRowId;
         }>
     ) => void;
     onRemoveVirtualLibrary: (
@@ -259,18 +260,8 @@ const MinitigerHomeBuilderSettings = ({
                 Boolean(library)
             ));
 
-    const getVirtualCount = (
-        rowId: VirtualHomeRowId
-    ) => {
-        const index = Number(
-            rowId.replace('virtual', '')
-        ) - 1;
-
-        return orderedVirtualLibraries
-            .slice(index * 4, index * 4 + 4)
-            .filter(library => library.enabled)
-            .length;
-    };
+    const getVirtualCount = (rowId: VirtualHomeRowId) =>
+        orderedVirtualLibraries.filter(library => library.enabled && library.rowId === rowId).length;
 
     return (
         <fieldset
@@ -991,8 +982,8 @@ const MinitigerHomeBuilderSettings = ({
                     <div>
                         <h4>Virtuelle Bibliotheken</h4>
                         <p className='minitigerSettingsHint'>
-                            Rein manuell gepflegt. Maximal 12 Bibliotheken,
-                            vier Karten pro virtueller Reihe.
+                            Bis zu 24 virtuelle Bibliotheken und frei zuweisbare Reihen.
+                            Vorhandene Inhalte und Bilder bleiben erhalten.
                         </p>
                     </div>
 
@@ -1000,7 +991,7 @@ const MinitigerHomeBuilderSettings = ({
                         type='button'
                         className='minitigerVirtualAddButton'
                         disabled={
-                            virtualConfig.libraries.length >= 12
+                            virtualConfig.libraries.length >= 24
                         }
                         onClick={onAddVirtualLibrary}
                     >
@@ -1172,6 +1163,19 @@ const MinitigerHomeBuilderSettings = ({
                                 </span>
                             </label>
 
+                            <label className='minitigerVirtualRowAssignment'>
+                                Auf welcher Startseiten-Reihe anzeigen?
+                                <select value={library.rowId} onChange={event =>
+                                    onUpdateVirtualLibrary(library.id, { rowId: event.currentTarget.value as MinitigerVirtualRowId })
+                                }>
+                                    {Array.from({ length: 24 }, (_, i) => {
+                                        const id = `virtual${i + 1}` as MinitigerVirtualRowId;
+                                        return <option key={id} value={id}>
+                                            {i + 1}. {virtualConfig.rowTitles[id] || 'Virtuelle Bibliotheken'}
+                                        </option>;
+                                    })}
+                                </select>
+                            </label>
                             <div className='minitigerVirtualImageEditor'>
                                 {library.image ? (
                                     <img
