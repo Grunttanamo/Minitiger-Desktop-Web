@@ -3974,7 +3974,7 @@ export class PlaybackManager {
             // episode, then follows Jellyfin's normal next-episode sequencing.
             const queuedPlayable = queuedEntry && ['Movie', 'Episode', 'Series', 'Season'].includes(queuedEntry.itemType)
                 ? queuedEntry : null;
-            const nextItem = queuedPlayable
+            const nextItem = (watchTogetherActive || queuedPlayable)
                 ? null
                 : self._playNextAfterEnded && !errorOccurred ? self._playQueueManager.getNextItemInfo() : null;
 
