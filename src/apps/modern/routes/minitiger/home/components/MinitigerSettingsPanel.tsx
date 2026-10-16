@@ -17,7 +17,8 @@ import {
 } from '../config/librarySettings';
 import {
     type MinitigerVirtualDisplay,
-    type MinitigerVirtualLibrariesConfig
+    type MinitigerVirtualLibrariesConfig,
+    type MinitigerVirtualRowId
 } from '../config/virtualLibraries';
 import {
     ACCENT_PRESETS,
@@ -104,14 +105,14 @@ interface MinitigerSettingsPanelProps {
         config: MinitigerVirtualLibrariesConfig
     ) => void;
     onUpdateVirtualRowTitle?: (
-        rowId: 'virtual1' | 'virtual2' | 'virtual3',
+        rowId: MinitigerVirtualRowId,
         title: string
     ) => void;
     onToggleVirtualRow?: (
-        rowId: 'virtual1' | 'virtual2' | 'virtual3'
+        rowId: MinitigerVirtualRowId
     ) => void;
     onSetVirtualRowTitleVisible?: (
-        rowId: 'virtual1' | 'virtual2' | 'virtual3',
+        rowId: MinitigerVirtualRowId,
         visible: boolean
     ) => void;
     onSetVirtualHomeCardWidth?: (
