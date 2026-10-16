@@ -3961,7 +3961,13 @@ export class PlaybackManager {
             const queueApi = finishedItem?.ServerId
                 ? ServerConnections.getApiClient(finishedItem.ServerId) : null;
             const queueProfile = queueApi ? activeSoloQueueProfileId(queueApi) : 'owner';
-            const queuedEntry = !errorOccurred && self._playNextAfterEnded
+            // WatchTogether owns the sequence while its room is active.
+            // Never consume a PERSONAL queue entry behind its back.
+            const watchTogetherActive = (() => {
+                try { return Boolean(sessionStorage.getItem('minitiger.watchtogether.active.v1')); }
+                catch { return false; }
+            })();
+            const queuedEntry = !watchTogetherActive && !errorOccurred && self._playNextAfterEnded
                 && endedNaturally && queueApi
                 ? readSoloQueue(queueApi, queueProfile)[0] : null;
             // A series queue item expands into its first unwatched available
