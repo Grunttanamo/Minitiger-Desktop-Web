@@ -1259,3 +1259,17 @@ html.minitigerNativeVideoCompositing .minitigerLargePreviewTrailerMuteButton {
 .minitigerLargePreview:has(.minitigerNativeTrailerActive) .minitigerLargePreviewShade {
     pointer-events: none;
 }
+
+/* TEST layered VLC preview: only the hero media area punches through.
+   Keep the popup's content/episode rows and its screen-wide scrim opaque. */
+.minitigerLargePreviewBackdrop:has(.minitigerNativeTrailerActive) {
+    background: rgba(0, 0, 0, .74) !important;
+}
+.minitigerLargePreview:has(.minitigerNativeTrailerActive) {
+    background: #181818 !important;
+    isolation: isolate;
+}
+.minitigerLargePreview:has(.minitigerNativeTrailerActive) > .minitigerLargePreviewContent {
+    background: #181818 !important;
+    opacity: 1 !important;
+}
