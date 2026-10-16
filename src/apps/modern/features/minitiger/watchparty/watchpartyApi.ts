@@ -99,3 +99,7 @@ export const moveWatchpartyQueuedItem = (apiClient: ApiClient, code: string, fro
     jsonRequest<WatchpartyRoom>(
         apiClient, 'Rooms/' + encodeURIComponent(code) + '/Queue/Move', 'POST', { from, to }
     );
+
+// Companion endpoint 1.6.25+: advance only if the completed item is still active.
+export const advanceWatchpartyQueuedItem = (apiClient: ApiClient, code: string, itemId: string) =>
+    jsonRequest<WatchpartyRoom>(apiClient, 'Rooms/' + encodeURIComponent(code) + '/Next', 'POST', { itemId });
