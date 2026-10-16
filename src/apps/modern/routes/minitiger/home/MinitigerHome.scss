@@ -6160,3 +6160,31 @@ iframe.minitigerInlineTrailer {
     cursor: pointer;
     accent-color: var(--mt-accent, #ffcb00);
 }
+
+/* Fix: position the volume slider above the banner UI stacking contexts. */
+.minitigerHome .minitigerHero .minitigerHeroVolumeControl {
+    position: absolute !important;
+    top: auto !important;
+    bottom: 17% !important;
+    right: 3.5% !important;
+    z-index: 100 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+.minitigerHome .minitigerHero:hover .minitigerHeroVolumeControl,
+.minitigerHome .minitigerHero .minitigerHeroVolumeControl:focus-within {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+.minitigerHome .minitigerHeroVolumeControl input[type='range'] {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    appearance: auto;
+    -webkit-appearance: slider-vertical;
+    height: 155px;
+}
