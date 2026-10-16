@@ -26,11 +26,7 @@ export type SystemHomeRowId =
 export type SystemHomeRowLayoutMap =
     Record<SystemHomeRowId, number>;
 
-export const VIRTUAL_HOME_ROW_IDS = [
-    'virtual1',
-    'virtual2',
-    'virtual3'
-] as const;
+export const VIRTUAL_HOME_ROW_IDS = Array.from({ length: 24 }, (_, i) => `virtual${i + 1}` as `virtual${number}`);
 
 export type VirtualHomeRowId =
     typeof VIRTUAL_HOME_ROW_IDS[number];
