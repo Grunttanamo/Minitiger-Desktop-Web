@@ -269,6 +269,16 @@ const MinitigerHomeBuilderSettings = ({
             disabled={disabled}
         >
             <section className='minitigerSettingsCard'>
+                <button type='button'
+                    disabled={settings.homeRowOrder.filter(isVirtualHomeRowId).length >= 24}
+                    onClick={() => {
+                        const next = Array.from({ length: 24 }, (_, i) => `virtual${i + 1}` as VirtualHomeRowId)
+                            .find(id => !settings.homeRowOrder.includes(id));
+                        if (next) onUpdateSettings({ homeRowOrder: [ ...settings.homeRowOrder, next ] });
+                    }}>
+                    + Virtuelle Reihe hinzufügen
+                </button>
+                <p className='minitigerSettingsHint'>Neue Reihen erscheinen hier in der Reihenverwaltung und können wie die bestehenden verschoben und benannt werden.</p>
                 <h4>Custom Startseiten-Reihen</h4>
 
                 <div className='minitigerHomeBuilderIntro'>
@@ -1168,8 +1178,7 @@ const MinitigerHomeBuilderSettings = ({
                                 <select value={library.rowId} onChange={event =>
                                     onUpdateVirtualLibrary(library.id, { rowId: event.currentTarget.value as MinitigerVirtualRowId })
                                 }>
-                                    {Array.from({ length: 24 }, (_, i) => {
-                                        const id = `virtual${i + 1}` as MinitigerVirtualRowId;
+                                    {settings.homeRowOrder.filter(isVirtualHomeRowId).map((id, i) => {
                                         return <option key={id} value={id}>
                                             {i + 1}. {virtualConfig.rowTitles[id] || 'Virtuelle Bibliotheken'}
                                         </option>;
