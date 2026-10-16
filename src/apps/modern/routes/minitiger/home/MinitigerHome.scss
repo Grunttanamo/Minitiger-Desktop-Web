@@ -6131,60 +6131,45 @@ iframe.minitigerInlineTrailer {
     outline: none;
 }
 
-/* Banner audio only: right-hand vertical slider, visible on hero hover. */
-.minitigerHeroVolumeControl {
-    position: absolute;
-    right: 3.1%;
-    top: 23%;
-    z-index: 9;
-    height: 180px;
-    padding: 13px 9px;
-    border-radius: 999px;
-    background: rgba(12, 14, 18, .56);
-    border: 1px solid color-mix(in srgb, var(--mt-accent, #ffcb00) 45%, transparent);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .2s ease;
-}
-.minitigerHero:hover .minitigerHeroVolumeControl,
-.minitigerHeroVolumeControl:focus-within {
-    opacity: 1;
-    pointer-events: auto;
-}
-.minitigerHeroVolumeControl input[type='range'] {
-    appearance: slider-vertical;
-    writing-mode: vertical-lr;
-    direction: rtl;
-    width: 19px;
-    height: 100%;
-    cursor: pointer;
-    accent-color: var(--mt-accent, #ffcb00);
-}
-
-/* Fix: position the volume slider above the banner UI stacking contexts. */
+/* Trailer volume: one definitive rule, centered on right-hand side of hero.
+   State-based hover remains responsive through translucent media overlays. */
 .minitigerHome .minitigerHero .minitigerHeroVolumeControl {
     position: absolute !important;
-    top: auto !important;
-    bottom: 17% !important;
-    right: 3.5% !important;
+    top: 50% !important;
+    bottom: auto !important;
+    right: 2.6% !important;
+    transform: translateY(-50%) !important;
     z-index: 100 !important;
+    box-sizing: border-box;
     display: flex !important;
     align-items: center;
     justify-content: center;
-    visibility: hidden;
+    height: 188px;
+    width: 38px;
+    padding: 12px 8px;
+    border-radius: 999px;
+    background: rgba(12, 14, 18, .65);
+    border: 1px solid color-mix(in srgb, var(--mt-accent, #ffcb00) 55%, transparent);
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
+    transition: opacity .18s ease, visibility .18s ease;
 }
+.minitigerHome .minitigerHero .minitigerHeroVolumeControl.isBannerHovered,
 .minitigerHome .minitigerHero:hover .minitigerHeroVolumeControl,
 .minitigerHome .minitigerHero .minitigerHeroVolumeControl:focus-within {
-    visibility: visible !important;
     opacity: 1 !important;
+    visibility: visible !important;
     pointer-events: auto !important;
 }
-.minitigerHome .minitigerHeroVolumeControl input[type='range'] {
+.minitigerHome .minitigerHero .minitigerHeroVolumeControl input[type='range'] {
+    -webkit-appearance: slider-vertical;
+    appearance: auto;
     writing-mode: vertical-lr;
     direction: rtl;
-    appearance: auto;
-    -webkit-appearance: slider-vertical;
+    width: 20px;
     height: 155px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--mt-accent, #ffcb00);
 }
