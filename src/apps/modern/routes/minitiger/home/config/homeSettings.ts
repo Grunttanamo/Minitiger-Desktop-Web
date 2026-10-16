@@ -38,7 +38,7 @@ export type HomeRowId =
 
 export const DEFAULT_HOME_ROW_ORDER: HomeRowId[] = [
     ...SYSTEM_HOME_ROW_IDS,
-    ...VIRTUAL_HOME_ROW_IDS,
+    ...VIRTUAL_HOME_ROW_IDS.slice(0, 3),
     ...CUSTOM_ROW_IDS
 ];
 
