@@ -960,11 +960,9 @@ const MinitigerHome = () => {
             Boolean(library?.enabled)
         ));
 
-    const virtualRows = [
-        orderedVirtualLibraries.slice(0, 8),
-        orderedVirtualLibraries.slice(8, 16),
-        orderedVirtualLibraries.slice(16, 24)
-    ];
+    const virtualRows = Array.from({ length: 24 }, (_, index) =>
+        orderedVirtualLibraries.filter(library => library.rowId === `virtual${index + 1}`)
+    );
 
     const librarySection = (
         <section className='minitigerSection minitigerLibrarySection'>
