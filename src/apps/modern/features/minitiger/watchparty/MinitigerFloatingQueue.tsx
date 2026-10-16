@@ -82,7 +82,12 @@ const MinitigerFloatingQueue = () => {
             onConfirm={() => { clearSoloQueue(apiClient, profile); setConfirmClear(false); setOpen(false); }}>
             Alle Einträge deiner persönlichen Warteschlange entfernen? Das lässt sich nicht rückgängig machen.
         </MinitigerConfirmDialog>
-        {open && <section className='minitigerFloatingQueuePanel' aria-label='Meine Warteschlange'>
+        {open && <section className='minitigerFloatingQueuePanel' aria-label='Meine Warteschlange'
+            onPointerDown={event => event.stopPropagation()}
+            onPointerUp={event => event.stopPropagation()}
+            onMouseDown={event => event.stopPropagation()}
+            onMouseUp={event => event.stopPropagation()}
+            onClick={event => event.stopPropagation()}>
             <header><strong>Meine Warteschlange ({entries.length})</strong>
                 <button type='button' aria-label='Schließen' onClick={() => setOpen(false)}>×</button></header>
             <div className='minitigerFloatingQueueItems'>
