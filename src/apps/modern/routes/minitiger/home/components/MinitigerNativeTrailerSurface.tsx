@@ -88,7 +88,7 @@ const MinitigerNativeTrailerSurface = ({
             registeredTransparency = false;
         };
         const showCompositing = () => {
-            if (closed || scrollSuspended || !decodedVideo ||
+            if (closed || offscreen || !decodedVideo ||
                 window.__minitigerNativePreviewOwner !== owner) return;
             document.querySelectorAll('.minitigerNativeTrailerActive')
                 .forEach(element => element.classList.remove('minitigerNativeTrailerActive'));
@@ -99,9 +99,14 @@ const MinitigerNativeTrailerSurface = ({
             registeredTransparency = true;
         };
         const move = () => {
-            if (closed || scrollSuspended || window.__minitigerNativePreviewOwner !== owner) return;
+            if (closed || window.__minitigerNativePreviewOwner !== owner) return;
             const p = bounds();
             if (p) {
+                if (offscreen) {
+                    offscreen = false;
+                    system?.nativeTrailerPreviewSuspend?.(false);
+                    if (decodedVideo) showCompositing();
+                }
                 const current = [p.x, p.y, p.width, p.height].join(':');
                 if (current !== lastBounds) {
                     lastBounds = current;
@@ -109,13 +114,13 @@ const MinitigerNativeTrailerSurface = ({
                 }
             }
             else {
-                // Entire container left the viewport: stop and release it.
-                if (registeredTransparency) hideCompositing();
-                system?.nativeTrailerPreviewStop?.();
-                delete window.__minitigerNativePreviewOwner;
-                delete window.__minitigerNativePreviewKind;
-                offscreen = true;
-                setActive(false);
+                // Keep one player; suspend only when fully outside the viewport.
+                if (!offscreen) {
+                    offscreen = true;
+                    system?.nativeTrailerPreviewSuspend?.(true);
+                    hideCompositing();
+                }
+                geometryTimer = window.setTimeout(move, 200);
                 return;
             }
             geometryTimer = window.setTimeout(move, 200);
@@ -191,7 +196,7 @@ const MinitigerNativeTrailerSurface = ({
                     decodedTimer = window.setInterval(() => {
                         // Scrolling intentionally pauses the native decoder.
                         // Do not count those frames as decoding failures.
-                        if (scrollSuspended) return;
+                        if (offscreen) return;
                         if (closed || window.__minitigerNativePreviewOwner !== owner) {
                             window.clearInterval(decodedTimer);
                             return;
@@ -227,55 +232,39 @@ const MinitigerNativeTrailerSurface = ({
                 }
             );
         };
-        const resumeAfterScroll = () => {
-            scrollResumeTimer = 0;
-            if (closed) return;
-            if (offscreen) {
-                if (bounds() && !window.__minitigerNativePreviewOwner) {
-                    offscreen = false;
-                    system?.nativeTrailerPreviewAvailable?.(start);
+        // Layer experiment: scrolling must not tear down the VLC video layer.
+        // Keep the same player alive while any part of the hero is on screen.
+        // Pause only when the whole hero has moved outside the viewport.
+        const syncVisibility = () => {
+            if (closed || window.__minitigerNativePreviewOwner !== owner) return;
+            const p = bounds();
+            if (!p) {
+                if (!offscreen) {
+                    offscreen = true;
+                    system?.nativeTrailerPreviewSuspend?.(true);
+                    hideCompositing();
                 }
                 return;
             }
-            if (!scrollSuspended || window.__minitigerNativePreviewOwner !== owner) return;
-            const p = bounds();
-            if (!p) {
-                // Fully offscreen: leave native decoding off and show artwork.
-                hideCompositing();
-                scrollSuspended = false;
-                system?.nativeTrailerPreviewStop?.();
-                delete window.__minitigerNativePreviewOwner;
-                delete window.__minitigerNativePreviewKind;
-                window.dispatchEvent(new Event('minitiger:native-preview-released'));
-                offscreen = true;
-                setActive(false);
-                return;
+            if (offscreen) {
+                offscreen = false;
+                system?.nativeTrailerPreviewSuspend?.(false);
+                if (decodedVideo) showCompositing();
             }
-            // Only ONE geometry update, after scroll has completely settled.
             const current = [p.x, p.y, p.width, p.height].join(':');
-            system?.nativeTrailerPreviewGeometry?.(p.x, p.y, p.width, p.height);
-            lastBounds = current;
-            scrollSuspended = false;
-            system?.nativeTrailerPreviewSuspend?.(false);
-            showCompositing();
-            geometryTimer = window.setTimeout(move, 250);
+            if (current !== lastBounds) {
+                lastBounds = current;
+                system?.nativeTrailerPreviewGeometry?.(p.x, p.y, p.width, p.height);
+            }
         };
         const scrollIntent = () => {
             if (closed) return;
-            window.clearTimeout(scrollResumeTimer);
-            if (window.__minitigerNativePreviewOwner === owner && system?.nativeTrailerPreviewSuspend) {
-                if (!scrollSuspended) {
-                    scrollSuspended = true;
-                    window.clearTimeout(geometryTimer);
-                    // Hide the FBO and restore the normal Chromium backdrop
-                    // BEFORE the scroll frame is composited, avoiding stale
-                    // texture copies all over the home screen.
-                    if (registeredTransparency) hideCompositing();
-                    system?.nativeTrailerPreviewSuspend?.(true);
-                }
-            }
-            if (scrollSuspended || offscreen)
-                scrollResumeTimer = window.setTimeout(resumeAfterScroll, 420);
+            // rAF coalesces the geometry updates; it does not pause playback.
+            if (scrollResumeTimer) return;
+            scrollResumeTimer = window.requestAnimationFrame(() => {
+                scrollResumeTimer = 0;
+                syncVisibility();
+            });
         };
         const onReleased = () => {
             if (!closed && !window.__minitigerNativePreviewOwner && elementRef.current?.isConnected
@@ -307,7 +296,7 @@ const MinitigerNativeTrailerSurface = ({
             window.removeEventListener('scroll', scrollIntent, true);
             closed = true;
             window.clearTimeout(retryTimer);
-            window.clearTimeout(scrollResumeTimer);
+            window.cancelAnimationFrame(scrollResumeTimer);
             window.clearTimeout(geometryTimer);
             window.clearInterval(decodedTimer);
             window.clearInterval(endPoll);
