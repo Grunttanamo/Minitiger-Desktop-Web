@@ -178,7 +178,6 @@ const MinitigerHero = ({
         (detailedItem ?? activeCandidate) as ItemDto | undefined;
 
     useEffect(() => {
-        setTrailerMuted(false);
         setTrailerReady(false);
     }, [heroItem?.Id]);
 
