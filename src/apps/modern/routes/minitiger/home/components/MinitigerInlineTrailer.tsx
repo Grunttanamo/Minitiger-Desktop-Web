@@ -27,7 +27,8 @@ type TrailerSource =
             | 'download'
             | 'transcode-h264'
             | 'transcode-vp8'
-            | 'transcode-vp9';
+            | 'transcode-vp9'
+            | 'remux-av1';
     }
     | {
         kind: 'youtube';
@@ -522,10 +523,10 @@ const buildForcedTranscodeUrl = (
     const videoBitRate = target === 'vp8'
         ? 1_100_000
         : target === 'vp9'
-            ? 2_000_000
+            ? 6_000_000
             : 5_000_000;
-    const maxWidth = isWebm ? 640 : 1280;
-    const maxHeight = isWebm ? 360 : 720;
+    const maxWidth = target === 'vp9' ? 1920 : isWebm ? 640 : 1280;
+    const maxHeight = target === 'vp9' ? 1080 : isWebm ? 360 : 720;
 
     return apiClient.getUrl(
         `Videos/${trailer.Id}/stream.${container}`,
@@ -560,6 +561,30 @@ const buildForcedTranscodeUrl = (
                 : {})
         }
     );
+};
+
+// Request AV1/Opus stream-copy in WebM; the player falls back on errors.
+// A Jellyfin server may reject this request, in which case we do not
+// silently claim that stream-copy succeeded.
+const buildAv1WebmRemuxUrl = (apiClient: ApiClient, trailer: TrailerItem) => {
+    if (!trailer.Id) return undefined;
+    const source = trailer.MediaSources?.[0];
+    const token = getMinitigerAccessToken(apiClient);
+    return apiClient.getUrl(`Videos/${trailer.Id}/stream.webm`, {
+        ...(source?.Id ? { MediaSourceId: source.Id } : {}),
+        DeviceId: getClientDeviceId(apiClient),
+        PlaySessionId: createPlaySessionId(),
+        Static: false,
+        Container: 'webm',
+        Context: 'Streaming',
+        VideoCodec: 'av1',
+        AudioCodec: 'opus',
+        EnableAutoStreamCopy: true,
+        AllowVideoStreamCopy: true,
+        AllowAudioStreamCopy: true,
+        SubtitleStreamIndex: -1,
+        ...(token ? { ApiKey: token } : {})
+    });
 };
 
 const hydrateTrailerDetails = async (
@@ -968,53 +993,27 @@ const resolveSources = async (
             const desktopShell =
                 isJellyfinDesktopShell();
 
-            const directCodecPlayable = (
-                [ 'mp4', 'm4v', 'mov' ].includes(container)
-                    ? canH264
-                    : container === 'webm'
-                        ? (
-                            videoCodec === 'vp8'
-                                ? canVp8
-                                : canVp9
-                        )
-                        : isLikelyBrowserSafe(local)
-            );
+            const directCodecPlayable =
+                (container === 'webm' && audioCodec === 'opus' && (
+                    (videoCodec === 'vp8' && canVp8)
+                    || (videoCodec === 'vp9' && canVp9)
+                    || (videoCodec === 'av1' && browserCanPlay('video/webm; codecs="av01.0.05M.08, opus"'))
+                ))
+                || ([ 'mp4', 'm4v', 'mov' ].includes(container)
+                    && videoCodec === 'h264' && (!audioCodec || audioCodec === 'aac') && canH264);
 
             if (desktopShell) {
-                /*
-                 * Local trailers are intentionally enabled again for the
-                 * native Minitiger Desktop test. Qt WebEngine often reports
-                 * no H264/AAC support, so prefer a royalty-free WebM
-                 * transcode (VP8, then VP9) before direct local playback.
-                 *
-                 * This restores the original local-trailer behavior so the
-                 * interaction with Intro Skipper / library analysis can be
-                 * tested under otherwise optimized frontend conditions.
-                 */
-                if (canVp8) {
-                    pushVp8();
-                } else {
-                    pushVp9();
-                }
-
+                // Only source selection changes; keep the proven stable banner.
                 if (directCodecPlayable && direct) {
-                    sources.push({
-                        kind: 'video',
-                        url: direct,
-                        key: `${local.Id}-desktop-direct`,
-                        mode: 'direct'
-                    });
+                    sources.push({ kind: 'video', url: direct, key: `${local.Id}-desktop-direct`, mode: 'direct' });
                 }
-
-                if (directCodecPlayable && download) {
-                    sources.push({
-                        kind: 'video',
-                        url: download,
-                        key: `${local.Id}-desktop-download`,
-                        mode: 'download'
-                    });
+                if (videoCodec === 'av1' && audioCodec === 'opus'
+                    && browserCanPlay('video/webm; codecs="av01.0.05M.08, opus"')) {
+                    const remux = buildAv1WebmRemuxUrl(apiClient, local);
+                    if (remux) sources.push({ kind: 'video', url: remux, key: `${local.Id}-av1-remux`, mode: 'remux-av1' });
                 }
-
+                pushVp9();
+                pushVp8();
                 pushH264();
             } else if (isLikelyBrowserSafe(local)) {
                 if (direct) {
@@ -1200,6 +1199,7 @@ const probeVideoSource = async (
         const timeoutMs = (
             source.mode === 'transcode-vp8'
             || source.mode === 'transcode-vp9'
+            || source.mode === 'remux-av1'
         ) ? 20_000 : 8_000;
 
         const timer = window.setTimeout(() => {
@@ -1777,6 +1777,7 @@ const MinitigerInlineTrailer = ({
         const watchdogMs = (
             source.mode === 'transcode-vp8'
             || source.mode === 'transcode-vp9'
+            || source.mode === 'remux-av1'
         ) ? 20_000 : 7_500;
 
         const watchdog = window.setTimeout(() => {
@@ -1800,6 +1801,8 @@ const MinitigerInlineTrailer = ({
             videoRef.current;
 
         if (video) {
+            video.volume = 1;
+            video.defaultMuted = muted;
             video.muted = muted;
         }
 
@@ -1881,6 +1884,11 @@ const MinitigerInlineTrailer = ({
                 src={source.url}
                 autoPlay
                 muted={muted}
+                onVolumeChange={event => {
+                    const video = event.currentTarget;
+                    if (!muted && video.muted) video.muted = false;
+                    if (!muted && video.volume === 0) video.volume = 1;
+                }}
                 loop={loop}
                 onEnded={() => { onEndedRef.current?.(); }}
                 playsInline
