@@ -555,7 +555,8 @@ const useMinitigerVirtualLibraries = () => {
                         display: 'poster',
                         enabled: true,
                         showCaption: true,
-                        itemIds: []
+                        itemIds: [],
+                        rowId: 'virtual1'
                     }
                 ],
                 homeOrder: [
@@ -579,6 +580,7 @@ const useMinitigerVirtualLibraries = () => {
             display: MinitigerVirtualDisplay;
             enabled: boolean;
             showCaption: boolean;
+            rowId: MinitigerVirtualRowId;
         }>
     ) => {
         let replacedVideoKey = '';
