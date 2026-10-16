@@ -6172,3 +6172,20 @@ html.minitigerNativeVideoCompositing .minitigerHome .minitigerEpisodePlayedButto
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
 }
+
+/* TEST layered VLC hero: persistent native video stays behind Chromium.
+   The Backdrop is the opaque cover until native frames are ready; once
+   hidden, preserve a DOM-owned bottom gradient ABOVE the native video. */
+.minitigerHome .minitigerHero.minitigerNativeTrailerActive .minitigerHeroBottomFade {
+    display: block !important;
+    z-index: 4;
+    height: var(--mt-banner-fade-size);
+    background: linear-gradient(to bottom, transparent 0%, rgba(8, 9, 11, .48) 55%, #08090b 100%) !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    pointer-events: none;
+}
+.minitigerHome .minitigerHero.minitigerNativeTrailerActive .minitigerHeroContent {
+    position: relative;
+    z-index: 5;
+}
