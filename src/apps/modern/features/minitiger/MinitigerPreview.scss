@@ -1260,16 +1260,10 @@ html.minitigerNativeVideoCompositing .minitigerLargePreviewTrailerMuteButton {
     pointer-events: none;
 }
 
-/* TEST layered VLC preview: only the hero media area punches through.
-   Keep the popup's content/episode rows and its screen-wide scrim opaque. */
-.minitigerLargePreviewBackdrop:has(.minitigerNativeTrailerActive) {
-    background: rgba(0, 0, 0, .74) !important;
-}
-.minitigerLargePreview:has(.minitigerNativeTrailerActive) {
-    background: #181818 !important;
-    isolation: isolate;
-}
+/* TEST layered VLC preview: leave the hero cutout transparent so Qt
+   remains visible below Chromium. Keep ONLY the lower description and
+   episode content solid; an opaque popup background hides the VLC frame. */
 .minitigerLargePreview:has(.minitigerNativeTrailerActive) > .minitigerLargePreviewContent {
-    background: #181818 !important;
+    background-color: #181818 !important;
     opacity: 1 !important;
 }
