@@ -46,6 +46,7 @@ interface Props {
     onEnded?: () => void;
     loop?: boolean;
     muted?: boolean;
+    volume?: number;
     allowYouTube?: boolean;
     allowLocal?: boolean;
 }
@@ -1349,6 +1350,7 @@ const MinitigerInlineTrailer = ({
     onEnded,
     loop = true,
     muted = true,
+    volume = 1,
     allowYouTube = true,
     allowLocal = true
 }: Props) => {
@@ -1801,7 +1803,7 @@ const MinitigerInlineTrailer = ({
             videoRef.current;
 
         if (video) {
-            video.volume = 1;
+            video.volume = Math.max(0, Math.min(1, volume));
             video.defaultMuted = muted;
             video.muted = muted;
         }
@@ -1819,6 +1821,7 @@ const MinitigerInlineTrailer = ({
         }
     }, [
         muted,
+        volume,
         source?.key
     ]);
 
@@ -1887,7 +1890,7 @@ const MinitigerInlineTrailer = ({
                 onVolumeChange={event => {
                     const video = event.currentTarget;
                     if (!muted && video.muted) video.muted = false;
-                    if (!muted && video.volume === 0) video.volume = 1;
+                    // Volume follows the user-controlled vertical banner slider.
                 }}
                 loop={loop}
                 onEnded={() => { onEndedRef.current?.(); }}
