@@ -1879,6 +1879,11 @@ const MinitigerInlineTrailer = ({
         return (
             <video
                 ref={element => {
+                    if (element) {
+                        element.volume = Math.max(0, Math.min(1, volume));
+                        element.defaultMuted = muted;
+                        element.muted = muted;
+                    }
                     videoRef.current = element;
                     visibilityRef.current = element;
                 }}
