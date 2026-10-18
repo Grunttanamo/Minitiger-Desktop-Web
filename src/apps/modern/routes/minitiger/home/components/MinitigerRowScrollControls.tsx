@@ -6,10 +6,11 @@ interface Props {
     rowClass: string;
     label: string;
     watchKey: string;
+    title?: string;
 }
 
 // Mirror the normal media row's overflow measurement.
-const MinitigerRowScrollControls = ({ sectionClass, rowClass, label, watchKey }: Props) => {
+const MinitigerRowScrollControls = ({ sectionClass, rowClass, label, watchKey, title }: Props) => {
     const controlsRef = useRef<HTMLDivElement | null>(null);
     const [canScroll, setCanScroll] = useState(false);
     const findRow = useCallback(() => controlsRef.current
@@ -47,7 +48,10 @@ const MinitigerRowScrollControls = ({ sectionClass, rowClass, label, watchKey }:
         animateMinitigerHorizontalScroll(row, direction * Math.max(320, row.clientWidth * 0.78));
     };
 
-    return <div ref={controlsRef} className={`minitigerAdaptiveRowControls${canScroll ? ' hasOverflow' : ''}`}>
+    return <div ref={controlsRef}
+        className='minitigerSectionHeader minitigerLibraryNavigationHeader'
+        data-has-scroll-controls={canScroll}>
+        {title && <h2>{title}</h2>}
         {canScroll && <div className='minitigerRowArrows'>
             <button type='button' aria-label={label + ' nach links scrollen'} onClick={() => scroll(-1)}>‹</button>
             <button type='button' aria-label={label + ' nach rechts scrollen'} onClick={() => scroll(1)}>›</button>
