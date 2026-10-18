@@ -6173,3 +6173,46 @@ iframe.minitigerInlineTrailer {
     cursor: pointer;
     accent-color: var(--mt-accent, #ffcb00);
 }
+
+/* TEST: consistent horizontal navigation for original + virtual libraries. */
+.minitigerHome .minitigerLibrarySection,
+.minitigerHome .minitigerVirtualHomeSection {
+    position: relative;
+    min-width: 0;
+}
+.minitigerHome .minitigerVirtualHomeRow {
+    display: flex !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start;
+    min-width: 0;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+}
+.minitigerHome .minitigerVirtualHomeRow::-webkit-scrollbar,
+.minitigerHome .minitigerLibraryGrid::-webkit-scrollbar {
+    display: none !important;
+    height: 0 !important;
+}
+.minitigerHome .minitigerLibraryGrid {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+}
+.minitigerHome .minitigerVirtualRowArrows,
+.minitigerHome .minitigerLibraryRowArrows {
+    position: absolute;
+    right: 3.25%;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    gap: 0.4rem;
+}
+.minitigerHome .minitigerLibraryRowArrows {
+    top: 0.15rem;
+}
+.minitigerHome .minitigerVirtualHomeSection .minitigerSectionHeader {
+    padding-right: 6.5rem;
+}
