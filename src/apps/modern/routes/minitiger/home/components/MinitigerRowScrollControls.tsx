@@ -47,7 +47,7 @@ const MinitigerRowScrollControls = ({ sectionClass, rowClass, label, watchKey }:
         animateMinitigerHorizontalScroll(row, direction * Math.max(320, row.clientWidth * 0.78));
     };
 
-    return <div ref={controlsRef} className='minitigerAdaptiveRowControls'>
+    return <div ref={controlsRef} className={`minitigerAdaptiveRowControls${canScroll ? ' hasOverflow' : ''}`}>
         {canScroll && <div className='minitigerRowArrows'>
             <button type='button' aria-label={label + ' nach links scrollen'} onClick={() => scroll(-1)}>‹</button>
             <button type='button' aria-label={label + ' nach rechts scrollen'} onClick={() => scroll(1)}>›</button>
