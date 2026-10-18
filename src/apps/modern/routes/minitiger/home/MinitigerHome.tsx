@@ -1216,7 +1216,7 @@ const MinitigerHome = () => {
                 <MinitigerRowScrollControls sectionClass='minitigerVirtualHomeSection'
                     rowClass='minitigerVirtualHomeRow' label={virtualConfig.rowTitles[rowId]}
                     watchKey={rowId + ':' + librariesInRow.map(library => library.id).join(',') + ':' + String(virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap)} />
-                <div className='minitigerVirtualHomeRow' style={{ gap: `${virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap}px` }}>
+                <div className='minitigerVirtualHomeRow' style={{ '--mt-virtual-row-gap': `${virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap}px` } as React.CSSProperties}>
                     {librariesInRow.map(library => (
                         <Link
                             key={library.id}
