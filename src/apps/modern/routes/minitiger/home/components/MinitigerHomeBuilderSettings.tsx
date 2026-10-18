@@ -311,6 +311,18 @@ const MinitigerHomeBuilderSettings = ({
                     </label>
                 </div>
 
+                <div className='minitigerHomeBuilderGrid'>
+                    {(['X', 'Y'] as const).map(axis => {
+                        const field = axis === 'X' ? 'libraryNavigationOffsetX' : 'libraryNavigationOffsetY';
+                        return <label className='minitigerRangeField' key={axis}>
+                            <span>Medien-Bibliotheken · Pfeile {axis === 'X' ? 'Horizontal' : 'Vertikal'} (px)</span>
+                            <div><input type='range' min='-500' max='500' step='1'
+                                value={settings[field]}
+                                onChange={event => onUpdateSettings({ [field]: Number(event.currentTarget.value) })} />
+                                <output>{settings[field]}px</output></div>
+                        </label>;
+                    })}
+                </div>
                 <div className='minitigerHomeBuilderList'>
                     {settings.homeRowOrder.map((
                         rowId,
@@ -595,6 +607,26 @@ const MinitigerHomeBuilderSettings = ({
                                                 />
                                             </label>
 
+                                            {(['x', 'y'] as const).map(axis =>
+                                                <label className='minitigerRangeField' key={axis}>
+                                                    <span>Navigationspfeile {axis === 'x' ? 'Horizontal' : 'Vertikal'} (px)</span>
+                                                    <div>
+                                                        <input type='range' min='-500' max='500' step='1'
+                                                            value={settings.virtualNavigationOffsets[rowId]?.[axis] ?? 0}
+                                                            onChange={event => onUpdateSettings({
+                                                                virtualNavigationOffsets: {
+                                                                    ...settings.virtualNavigationOffsets,
+                                                                    [rowId]: {
+                                                                        x: settings.virtualNavigationOffsets[rowId]?.x ?? 0,
+                                                                        y: settings.virtualNavigationOffsets[rowId]?.y ?? 0,
+                                                                        [axis]: Number(event.currentTarget.value)
+                                                                    }
+                                                                }
+                                                            })} />
+                                                        <output>{settings.virtualNavigationOffsets[rowId]?.[axis] ?? 0}px</output>
+                                                    </div>
+                                                </label>
+                                            )}
                                             <label className='minitigerSettingsField'>
                                                 <span>Abstand zwischen Bibliotheken (px)</span>
                                                 <input type='text' inputMode='numeric'
