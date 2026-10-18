@@ -6174,11 +6174,68 @@ iframe.minitigerInlineTrailer {
     accent-color: var(--mt-accent, #ffcb00);
 }
 
-/* TEST: consistent horizontal navigation for original + virtual libraries. */
+/* Library navigation layout: the toolbar occupies normal document flow.
+   No absolute arrow positioning, overlapping margins or :has() tricks. */
 .minitigerHome .minitigerLibrarySection,
 .minitigerHome .minitigerVirtualHomeSection {
     position: relative;
     min-width: 0;
+}
+.minitigerHome .minitigerVirtualHomeToolbar {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 2.6rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 3.25% 0 0;
+    margin: 0 0 0.3rem !important;
+}
+.minitigerHome .minitigerVirtualHomeToolbar > .minitigerSectionHeader {
+    position: static !important;
+    display: flex !important;
+    align-items: center;
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.minitigerHome .minitigerVirtualHomeToolbar > .minitigerSectionHeader h2 {
+    position: static;
+    margin: 0 !important;
+    line-height: 1.3 !important;
+}
+.minitigerHome .minitigerAdaptiveRowControls {
+    display: flex;
+    flex: 0 0 auto;
+    position: static !important;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: flex-end;
+    width: auto !important;
+    min-width: 0;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 90;
+}
+.minitigerHome .minitigerAdaptiveRowControls.hasOverflow {
+    height: 2.6rem !important;
+}
+.minitigerHome .minitigerAdaptiveRowControls > .minitigerRowArrows {
+    position: static !important;
+    display: flex !important;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 !important;
+    transform: none !important;
+}
+.minitigerHome .minitigerLibrarySection > .minitigerAdaptiveRowControls {
+    margin: 0 3.25% 0 auto !important;
 }
 .minitigerHome .minitigerVirtualHomeRow {
     display: flex !important;
@@ -6186,92 +6243,16 @@ iframe.minitigerInlineTrailer {
     flex-wrap: nowrap !important;
     align-items: flex-start;
     min-width: 0;
+    gap: var(--mt-virtual-row-gap, var(--mt-virtual-home-gap, 12px)) !important;
     overflow-x: auto !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none;
-    scroll-behavior: smooth;
 }
 .minitigerHome .minitigerVirtualHomeRow::-webkit-scrollbar,
 .minitigerHome .minitigerLibraryGrid::-webkit-scrollbar {
     display: none !important;
-    height: 0 !important;
 }
 .minitigerHome .minitigerLibraryGrid {
     scrollbar-width: none !important;
     -ms-overflow-style: none;
-    scroll-behavior: smooth;
-}
-.minitigerHome .minitigerVirtualRowArrows,
-.minitigerHome .minitigerLibraryRowArrows {
-    position: absolute;
-    right: 3.25%;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    gap: 0.4rem;
-}
-.minitigerHome .minitigerLibraryRowArrows {
-    top: 0.15rem;
-}
-.minitigerHome .minitigerVirtualHomeSection .minitigerSectionHeader {
-    padding-right: 6.5rem;
-}
-
-/* TEST fix: navigation is a real in-flow lane, not an overlay in the banner
-   or in the previous library row. The lane exists only for overflowing rows. */
-.minitigerHome .minitigerAdaptiveRowControls {
-    position: relative !important;
-    box-sizing: border-box;
-    width: 100%;
-    height: 0;
-    min-height: 0;
-    z-index: 90;
-}
-.minitigerHome .minitigerAdaptiveRowControls.hasOverflow {
-    height: 2.45rem;
-}
-.minitigerHome .minitigerAdaptiveRowControls > .minitigerRowArrows {
-    position: absolute !important;
-    top: 0.15rem !important;
-    right: 3.25% !important;
-    bottom: auto !important;
-    left: auto !important;
-    display: flex !important;
-    gap: 0.4rem;
-    transform: none !important;
-}
-.minitigerHome .minitigerVirtualHomeRow {
-    justify-content: flex-start !important;
-    gap: var(--mt-virtual-row-gap, var(--mt-virtual-home-gap, 12px)) !important;
-}
-
-/* Fix: overflowing library controls occupy a full line instead of painting
-   across banner/previous row. Virtual heading shares that exact line. */
-.minitigerHome .minitigerLibrarySection .minitigerAdaptiveRowControls.hasOverflow {
-    height: 3.6rem !important;
-    margin-top: 0.5rem;
-}
-.minitigerHome .minitigerVirtualHomeSection:has(> .minitigerAdaptiveRowControls.hasOverflow)
-> .minitigerSectionHeader {
-    box-sizing: border-box;
-    min-height: 3.6rem !important;
-    height: 3.6rem;
-    display: flex;
-    align-items: center;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-}
-.minitigerHome .minitigerVirtualHomeSection:has(> .minitigerAdaptiveRowControls.hasOverflow)
-> .minitigerAdaptiveRowControls {
-    height: 3.6rem !important;
-    margin-top: -3.6rem !important;
-}
-.minitigerHome .minitigerVirtualHomeSection:has(> .minitigerAdaptiveRowControls.hasOverflow)
-> .minitigerVirtualHomeRow {
-    margin-top: 0 !important;
-    padding-top: 0.8rem !important;
-}
-.minitigerHome .minitigerLibrarySection .minitigerAdaptiveRowControls > .minitigerRowArrows,
-.minitigerHome .minitigerVirtualHomeSection .minitigerAdaptiveRowControls > .minitigerRowArrows {
-    top: 0.55rem !important;
 }
