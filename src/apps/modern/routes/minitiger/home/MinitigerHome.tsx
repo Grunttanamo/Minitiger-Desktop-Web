@@ -966,6 +966,18 @@ const MinitigerHome = () => {
 
     const librarySection = (
         <section className='minitigerSection minitigerLibrarySection'>
+            <div className='minitigerRowArrows minitigerLibraryRowArrows'>
+                <button type='button' aria-label='Hauptbibliotheken nach links scrollen'
+                    onClick={event => {
+                        const row = event.currentTarget.closest('.minitigerLibrarySection')?.querySelector<HTMLElement>('.minitigerLibraryGrid');
+                        row?.scrollBy({ left: -Math.max(220, row.clientWidth * 0.8), behavior: 'smooth' });
+                    }}>‹</button>
+                <button type='button' aria-label='Hauptbibliotheken nach rechts scrollen'
+                    onClick={event => {
+                        const row = event.currentTarget.closest('.minitigerLibrarySection')?.querySelector<HTMLElement>('.minitigerLibraryGrid');
+                        row?.scrollBy({ left: Math.max(220, row.clientWidth * 0.8), behavior: 'smooth' });
+                    }}>›</button>
+            </div>
             {librariesDisplayPending && (
                 <div className='minitigerStatusCard'>
                     Bibliotheken werden geladen …
