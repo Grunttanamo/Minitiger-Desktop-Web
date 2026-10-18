@@ -1192,32 +1192,12 @@ const MinitigerHome = () => {
                 key={rowId}
                 className='minitigerSection minitigerVirtualHomeSection'
             >
-                <div className='minitigerVirtualHomeToolbar'>
-                {virtualConfig.rowTitleVisible[rowId] && (
-                    <div className='minitigerSectionHeader'>
-                        <h2
-                            style={{
-                                '--mt-side-title-size':
-                                    `${Math.max(
-                                        0.72,
-                                        Math.min(
-                                            1.18,
-                                            1.34
-                                            - virtualConfig.rowTitles[rowId].length
-                                                * 0.018
-                                        )
-                                    ).toFixed(2)}rem`
-                            } as React.CSSProperties}
-                        >
-                            {virtualConfig.rowTitles[rowId]}
-                        </h2>
-                    </div>
-                )}
-
-                <MinitigerRowScrollControls sectionClass='minitigerVirtualHomeSection'
-                    rowClass='minitigerVirtualHomeRow' label={virtualConfig.rowTitles[rowId]}
+                <MinitigerRowScrollControls
+                    sectionClass='minitigerVirtualHomeSection'
+                    rowClass='minitigerVirtualHomeRow'
+                    label={virtualConfig.rowTitles[rowId]}
+                    title={virtualConfig.rowTitleVisible[rowId] ? virtualConfig.rowTitles[rowId] : undefined}
                     watchKey={rowId + ':' + librariesInRow.map(library => library.id).join(',') + ':' + String(virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap)} />
-                </div>
                 <div className='minitigerVirtualHomeRow' style={{ '--mt-virtual-row-gap': `${virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap}px` } as React.CSSProperties}>
                     {librariesInRow.map(library => (
                         <Link
