@@ -25,6 +25,7 @@ export interface MinitigerVirtualLibrariesConfig {
     homeOrder: string[];
     homeCardWidth: number;
     homeGap: number;
+    rowGaps: Record<MinitigerVirtualRowId, number>;
     pagePosterWidth: number;
     pageLandscapeWidth: number;
     pageGap: number;
@@ -38,6 +39,7 @@ export const DEFAULT_VIRTUAL_LIBRARIES: MinitigerVirtualLibrariesConfig = {
     homeOrder: [],
     homeCardWidth: 300,
     homeGap: 80,
+    rowGaps: {} as Record<MinitigerVirtualRowId, number>,
     pagePosterWidth: 320,
     pageLandscapeWidth: 520,
     pageGap: 23,
@@ -191,6 +193,12 @@ export const normalizeVirtualLibraries = (
             180,
             520
         ),
+        rowGaps: Object.fromEntries(VIRTUAL_ROW_IDS.map(id => {
+            const raw = source.rowGaps?.[id];
+            const parsed = typeof raw === 'number' ? raw : Number(raw);
+            return [id, raw !== undefined && Number.isFinite(parsed) && parsed >= 0
+                ? Math.min(1000000, Math.round(parsed)) : clamp(source.homeGap, 80, 4, 80)];
+        })) as Record<MinitigerVirtualRowId, number>,
         homeGap: clamp(
             source.homeGap,
             DEFAULT_VIRTUAL_LIBRARIES.homeGap,
