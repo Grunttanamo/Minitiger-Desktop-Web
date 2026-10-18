@@ -554,7 +554,7 @@ const MinitigerHome = () => {
         isFetched: watchlistFetched
     } = useGetItems({
         recursive: true,
-        limit: 18,
+        limit: 1000,
         isFavorite: true,
         imageTypeLimit: 1,
         enableImageTypes: [
@@ -1208,6 +1208,18 @@ const MinitigerHome = () => {
                     </div>
                 )}
 
+                <div className='minitigerRowArrows minitigerVirtualRowArrows'>
+                    <button type='button' aria-label='Virtuelle Bibliotheken nach links scrollen'
+                        onClick={event => {
+                            const row = event.currentTarget.closest('.minitigerVirtualHomeSection')?.querySelector<HTMLElement>('.minitigerVirtualHomeRow');
+                            row?.scrollBy({ left: -Math.max(220, row.clientWidth * 0.8), behavior: 'smooth' });
+                        }}>‹</button>
+                    <button type='button' aria-label='Virtuelle Bibliotheken nach rechts scrollen'
+                        onClick={event => {
+                            const row = event.currentTarget.closest('.minitigerVirtualHomeSection')?.querySelector<HTMLElement>('.minitigerVirtualHomeRow');
+                            row?.scrollBy({ left: Math.max(220, row.clientWidth * 0.8), behavior: 'smooth' });
+                        }}>›</button>
+                </div>
                 <div className='minitigerVirtualHomeRow'>
                     {librariesInRow.map(library => (
                         <Link
