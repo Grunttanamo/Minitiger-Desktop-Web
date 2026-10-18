@@ -118,6 +118,7 @@ interface MinitigerSettingsPanelProps {
     onSetVirtualHomeCardWidth?: (
         width: number
     ) => void;
+    onSetVirtualRowGap?: (rowId: MinitigerVirtualRowId, gap: number) => void;
     onSetVirtualHomeGap?: (
         gap: number
     ) => void;
@@ -570,6 +571,7 @@ const MinitigerSettingsPanel = ({
     onSetVirtualRowTitleVisible,
     onSetVirtualHomeCardWidth,
     onSetVirtualHomeGap,
+    onSetVirtualRowGap,
     onSetVirtualPagePosterWidth,
     onSetVirtualPageLandscapeWidth,
     onSetVirtualPageGap,
@@ -2180,6 +2182,7 @@ const onUpdate = (
                                             onUpdateVirtualRowTitle={onUpdateVirtualRowTitle}
                                             onSetVirtualRowTitleVisible={onSetVirtualRowTitleVisible}
                                             onSetVirtualHomeCardWidth={onSetVirtualHomeCardWidth}
+                                            onSetVirtualRowGap={onSetVirtualRowGap}
                                             onAddVirtualLibrary={onAddVirtualLibrary}
                                             onUpdateVirtualLibrary={onUpdateVirtualLibrary}
                                             onRemoveVirtualLibrary={onRemoveVirtualLibrary}
