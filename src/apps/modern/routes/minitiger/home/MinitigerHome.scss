@@ -6244,3 +6244,34 @@ iframe.minitigerInlineTrailer {
     justify-content: flex-start !important;
     gap: var(--mt-virtual-row-gap, var(--mt-virtual-home-gap, 12px)) !important;
 }
+
+/* Fix: overflowing library controls occupy a full line instead of painting
+   across banner/previous row. Virtual heading shares that exact line. */
+.minitigerHome .minitigerLibrarySection .minitigerAdaptiveRowControls.hasOverflow {
+    height: 3.6rem !important;
+    margin-top: 0.5rem;
+}
+.minitigerHome .minitigerVirtualHomeSection:has(> .minitigerAdaptiveRowControls.hasOverflow)
+> .minitigerSectionHeader {
+    box-sizing: border-box;
+    min-height: 3.6rem !important;
+    height: 3.6rem;
+    display: flex;
+    align-items: center;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+.minitigerHome .minitigerVirtualHomeSection:has(> .minitigerAdaptiveRowControls.hasOverflow)
+> .minitigerAdaptiveRowControls {
+    height: 3.6rem !important;
+    margin-top: -3.6rem !important;
+}
+.minitigerHome .minitigerVirtualHomeSection:has(> .minitigerAdaptiveRowControls.hasOverflow)
+> .minitigerVirtualHomeRow {
+    margin-top: 0 !important;
+    padding-top: 0.8rem !important;
+}
+.minitigerHome .minitigerLibrarySection .minitigerAdaptiveRowControls > .minitigerRowArrows,
+.minitigerHome .minitigerVirtualHomeSection .minitigerAdaptiveRowControls > .minitigerRowArrows {
+    top: 0.55rem !important;
+}
