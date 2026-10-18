@@ -601,7 +601,7 @@ const MinitigerHomeBuilderSettings = ({
                                                     value={String(virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap)}
                                                     onChange={event => {
                                                         const raw = event.currentTarget.value.trim();
-                                                        if (!/^\\d+$/.test(raw)) return;
+                                                        if (!/^\d+$/.test(raw)) return;
                                                         const number = Number(raw);
                                                         if (Number.isSafeInteger(number) && number >= 0) {
                                                             onSetVirtualRowGap?.(rowId, number);
