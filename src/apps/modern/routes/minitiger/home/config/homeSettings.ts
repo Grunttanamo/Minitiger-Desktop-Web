@@ -83,6 +83,11 @@ export interface MinitigerHomeSettings {
     bannerEnabled: boolean;
     bannerHeightOffset: number;
     bannerOverlayOffset: number;
+    bannerControlOffsetX: number;
+    bannerControlOffsetY: number;
+    libraryNavigationOffsetX: number;
+    libraryNavigationOffsetY: number;
+    virtualNavigationOffsets: Record<string, { x: number; y: number }>;
     bannerFadeSize: number;
     bannerFadeStrength: number;
     bannerNavigationVisible: boolean;
@@ -785,6 +790,11 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     bannerEnabled: true,
     bannerHeightOffset: 280,
     bannerOverlayOffset: 70,
+    bannerControlOffsetX: 0,
+    bannerControlOffsetY: 0,
+    libraryNavigationOffsetX: 0,
+    libraryNavigationOffsetY: 0,
+    virtualNavigationOffsets: {},
     bannerFadeSize: 320,
     bannerFadeStrength: 100,
     bannerNavigationVisible: true,
@@ -1176,6 +1186,21 @@ export const normalizeHomeSettings = (
             DEFAULT_HOME_SETTINGS.bannerOverlayOffset,
             -120,
             120
+        ),
+        bannerControlOffsetX: clampNumber(source.bannerControlOffsetX, 0, -500, 500),
+        bannerControlOffsetY: clampNumber(source.bannerControlOffsetY, 0, -500, 500),
+        libraryNavigationOffsetX: clampNumber(source.libraryNavigationOffsetX, 0, -500, 500),
+        libraryNavigationOffsetY: clampNumber(source.libraryNavigationOffsetY, 0, -500, 500),
+        virtualNavigationOffsets: Object.fromEntries(
+            Object.entries(source.virtualNavigationOffsets && typeof source.virtualNavigationOffsets === 'object' ? source.virtualNavigationOffsets : {})
+                .filter(([key]) => /^virtual([1-9]|1[0-9]|2[0-4])$/.test(key))
+                .map(([key, value]) => {
+                    const offsets = value as { x?: number; y?: number } | null;
+                    return [key, {
+                        x: clampNumber(offsets?.x, 0, -500, 500),
+                        y: clampNumber(offsets?.y, 0, -500, 500)
+                    }];
+                })
         ),
         bannerFadeSize: clampNumber(
             source.bannerFadeSize,
