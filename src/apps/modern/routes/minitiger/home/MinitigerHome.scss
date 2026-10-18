@@ -6216,3 +6216,31 @@ iframe.minitigerInlineTrailer {
 .minitigerHome .minitigerVirtualHomeSection .minitigerSectionHeader {
     padding-right: 6.5rem;
 }
+
+/* TEST fix: navigation is a real in-flow lane, not an overlay in the banner
+   or in the previous library row. The lane exists only for overflowing rows. */
+.minitigerHome .minitigerAdaptiveRowControls {
+    position: relative !important;
+    box-sizing: border-box;
+    width: 100%;
+    height: 0;
+    min-height: 0;
+    z-index: 90;
+}
+.minitigerHome .minitigerAdaptiveRowControls.hasOverflow {
+    height: 2.45rem;
+}
+.minitigerHome .minitigerAdaptiveRowControls > .minitigerRowArrows {
+    position: absolute !important;
+    top: 0.15rem !important;
+    right: 3.25% !important;
+    bottom: auto !important;
+    left: auto !important;
+    display: flex !important;
+    gap: 0.4rem;
+    transform: none !important;
+}
+.minitigerHome .minitigerVirtualHomeRow {
+    justify-content: flex-start !important;
+    gap: var(--mt-virtual-row-gap, var(--mt-virtual-home-gap, 12px)) !important;
+}
