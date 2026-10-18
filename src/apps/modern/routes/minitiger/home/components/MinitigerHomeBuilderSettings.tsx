@@ -60,6 +60,7 @@ interface MinitigerHomeBuilderSettingsProps {
     onSetVirtualHomeCardWidth: (
         width: number
     ) => void;
+    onSetVirtualRowGap?: (rowId: MinitigerVirtualRowId, gap: number) => void;
     onAddVirtualLibrary: () => void;
     onUpdateVirtualLibrary: (
         libraryId: string,
@@ -147,6 +148,7 @@ const MinitigerHomeBuilderSettings = ({
     onUpdateVirtualRowTitle,
     onSetVirtualRowTitleVisible,
     onSetVirtualHomeCardWidth,
+    onSetVirtualRowGap,
     onAddVirtualLibrary,
     onUpdateVirtualLibrary,
     onRemoveVirtualLibrary,
@@ -593,6 +595,21 @@ const MinitigerHomeBuilderSettings = ({
                                                 />
                                             </label>
 
+                                            <label className='minitigerSettingsField'>
+                                                <span>Abstand zwischen Bibliotheken (px)</span>
+                                                <input type='text' inputMode='numeric'
+                                                    value={String(virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap)}
+                                                    onChange={event => {
+                                                        const raw = event.currentTarget.value.trim();
+                                                        if (!/^\\d+$/.test(raw)) return;
+                                                        const number = Number(raw);
+                                                        if (Number.isSafeInteger(number) && number >= 0) {
+                                                            onSetVirtualRowGap?.(rowId, number);
+                                                        }
+                                                    }}
+                                                />
+                                                <small>Die erste Karte bleibt links. Größere Werte verschieben die folgenden Karten gleichmäßig nach rechts.</small>
+                                            </label>
                                             <label className='minitigerSettingsToggle'>
                                                 <input
                                                     type='checkbox'
