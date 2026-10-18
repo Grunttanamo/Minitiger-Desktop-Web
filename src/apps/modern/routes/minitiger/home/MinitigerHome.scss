@@ -6174,119 +6174,59 @@ iframe.minitigerInlineTrailer {
     accent-color: var(--mt-accent, #ffcb00);
 }
 
-/* Library navigation layout: the toolbar occupies normal document flow.
-   No absolute arrow positioning, overlapping margins or :has() tricks. */
-.minitigerHome .minitigerLibrarySection,
-.minitigerHome .minitigerVirtualHomeSection {
-    position: relative;
-    min-width: 0;
-}
-.minitigerHome .minitigerVirtualHomeToolbar {
-    display: flex;
-    box-sizing: border-box;
-    width: 100%;
-    min-height: 2.6rem;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0 3.25% 0 0;
-    margin: 0 0 0.3rem !important;
-}
-.minitigerHome .minitigerVirtualHomeToolbar > .minitigerSectionHeader {
-    position: static !important;
+/* TEST: library rows use the same in-flow header as MinitigerMediaRow.
+   Preserve the banner and the existing configured row separation. */
+.minitigerHome .minitigerLibraryNavigationHeader {
     display: flex !important;
-    align-items: center;
+    align-items: center !important;
+    justify-content: space-between !important;
     box-sizing: border-box;
-    flex: 1 1 auto;
+    position: relative !important;
+    z-index: 80;
+    margin: 0 3.25% 0.45rem !important;
+    padding: 0 !important;
     min-height: 0 !important;
     height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
 }
-.minitigerHome .minitigerVirtualHomeToolbar > .minitigerSectionHeader h2 {
-    position: static;
-    margin: 0 !important;
-    line-height: 1.3 !important;
+.minitigerHome .minitigerLibraryNavigationHeader:has(.minitigerRowArrows) {
+    min-height: 2.35rem !important;
 }
-.minitigerHome .minitigerAdaptiveRowControls {
-    display: flex;
-    flex: 0 0 auto;
+.minitigerHome .minitigerLibraryNavigationHeader > h2 {
     position: static !important;
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: flex-end;
-    width: auto !important;
-    min-width: 0;
-    height: 0 !important;
-    min-height: 0 !important;
     margin: 0 !important;
-    padding: 0 !important;
-    z-index: 90;
+    line-height: 1.3;
 }
-.minitigerHome .minitigerAdaptiveRowControls.hasOverflow {
-    height: 2.6rem !important;
-}
-.minitigerHome .minitigerAdaptiveRowControls > .minitigerRowArrows {
+.minitigerHome .minitigerLibraryNavigationHeader .minitigerRowArrows {
     position: static !important;
+    transform: none !important;
+    margin-left: auto;
     display: flex !important;
     align-items: center;
-    gap: 0.4rem;
-    margin: 0 !important;
-    transform: none !important;
+    gap: .4rem;
 }
-.minitigerHome .minitigerLibrarySection > .minitigerAdaptiveRowControls {
-    margin: 0 3.25% 0 auto !important;
+.minitigerHome .minitigerLibrarySection > .minitigerLibraryNavigationHeader:not(:has(.minitigerRowArrows)) {
+    display: none !important;
 }
 .minitigerHome .minitigerVirtualHomeRow {
     display: flex !important;
     justify-content: flex-start !important;
     flex-wrap: nowrap !important;
     align-items: flex-start;
-    min-width: 0;
     gap: var(--mt-virtual-row-gap, var(--mt-virtual-home-gap, 12px)) !important;
     overflow-x: auto !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none;
 }
 .minitigerHome .minitigerVirtualHomeRow::-webkit-scrollbar,
-.minitigerHome .minitigerLibraryGrid::-webkit-scrollbar {
-    display: none !important;
-}
-.minitigerHome .minitigerLibraryGrid {
-    scrollbar-width: none !important;
-    -ms-overflow-style: none;
-}
-
-/* TEST: repair the actual collision source. Older virtual rows used a
-   -30px top margin (more with glow) that pulled cards UP through their
-   heading. New in-flow headers must never use that compensation. */
-.minitigerHome:not([data-side-row-titles='true']) .minitigerVirtualHomeSection {
-    display: flow-root;
-}
-.minitigerHome:not([data-side-row-titles='true']) .minitigerVirtualHomeSection
-> .minitigerVirtualHomeToolbar {
+.minitigerHome .minitigerLibraryGrid::-webkit-scrollbar { display: none !important; }
+.minitigerHome .minitigerLibraryGrid { scrollbar-width: none !important; }
+/* Legacy negative scrollport offsets must not pull virtual cards over their
+   header or the previous row. Keep glow breathing room below the header. */
+.minitigerHome:not([data-side-row-titles='true']) .minitigerVirtualHomeSection > .minitigerVirtualHomeRow {
     margin-top: 0 !important;
-    margin-bottom: 0.35rem !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-}
-.minitigerHome:not([data-side-row-titles='true']) .minitigerVirtualHomeSection
-> .minitigerVirtualHomeRow {
-    margin-top: 0 !important;
-    padding-top: 0.35rem !important;
+    padding-top: .4rem !important;
 }
 .minitigerHome:not([data-side-row-titles='true'])[data-glow-enabled='true']
 .minitigerVirtualHomeSection > .minitigerVirtualHomeRow {
-    margin-top: 0 !important;
-    padding-top: calc(0.35rem + var(--mt-glow-size, 20px) * 0.35) !important;
-}
-/* Preserve the user's library/virtual section gap, without collapsing its
-   heading into the preceding card scrollport. */
-.minitigerHome:not([data-side-row-titles='true'])
-.minitigerLibrarySection:has(+ .minitigerVirtualHomeSection) {
-    margin-bottom: 0 !important;
-}
-.minitigerHome:not([data-side-row-titles='true'])
-.minitigerLibrarySection + .minitigerVirtualHomeSection {
-    margin-top: var(--mt-library-virtual-gap, 64px) !important;
+    padding-top: calc(.4rem + var(--mt-glow-size, 20px) * .35) !important;
 }
