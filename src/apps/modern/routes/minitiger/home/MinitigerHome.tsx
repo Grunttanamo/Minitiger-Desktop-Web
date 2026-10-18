@@ -970,7 +970,8 @@ const MinitigerHome = () => {
         <section className='minitigerSection minitigerLibrarySection'>
             <MinitigerRowScrollControls sectionClass='minitigerLibrarySection'
                 rowClass='minitigerLibraryGrid' label='Hauptbibliotheken'
-                watchKey={String(libraries.length)} />
+                watchKey={String(libraries.length)}
+                offsetX={settings.libraryNavigationOffsetX} offsetY={settings.libraryNavigationOffsetY} />
             {librariesDisplayPending && (
                 <div className='minitigerStatusCard'>
                     Bibliotheken werden geladen …
@@ -1197,7 +1198,9 @@ const MinitigerHome = () => {
                     rowClass='minitigerVirtualHomeRow'
                     label={virtualConfig.rowTitles[rowId]}
                     title={virtualConfig.rowTitleVisible[rowId] ? virtualConfig.rowTitles[rowId] : undefined}
-                    watchKey={rowId + ':' + librariesInRow.map(library => library.id).join(',') + ':' + String(virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap)} />
+                    watchKey={rowId + ':' + librariesInRow.map(library => library.id).join(',') + ':' + String(virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap)}
+                    offsetX={settings.virtualNavigationOffsets[rowId]?.x ?? 0}
+                    offsetY={settings.virtualNavigationOffsets[rowId]?.y ?? 0} />
                 <div className='minitigerVirtualHomeRow' style={{ '--mt-virtual-row-gap': `${virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap}px` } as React.CSSProperties}>
                     {librariesInRow.map(library => (
                         <Link
@@ -1388,6 +1391,8 @@ const MinitigerHome = () => {
         '--mt-banner-fsk-shift': `${Math.max(0, Math.round(settings.bannerHeightOffset * 0.70))}px`,
         '--mt-banner-nav-shift': `${Math.max(0, Math.round(settings.bannerHeightOffset * 0.78))}px`,
         '--mt-banner-overlay-offset': `${settings.bannerOverlayOffset}px`,
+        '--mt-banner-control-x': `${settings.bannerControlOffsetX}px`,
+        '--mt-banner-control-y': `${settings.bannerControlOffsetY}px`,
         '--mt-banner-fade-size': `${settings.bannerFadeSize}px`,
         '--mt-banner-fade-strength': `${settings.bannerFadeStrength}%`,
         '--mt-banner-fade-end-opacity': `${100 - settings.bannerFadeStrength}%`,
