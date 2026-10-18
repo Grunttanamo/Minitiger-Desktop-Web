@@ -196,8 +196,8 @@ export const normalizeVirtualLibraries = (
         rowGaps: Object.fromEntries(VIRTUAL_ROW_IDS.map(id => {
             const raw = source.rowGaps?.[id];
             const parsed = typeof raw === 'number' ? raw : Number(raw);
-            return [id, raw !== undefined && Number.isFinite(parsed) && parsed >= 0
-                ? Math.min(1000000, Math.round(parsed)) : clamp(source.homeGap, 80, 4, 80)];
+            return [id, raw !== undefined && Number.isSafeInteger(parsed) && parsed >= 0
+                ? parsed : clamp(source.homeGap, 80, 4, 80)];
         })) as Record<MinitigerVirtualRowId, number>,
         homeGap: clamp(
             source.homeGap,
