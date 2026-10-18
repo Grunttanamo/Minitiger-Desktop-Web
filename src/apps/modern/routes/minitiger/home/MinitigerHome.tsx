@@ -23,6 +23,7 @@ import MinitigerHero from './components/MinitigerHero';
 import MinitigerProfileGate from './components/MinitigerProfileGate';
 import MinitigerVanillaHomeSections from './components/MinitigerVanillaHomeSections';
 import MinitigerMediaRow from './components/MinitigerMediaRow';
+import MinitigerRowScrollControls from './components/MinitigerRowScrollControls';
 import MinitigerSettingsPanel from './components/MinitigerSettingsPanel';
 import MinitigerVirtualAssignModal from './components/MinitigerVirtualAssignModal';
 import MinitigerVirtualHomeMedia from './components/MinitigerVirtualHomeMedia';
@@ -966,18 +967,9 @@ const MinitigerHome = () => {
 
     const librarySection = (
         <section className='minitigerSection minitigerLibrarySection'>
-            <div className='minitigerRowArrows minitigerLibraryRowArrows'>
-                <button type='button' aria-label='Hauptbibliotheken nach links scrollen'
-                    onClick={event => {
-                        const row = event.currentTarget.closest('.minitigerLibrarySection')?.querySelector<HTMLElement>('.minitigerLibraryGrid');
-                        row?.scrollBy({ left: -Math.max(220, row.clientWidth * 0.8), behavior: 'smooth' });
-                    }}>‹</button>
-                <button type='button' aria-label='Hauptbibliotheken nach rechts scrollen'
-                    onClick={event => {
-                        const row = event.currentTarget.closest('.minitigerLibrarySection')?.querySelector<HTMLElement>('.minitigerLibraryGrid');
-                        row?.scrollBy({ left: Math.max(220, row.clientWidth * 0.8), behavior: 'smooth' });
-                    }}>›</button>
-            </div>
+            <MinitigerRowScrollControls sectionClass='minitigerLibrarySection'
+                rowClass='minitigerLibraryGrid' label='Hauptbibliotheken'
+                watchKey={String(libraries.length)} />
             {librariesDisplayPending && (
                 <div className='minitigerStatusCard'>
                     Bibliotheken werden geladen …
@@ -1220,18 +1212,9 @@ const MinitigerHome = () => {
                     </div>
                 )}
 
-                <div className='minitigerRowArrows minitigerVirtualRowArrows'>
-                    <button type='button' aria-label='Virtuelle Bibliotheken nach links scrollen'
-                        onClick={event => {
-                            const row = event.currentTarget.closest('.minitigerVirtualHomeSection')?.querySelector<HTMLElement>('.minitigerVirtualHomeRow');
-                            row?.scrollBy({ left: -Math.max(220, row.clientWidth * 0.8), behavior: 'smooth' });
-                        }}>‹</button>
-                    <button type='button' aria-label='Virtuelle Bibliotheken nach rechts scrollen'
-                        onClick={event => {
-                            const row = event.currentTarget.closest('.minitigerVirtualHomeSection')?.querySelector<HTMLElement>('.minitigerVirtualHomeRow');
-                            row?.scrollBy({ left: Math.max(220, row.clientWidth * 0.8), behavior: 'smooth' });
-                        }}>›</button>
-                </div>
+                <MinitigerRowScrollControls sectionClass='minitigerVirtualHomeSection'
+                    rowClass='minitigerVirtualHomeRow' label={virtualConfig.rowTitles[rowId]}
+                    watchKey={rowId + ':' + librariesInRow.map(library => library.id).join(',') + ':' + String(virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap)} />
                 <div className='minitigerVirtualHomeRow'>
                     {librariesInRow.map(library => (
                         <Link
