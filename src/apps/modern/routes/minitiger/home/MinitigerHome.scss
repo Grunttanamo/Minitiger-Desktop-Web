@@ -6256,3 +6256,37 @@ iframe.minitigerInlineTrailer {
     scrollbar-width: none !important;
     -ms-overflow-style: none;
 }
+
+/* TEST: repair the actual collision source. Older virtual rows used a
+   -30px top margin (more with glow) that pulled cards UP through their
+   heading. New in-flow headers must never use that compensation. */
+.minitigerHome:not([data-side-row-titles='true']) .minitigerVirtualHomeSection {
+    display: flow-root;
+}
+.minitigerHome:not([data-side-row-titles='true']) .minitigerVirtualHomeSection
+> .minitigerVirtualHomeToolbar {
+    margin-top: 0 !important;
+    margin-bottom: 0.35rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+.minitigerHome:not([data-side-row-titles='true']) .minitigerVirtualHomeSection
+> .minitigerVirtualHomeRow {
+    margin-top: 0 !important;
+    padding-top: 0.35rem !important;
+}
+.minitigerHome:not([data-side-row-titles='true'])[data-glow-enabled='true']
+.minitigerVirtualHomeSection > .minitigerVirtualHomeRow {
+    margin-top: 0 !important;
+    padding-top: calc(0.35rem + var(--mt-glow-size, 20px) * 0.35) !important;
+}
+/* Preserve the user's library/virtual section gap, without collapsing its
+   heading into the preceding card scrollport. */
+.minitigerHome:not([data-side-row-titles='true'])
+.minitigerLibrarySection:has(+ .minitigerVirtualHomeSection) {
+    margin-bottom: 0 !important;
+}
+.minitigerHome:not([data-side-row-titles='true'])
+.minitigerLibrarySection + .minitigerVirtualHomeSection {
+    margin-top: var(--mt-library-virtual-gap, 64px) !important;
+}
