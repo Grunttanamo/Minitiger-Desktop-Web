@@ -7,10 +7,12 @@ interface Props {
     label: string;
     watchKey: string;
     title?: string;
+    offsetX?: number;
+    offsetY?: number;
 }
 
 // Mirror the normal media row's overflow measurement.
-const MinitigerRowScrollControls = ({ sectionClass, rowClass, label, watchKey, title }: Props) => {
+const MinitigerRowScrollControls = ({ sectionClass, rowClass, label, watchKey, title, offsetX = 0, offsetY = 0 }: Props) => {
     const controlsRef = useRef<HTMLDivElement | null>(null);
     const [canScroll, setCanScroll] = useState(false);
     const findRow = useCallback(() => controlsRef.current
@@ -50,6 +52,7 @@ const MinitigerRowScrollControls = ({ sectionClass, rowClass, label, watchKey, t
 
     return <div ref={controlsRef}
         className='minitigerSectionHeader minitigerLibraryNavigationHeader'
+        style={{ '--mt-nav-x': `${offsetX}px`, '--mt-nav-y': `${offsetY}px` } as React.CSSProperties}
         data-has-scroll-controls={canScroll}>
         {title && <h2>{title}</h2>}
         {canScroll && <div className='minitigerRowArrows'>
