@@ -339,6 +339,7 @@ const MinitigerHome = () => {
         toggleRow: toggleVirtualRow,
         setHomeCardWidth: setVirtualHomeCardWidth,
         setHomeGap: setVirtualHomeGap,
+        setVirtualRowGap,
         setPagePosterWidth: setVirtualPagePosterWidth,
         setPageLandscapeWidth: setVirtualPageLandscapeWidth,
         setPageGap: setVirtualPageGap,
@@ -1215,7 +1216,7 @@ const MinitigerHome = () => {
                 <MinitigerRowScrollControls sectionClass='minitigerVirtualHomeSection'
                     rowClass='minitigerVirtualHomeRow' label={virtualConfig.rowTitles[rowId]}
                     watchKey={rowId + ':' + librariesInRow.map(library => library.id).join(',') + ':' + String(virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap)} />
-                <div className='minitigerVirtualHomeRow'>
+                <div className='minitigerVirtualHomeRow' style={{ gap: `${virtualConfig.rowGaps?.[rowId] ?? virtualConfig.homeGap}px` }}>
                     {librariesInRow.map(library => (
                         <Link
                             key={library.id}
@@ -1571,6 +1572,7 @@ const MinitigerHome = () => {
                     onToggleVirtualRow={toggleVirtualRow}
                     onSetVirtualHomeCardWidth={setVirtualHomeCardWidth}
                     onSetVirtualHomeGap={setVirtualHomeGap}
+                    onSetVirtualRowGap={setVirtualRowGap}
                     onSetVirtualPagePosterWidth={setVirtualPagePosterWidth}
                     onSetVirtualPageLandscapeWidth={setVirtualPageLandscapeWidth}
                     onSetVirtualPageGap={setVirtualPageGap}
