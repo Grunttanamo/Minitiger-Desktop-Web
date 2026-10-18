@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { animateMinitigerHorizontalScroll } from '../../animateHorizontalScroll';
 
 interface Props {
     sectionClass: string;
@@ -43,7 +44,7 @@ const MinitigerRowScrollControls = ({ sectionClass, rowClass, label, watchKey }:
     const scroll = (direction: -1 | 1) => {
         const row = findRow();
         if (!row) return;
-        row.scrollBy({ left: direction * Math.max(220, row.clientWidth * 0.78), behavior: 'smooth' });
+        animateMinitigerHorizontalScroll(row, direction * Math.max(320, row.clientWidth * 0.78));
     };
 
     return <div ref={controlsRef} className='minitigerAdaptiveRowControls'>
