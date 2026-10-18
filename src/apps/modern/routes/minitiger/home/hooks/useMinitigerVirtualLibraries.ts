@@ -42,6 +42,7 @@ const cloneDefaults = (): MinitigerVirtualLibrariesConfig => ({
     ...DEFAULT_VIRTUAL_LIBRARIES,
     libraries: [],
     homeOrder: [],
+    rowGaps: { ...DEFAULT_VIRTUAL_LIBRARIES.rowGaps },
     rowEnabled: {
         ...DEFAULT_VIRTUAL_LIBRARIES.rowEnabled
     },
@@ -988,6 +989,13 @@ const useMinitigerVirtualLibraries = () => {
         }));
     }, [commit]);
 
+    const setVirtualRowGap = useCallback((rowId: MinitigerVirtualRowId, gap: number) => {
+        commit(current => ({
+            ...current,
+            rowGaps: { ...current.rowGaps, [rowId]: gap }
+        }));
+    }, [commit]);
+
     const setHomeGap = useCallback((gap: number) => {
         commit(current => ({
             ...current,
@@ -1072,6 +1080,7 @@ const useMinitigerVirtualLibraries = () => {
         toggleRow,
         setHomeCardWidth,
         setHomeGap,
+        setVirtualRowGap,
         setPagePosterWidth,
         setPageLandscapeWidth,
         setPageGap,
