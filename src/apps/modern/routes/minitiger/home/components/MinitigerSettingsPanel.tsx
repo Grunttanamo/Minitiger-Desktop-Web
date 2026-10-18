@@ -1601,6 +1601,22 @@ const onUpdate = (
                                         <small>Steuert die Transparenz am unteren Rand. 0% = keine Transparenz, 100% = der Banner wird unten vollständig transparent.</small>
                                     </label>
 
+                                    <div className='minitigerSettingsCard'>
+                                        <h4>Banner-Pfeile, Zähler und Tonknopf gemeinsam verschieben</h4>
+                                        <p className='minitigerSettingsHint'>Unabhängig von den Banner-Inhalten links. 0 px = bisherige Position.</p>
+                                        {(['X', 'Y'] as const).map(axis => {
+                                            const field = axis === 'X' ? 'bannerControlOffsetX' : 'bannerControlOffsetY';
+                                            return <label className='minitigerRangeField' key={axis}>
+                                                <span>{axis === 'X' ? 'Horizontal' : 'Vertikal'} (px)</span>
+                                                <div>
+                                                    <input type='range' min='-500' max='500' step='1'
+                                                        value={settings[field]}
+                                                        onChange={event => onUpdate({ [field]: Number(event.currentTarget.value) })} />
+                                                    <output>{settings[field]}px</output>
+                                                </div>
+                                            </label>;
+                                        })}
+                                    </div>
                                     <label className='minitigerSettingsToggle'>
                                         <input
                                             type='checkbox'
