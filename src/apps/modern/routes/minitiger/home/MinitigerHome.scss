@@ -6230,3 +6230,23 @@ iframe.minitigerInlineTrailer {
 .minitigerVirtualHomeSection > .minitigerVirtualHomeRow {
     padding-top: calc(.4rem + var(--mt-glow-size, 20px) * .35) !important;
 }
+
+/* User-adjustable navigation offsets. These only shift controls visually,
+   without changing banner media, card positions, or row titles. */
+.minitigerHome .minitigerLibraryNavigationHeader > .minitigerRowArrows {
+    translate: var(--mt-nav-x, 0px) var(--mt-nav-y, 0px);
+}
+.minitigerHome .minitigerHeroNavigation,
+.minitigerHome .minitigerHeroAudioToggle {
+    transform: translate(
+        var(--mt-banner-control-x, 0px),
+        calc(-1 * var(--mt-banner-nav-shift) + var(--mt-banner-overlay-offset) + var(--mt-banner-control-y, 0px))
+    ) !important;
+}
+.minitigerHome .minitigerHeroAudioToggle:hover,
+.minitigerHome .minitigerHeroAudioToggle:focus-visible {
+    transform: translate(
+        var(--mt-banner-control-x, 0px),
+        calc(-1 * var(--mt-banner-nav-shift) + var(--mt-banner-overlay-offset) + var(--mt-banner-control-y, 0px))
+    ) scale(1.07) !important;
+}
