@@ -20,6 +20,7 @@ import MinitigerDesktopUpdateHost from './features/minitiger/MinitigerDesktopUpd
 import MinitigerGlobalSettingsHost from './features/minitiger/MinitigerGlobalSettingsHost';
 import MinitigerProfileSelectionHost from './features/minitiger/MinitigerProfileSelectionHost';
 import MinitigerSmoothScrollHost from './features/minitiger/MinitigerSmoothScrollHost';
+import MinitigerSeasonalHost from './features/minitiger/MinitigerSeasonalHost';
 import MinitigerFloatingQueue from './features/minitiger/watchparty/MinitigerFloatingQueue';
 import useMinitigerHomeSettings from './routes/minitiger/home/hooks/useMinitigerHomeSettings';
 
@@ -115,6 +116,7 @@ export const Component = () => {
             <MinitigerGlobalSettingsHost />
             <MinitigerProfileSelectionHost />
             <MinitigerSmoothScrollHost />
+            <MinitigerSeasonalHost />
             <MinitigerFloatingQueue />
             <ThemeCss />
             <CustomCss />
