@@ -48,10 +48,10 @@ const MinitigerHeroTextBoxSettings = () => {
             <small>0% = durchsichtig, 100% = vollständig dunkel. Standard: 78%.</small>
         </label>
         <label className='minitigerSettingsField'>
-            <span>Randweichheit · {value.edgeSoftness}px</span>
+            <span>Box-Fade / Randweichheit · {value.edgeSoftness}px</span>
             <input type='range' min='0' max='40' step='1' value={value.edgeSoftness}
                 disabled={!apiClient} onChange={e => change({ edgeSoftness: Number(e.currentTarget.value) })} />
-            <small>0px = klare Kante, höhere Werte = weicher äußerer Schattenrand. Die Textfläche bleibt überall gleich dunkel.</small>
+            <small>0px = harte Box-Kanten. Höhere Werte lassen die Box selbst von den Rändern nach innen ins Bild ausblenden; Text bleibt scharf.</small>
         </label>
         <button type='button' disabled={!apiClient} onClick={() => change(DEFAULT_HERO_TEXT_BOX)}>Standard wiederherstellen</button>
         {saving && <small>Wird gespeichert …</small>}
