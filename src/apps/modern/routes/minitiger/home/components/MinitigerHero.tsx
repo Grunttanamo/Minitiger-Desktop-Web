@@ -30,6 +30,10 @@ import {
     shortOverview
 } from '../mediaUtils';
 import { getItemRoute } from '../routingUtils';
+import {
+    getCachedHeroTextBox, applyHeroTextBox, readHeroTextBox,
+    HERO_TEXT_BOX_EVENT, type HeroTextBoxOptions
+} from '../heroTextBoxConfig';
 
 
 const shuffledCopy = (items: ItemDto[]) => {
@@ -73,6 +77,23 @@ const MinitigerHero = ({
     } = useApi();
 
     const queryClient = useQueryClient();
+    const [heroTextBox, setHeroTextBox] = useState<HeroTextBoxOptions>(getCachedHeroTextBox);
+    useEffect(() => {
+        const listener = (e: Event) => setHeroTextBox((e as CustomEvent<HeroTextBoxOptions>).detail);
+        window.addEventListener(HERO_TEXT_BOX_EVENT, listener);
+        return () => window.removeEventListener(HERO_TEXT_BOX_EVENT, listener);
+    }, []);
+    useEffect(() => {
+        if (!apiClient) return;
+        let active = true;
+        const refresh = () => void readHeroTextBox(apiClient).then(options => {
+            if (active) applyHeroTextBox(options);
+        }).catch(() => {});
+        refresh();
+        const timer = window.setInterval(refresh, 30000);
+        return () => { active = false; window.clearInterval(timer); };
+    }, [apiClient]);
+
 
     const {
         data: bannerData,
@@ -515,7 +536,11 @@ const MinitigerHero = ({
                     )}
                 </div>
 
-                <div className='minitigerHeroInfoReadability'>
+                <div className='minitigerHeroInfoReadability'
+                    style={{
+                        '--mt-info-opacity': heroTextBox.opacity / 100,
+                        '--mt-info-edge': heroTextBox.edgeSoftness + 'px'
+                    } as React.CSSProperties}>
                     <div className='minitigerHeroMetaRow'>
                         {metadata.length > 0 && (
                             <div className='minitigerHeroMeta'>
