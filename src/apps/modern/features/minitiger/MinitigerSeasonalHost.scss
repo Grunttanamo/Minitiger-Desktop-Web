@@ -1,6 +1,6 @@
 .minitigerGlobalSeason { position: fixed; inset: 60px 0 0; pointer-events: none; z-index: 35; overflow: hidden; }
 .minitigerGlobalSeason > span { position: absolute; display: block; user-select: none; filter: drop-shadow(0 3px 4px #0009); }
-.minitigerGlobalSeason-halloween .seasonPumpkin { font-size: 21px; opacity: .9; }
+
 .minitigerGlobalSeason-halloween .seasonBat { font-size: 23px; opacity: .87; animation: mtBatInfinity 12s ease-in-out infinite; animation-delay: calc(var(--seed) * -.8s); }
 @keyframes mtBatInfinity {
   0%,100% { transform: translate(0,0) rotate(-7deg); }
@@ -21,6 +21,52 @@
 @media (prefers-reduced-motion: reduce) {
  .minitigerGlobalSeason .seasonBat,.minitigerGlobalSeason .seasonFlake { animation: none; }
 }
-/* Seasonal palette applies globally, including carousel arrows. */
-html[data-minitiger-season="halloween"] { --mt-accent: #ff9c25; --mt-button: #662b86; --mt-glow-color: #ff8c21; }
-html[data-minitiger-season="christmas"] { --mt-accent: #cb303e; --mt-button: #176b48; --mt-glow-color: #ffebce; }
+/* Pumpkins are children of actual scrollable cards/headings, never fixed to viewport. */
+.minitigerAnchoredPumpkin {
+    position: absolute;
+    z-index: 5;
+    pointer-events: none;
+    user-select: none;
+    font-size: 21px;
+    line-height: 1;
+    filter: drop-shadow(0 3px 4px #0009);
+    transform: translateY(-20%);
+}
+
+/* Temporary event palette. The user settings are never changed:
+   when data-minitiger-season becomes off, all original variables take over. */
+
+html[data-minitiger-season="halloween"],
+html[data-minitiger-season="halloween"] .minitigerHome {
+    --mt-accent: #ff9c25 !important;
+    --mt-accent-hover: #ffaf50 !important;
+    --mt-accent-text: #181018 !important;
+    --mt-button: #662b86 !important;
+    --mt-button-hover: #8342a3 !important;
+    --mt-banner-meta: #ffc47b !important;
+    --mt-glow-color: #ff8c21 !important;
+    --minitiger-accent: #ff9c25 !important;
+    --minitiger-accent-hover: #ffaf50 !important;
+    --minitiger-accent-text: #181018 !important;
+    --minitiger-secondary: #662b86 !important;
+    --minitiger-secondary-hover: #8342a3 !important;
+    --minitiger-banner-meta: #ffc47b !important;
+    --minitiger-glow: #ff8c21 !important;
+}
+html[data-minitiger-season="christmas"],
+html[data-minitiger-season="christmas"] .minitigerHome {
+    --mt-accent: #cb303e !important;
+    --mt-accent-hover: #df5360 !important;
+    --mt-accent-text: #fff !important;
+    --mt-button: #176b48 !important;
+    --mt-button-hover: #23865c !important;
+    --mt-banner-meta: #ffd8d8 !important;
+    --mt-glow-color: #ffebce !important;
+    --minitiger-accent: #cb303e !important;
+    --minitiger-accent-hover: #df5360 !important;
+    --minitiger-accent-text: #fff !important;
+    --minitiger-secondary: #176b48 !important;
+    --minitiger-secondary-hover: #23865c !important;
+    --minitiger-banner-meta: #ffd8d8 !important;
+    --minitiger-glow: #ffebce !important;
+}
