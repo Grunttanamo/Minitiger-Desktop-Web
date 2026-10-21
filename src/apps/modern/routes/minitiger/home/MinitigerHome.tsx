@@ -59,7 +59,7 @@ import {
     readMinitigerServerPreference
 } from './serverPreferences';
 import './MinitigerHome.scss';
-import { readMinitigerSeason, SEASON_EVENT, type MinitigerSeason } from './seasonalEvents';
+import { getCachedMinitigerSeason, SEASON_EVENT, type MinitigerSeason } from './seasonalEvents';
 
 const getLibraryImageUrl = (
     apiClient: ApiClient | undefined,
@@ -238,30 +238,14 @@ const MinitigerHome = () => {
         };
     }, []);
 
-    const [ seasonalEvent, setSeasonalEvent ] = useState<MinitigerSeason>('off');
+    const [ seasonalEvent, setSeasonalEvent ] = useState<MinitigerSeason>(getCachedMinitigerSeason);
     useEffect(() => {
-        if (!apiClient) return;
-        let disposed = false;
-        const refresh = () => {
-            void readMinitigerSeason(apiClient).then(value => {
-                if (!disposed) setSeasonalEvent(value);
-            }).catch(() => { /* server can be briefly unavailable */ });
+        const handler = (event: Event) => {
+            setSeasonalEvent((event as CustomEvent<MinitigerSeason>).detail);
         };
-        const onSeasonChange = (event: Event) => {
-            const next = (event as CustomEvent<MinitigerSeason>).detail;
-            if (next === 'off' || next === 'halloween' || next === 'christmas') {
-                setSeasonalEvent(next);
-            }
-        };
-        refresh();
-        const timer = window.setInterval(refresh, 60000);
-        window.addEventListener(SEASON_EVENT, onSeasonChange);
-        return () => {
-            disposed = true;
-            window.clearInterval(timer);
-            window.removeEventListener(SEASON_EVENT, onSeasonChange);
-        };
-    }, [apiClient]);
+        window.addEventListener(SEASON_EVENT, handler);
+        return () => window.removeEventListener(SEASON_EVENT, handler);
+    }, []);
 
     const isAdmin = Boolean(user?.Policy?.IsAdministrator);
 
@@ -1488,15 +1472,6 @@ const MinitigerHome = () => {
             data-side-row-titles={settings.sideRowTitlesEnabled}
             data-custom-home={settings.customHomeRowsEnabled}
         >
-            {seasonalEvent !== 'off' && (
-                <div className='minitigerSeasonalDecor' aria-hidden='true'>
-                    {seasonalEvent === 'halloween' ? (
-                        <><span>🎃</span><span>🎃</span><span>🦇</span></>
-                    ) : (
-                        <><span>❄</span><span>❅</span><span>❆</span><span>❄</span></>
-                    )}
-                </div>
-            )}
             {!activeVirtualLibrary && settings.bannerEnabled && (
                 <MinitigerHero
                     autoRotateMs={
