@@ -1,12 +1,12 @@
 .minitigerGlobalSeason { position: fixed; inset: 60px 0 0; pointer-events: none; z-index: 35; overflow: hidden; }
 .minitigerGlobalSeason > span { position: absolute; display: block; user-select: none; filter: drop-shadow(0 3px 4px #0009); }
 
-.minitigerGlobalSeason-halloween .seasonBat { font-size: 23px; opacity: .87; animation: mtBatInfinity 12s ease-in-out infinite; animation-delay: calc(var(--seed) * -.8s); }
+.minitigerGlobalSeason-halloween .seasonBat { font-size: 25px; opacity: 1; filter: drop-shadow(0 3px 5px rgba(0,0,0,.9)); animation: mtBatInfinity 12s ease-in-out infinite; }
 @keyframes mtBatInfinity {
   0%,100% { transform: translate(0,0) rotate(-7deg); }
-  25% { transform: translate(25px,-15px) rotate(9deg); }
+  25% { transform: translate(var(--bat-dx,25px),calc(-1 * var(--bat-dy,15px))) rotate(9deg); }
   50% { transform: translate(0,0) rotate(-7deg); }
-  75% { transform: translate(-25px,15px) rotate(9deg); }
+  75% { transform: translate(calc(-1 * var(--bat-dx,25px)),var(--bat-dy,15px)) rotate(9deg); }
 }
 .minitigerGlobalSeason-christmas .seasonFlake {
   color: #fff; font-size: 26px; opacity: .95; text-shadow: 0 0 10px #b9ebff, 0 0 4px white;
