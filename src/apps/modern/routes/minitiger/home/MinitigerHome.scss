@@ -6278,3 +6278,16 @@ iframe.minitigerInlineTrailer {
 @media (prefers-reduced-motion: reduce) {
     .minitigerSeason-christmas .minitigerSeasonalDecor span { animation: none; }
 }
+
+/* Desktop seasonal follow-up: no left OR right blackout, only lower fade. */
+.minitigerHome .minitigerHeroShade,
+.minitigerHome .minitigerHeroMediaLayer .minitigerHeroShade {
+    background: linear-gradient(0deg, rgba(5,7,10,.82) 0%, rgba(5,7,10,.35) 14%, transparent 42%) !important;
+}
+/* All carousel arrows derive from the selected accent instead of fixed gold. */
+.minitigerHome .minitigerRowArrows button,
+.minitigerHome .minitigerHeroArrow,
+.minitigerHome .minitigerHeroNavigation button {
+    background-color: var(--mt-accent) !important;
+    color: var(--mt-accent-text, #101010) !important;
+}
