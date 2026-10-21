@@ -6291,3 +6291,27 @@ iframe.minitigerInlineTrailer {
     background-color: var(--mt-accent) !important;
     color: var(--mt-accent-text, #101010) !important;
 }
+
+/* Only the text underneath the logo gains contrast; trailer and right half remain untouched. */
+.minitigerHome .minitigerHeroInfoReadability {
+    position: relative;
+    isolation: isolate;
+    max-width: min(100%, 560px);
+    padding: 7px 9px;
+    margin: 0 -9px 4px;
+}
+.minitigerHome .minitigerHeroInfoReadability::before {
+    content: '';
+    position: absolute;
+    inset: -5px -18px;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 14px;
+    background: linear-gradient(90deg, rgba(4,6,10,.65), rgba(4,6,10,.38) 66%, transparent 100%);
+    filter: blur(5px);
+}
+.minitigerHome .minitigerHeroInfoReadability .minitigerHeroMetaRow,
+.minitigerHome .minitigerHeroInfoReadability .minitigerHeroLanguageLine,
+.minitigerHome .minitigerHeroInfoReadability .minitigerHeroOverview {
+    text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 2px 7px rgba(0,0,0,.75);
+}
