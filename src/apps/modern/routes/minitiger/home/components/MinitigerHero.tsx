@@ -515,50 +515,53 @@ const MinitigerHero = ({
                     )}
                 </div>
 
-                <div className='minitigerHeroMetaRow'>
-                    {metadata.length > 0 && (
-                        <div className='minitigerHeroMeta'>
-                            {metadata.join(' · ')}
-                        </div>
-                    )}
-
-                    {heroItem.CommunityRating != null && (
-                        <span className='minitigerHeroCommunityRating'>
-                            ★ {heroItem.CommunityRating.toFixed(1)}
-                        </span>
-                    )}
-                </div>
-
-                {(audioLanguages.length > 0
-                    || subtitleLanguages.length > 0) && (
-                    <div className='minitigerHeroLanguageLine'>
-                        {audioLanguages.length > 0 && (
-                            <span>
-                                Audio: {audioLanguages.join(', ')}
-                            </span>
+                <div className='minitigerHeroInfoReadability'>
+                    <div className='minitigerHeroMetaRow'>
+                        {metadata.length > 0 && (
+                            <div className='minitigerHeroMeta'>
+                                {metadata.join(' · ')}
+                            </div>
                         )}
 
-                        {audioLanguages.length > 0
-                            && subtitleLanguages.length > 0
-                            && (
-                                <span aria-hidden='true'> · </span>
-                            )}
-
-                        {subtitleLanguages.length > 0 && (
-                            <span>
-                                Untertitel: {
-                                    subtitleLanguages.join(', ')
-                                }
+                        {heroItem.CommunityRating != null && (
+                            <span className='minitigerHeroCommunityRating'>
+                                ★ {heroItem.CommunityRating.toFixed(1)}
                             </span>
                         )}
                     </div>
-                )}
 
-                {overview && (
-                    <p className='minitigerHeroOverview'>
-                        {overview}
-                    </p>
-                )}
+                    {(audioLanguages.length > 0
+                        || subtitleLanguages.length > 0) && (
+                        <div className='minitigerHeroLanguageLine'>
+                            {audioLanguages.length > 0 && (
+                                <span>
+                                    Audio: {audioLanguages.join(', ')}
+                                </span>
+                            )}
+
+                            {audioLanguages.length > 0
+                                && subtitleLanguages.length > 0
+                                && (
+                                    <span aria-hidden='true'> · </span>
+                                )}
+
+                            {subtitleLanguages.length > 0 && (
+                                <span>
+                                    Untertitel: {
+                                        subtitleLanguages.join(', ')
+                                    }
+                                </span>
+                            )}
+                        </div>
+                    )}
+
+                    {overview && (
+                        <p className='minitigerHeroOverview'>
+                            {overview}
+                        </p>
+                    )}
+
+                </div>
 
                 <div className='minitigerHeroActions'>
                     <button
