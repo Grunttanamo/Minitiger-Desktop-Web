@@ -1,0 +1,26 @@
+.minitigerGlobalSeason { position: fixed; inset: 60px 0 0; pointer-events: none; z-index: 35; overflow: hidden; }
+.minitigerGlobalSeason > span { position: absolute; display: block; user-select: none; filter: drop-shadow(0 3px 4px #0009); }
+.minitigerGlobalSeason-halloween .seasonPumpkin { font-size: 21px; opacity: .9; }
+.minitigerGlobalSeason-halloween .seasonBat { font-size: 23px; opacity: .87; animation: mtBatInfinity 12s ease-in-out infinite; animation-delay: calc(var(--seed) * -.8s); }
+@keyframes mtBatInfinity {
+  0%,100% { transform: translate(0,0) rotate(-7deg); }
+  25% { transform: translate(25px,-15px) rotate(9deg); }
+  50% { transform: translate(0,0) rotate(-7deg); }
+  75% { transform: translate(-25px,15px) rotate(9deg); }
+}
+.minitigerGlobalSeason-christmas .seasonFlake {
+  color: #fff; font-size: 26px; opacity: .95; text-shadow: 0 0 10px #b9ebff, 0 0 4px white;
+  animation: mtSnowDrift 11s linear infinite;
+  animation-delay: calc(var(--seed) * -.68s);
+}
+@keyframes mtSnowDrift {
+  0% { transform: translate(0,-20vh) rotate(0); opacity: .85; }
+  50% { opacity: 1; }
+  100% { transform: translate(38px,95vh) rotate(95deg); opacity: .75; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .minitigerGlobalSeason .seasonBat,.minitigerGlobalSeason .seasonFlake { animation: none; }
+}
+/* Seasonal palette applies globally, including carousel arrows. */
+html[data-minitiger-season="halloween"] { --mt-accent: #ff9c25; --mt-button: #662b86; --mt-glow-color: #ff8c21; }
+html[data-minitiger-season="christmas"] { --mt-accent: #cb303e; --mt-button: #176b48; --mt-glow-color: #ffebce; }
