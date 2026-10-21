@@ -6292,10 +6292,11 @@ iframe.minitigerInlineTrailer {
     color: var(--mt-accent-text, #101010) !important;
 }
 
-/* A uniform, self-contained contrast panel for hero metadata and overview.
-   No side fade, backdrop blur or full-width trailer shading. */
+/* Server-controlled banner text box: fade the actual panel edges, not an outer shadow.
+   Only the background pseudo-element is masked; the text remains completely opaque. */
 .minitigerHome .minitigerHeroInfoReadability {
     position: relative;
+    isolation: isolate;
     display: block;
     box-sizing: border-box;
     width: max-content;
@@ -6303,11 +6304,29 @@ iframe.minitigerInlineTrailer {
     padding: 10px 12px;
     margin: 0 0 8px -12px;
     border-radius: 10px;
-    background: rgba(5, 7, 12, var(--mt-info-opacity, .78));
-    box-shadow: 0 0 var(--mt-info-edge, 0px) calc(var(--mt-info-edge, 0px) * .36) rgba(5, 7, 12, var(--mt-info-opacity, .78));
+    background: transparent;
+    box-shadow: none;
 }
 .minitigerHome .minitigerHeroInfoReadability::before {
-    content: none;
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    background: rgba(5, 7, 12, var(--mt-info-opacity, .78));
+    -webkit-mask-image:
+        linear-gradient(to right, transparent 0, #000 var(--mt-info-edge, 0px),
+            #000 calc(100% - var(--mt-info-edge, 0px)), transparent 100%),
+        linear-gradient(to bottom, transparent 0, #000 var(--mt-info-edge, 0px),
+            #000 calc(100% - var(--mt-info-edge, 0px)), transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+        linear-gradient(to right, transparent 0, #000 var(--mt-info-edge, 0px),
+            #000 calc(100% - var(--mt-info-edge, 0px)), transparent 100%),
+        linear-gradient(to bottom, transparent 0, #000 var(--mt-info-edge, 0px),
+            #000 calc(100% - var(--mt-info-edge, 0px)), transparent 100%);
+    mask-composite: intersect;
 }
 .minitigerHome .minitigerHeroInfoReadability .minitigerHeroMetaRow,
 .minitigerHome .minitigerHeroInfoReadability .minitigerHeroLanguageLine,
