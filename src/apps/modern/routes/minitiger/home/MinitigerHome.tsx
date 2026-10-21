@@ -59,6 +59,7 @@ import {
     readMinitigerServerPreference
 } from './serverPreferences';
 import './MinitigerHome.scss';
+import { readMinitigerSeason, SEASON_EVENT, type MinitigerSeason } from './seasonalEvents';
 
 const getLibraryImageUrl = (
     apiClient: ApiClient | undefined,
@@ -236,6 +237,31 @@ const MinitigerHome = () => {
             );
         };
     }, []);
+
+    const [ seasonalEvent, setSeasonalEvent ] = useState<MinitigerSeason>('off');
+    useEffect(() => {
+        if (!apiClient) return;
+        let disposed = false;
+        const refresh = () => {
+            void readMinitigerSeason(apiClient).then(value => {
+                if (!disposed) setSeasonalEvent(value);
+            }).catch(() => { /* server can be briefly unavailable */ });
+        };
+        const onSeasonChange = (event: Event) => {
+            const next = (event as CustomEvent<MinitigerSeason>).detail;
+            if (next === 'off' || next === 'halloween' || next === 'christmas') {
+                setSeasonalEvent(next);
+            }
+        };
+        refresh();
+        const timer = window.setInterval(refresh, 60000);
+        window.addEventListener(SEASON_EVENT, onSeasonChange);
+        return () => {
+            disposed = true;
+            window.clearInterval(timer);
+            window.removeEventListener(SEASON_EVENT, onSeasonChange);
+        };
+    }, [apiClient]);
 
     const isAdmin = Boolean(user?.Policy?.IsAdministrator);
 
@@ -1369,14 +1395,14 @@ const MinitigerHome = () => {
     ]);
 
     const homeStyle = {
-        '--mt-accent': settings.accentColor,
+        '--mt-accent': seasonalEvent === 'halloween' ? '#ff9c25' : seasonalEvent === 'christmas' ? '#cb303e' : settings.accentColor,
         '--mt-accent-hover': settings.primaryHoverColor,
         '--mt-accent-text':
-            getContrastTextColor(settings.accentColor),
-        '--mt-button': settings.secondaryColor,
+            getContrastTextColor(seasonalEvent === 'halloween' ? '#ff9c25' : seasonalEvent === 'christmas' ? '#cb303e' : settings.accentColor),
+        '--mt-button': seasonalEvent === 'halloween' ? '#662b86' : seasonalEvent === 'christmas' ? '#176b48' : settings.secondaryColor,
         '--mt-button-hover': settings.secondaryHoverColor,
-        '--mt-banner-meta': settings.bannerMetaColor,
-        '--mt-glow-color': settings.glowColor,
+        '--mt-banner-meta': seasonalEvent === 'halloween' ? '#ffc47b' : seasonalEvent === 'christmas' ? '#ffd8d8' : settings.bannerMetaColor,
+        '--mt-glow-color': seasonalEvent === 'halloween' ? '#ff8c21' : seasonalEvent === 'christmas' ? '#ffebce' : settings.glowColor,
         '--mt-glow-opacity': settings.glowStrength / 100,
         '--mt-glow-size': `${settings.glowSize}px`,
         '--mt-played-indicator-size':
@@ -1445,6 +1471,7 @@ const MinitigerHome = () => {
                 'mainAnimatedPage',
                 'homePage',
                 'minitigerHome',
+                seasonalEvent !== 'off' ? `minitigerSeason-${seasonalEvent}` : '',
                 !settings.customHomeRowsEnabled && !activeVirtualLibrary
                     ? 'libraryPage allLibraryPage pageWithAbsoluteTabs withTabs minitigerVanillaRowsMode'
                     : ''
@@ -1461,6 +1488,15 @@ const MinitigerHome = () => {
             data-side-row-titles={settings.sideRowTitlesEnabled}
             data-custom-home={settings.customHomeRowsEnabled}
         >
+            {seasonalEvent !== 'off' && (
+                <div className='minitigerSeasonalDecor' aria-hidden='true'>
+                    {seasonalEvent === 'halloween' ? (
+                        <><span>🎃</span><span>🎃</span><span>🦇</span></>
+                    ) : (
+                        <><span>❄</span><span>❅</span><span>❆</span><span>❄</span></>
+                    )}
+                </div>
+            )}
             {!activeVirtualLibrary && settings.bannerEnabled && (
                 <MinitigerHero
                     autoRotateMs={
