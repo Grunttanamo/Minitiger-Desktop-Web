@@ -6303,8 +6303,8 @@ iframe.minitigerInlineTrailer {
     padding: 10px 12px;
     margin: 0 0 8px -12px;
     border-radius: 10px;
-    background: rgba(5, 7, 12, .78);
-    box-shadow: 0 3px 14px rgba(0, 0, 0, .28);
+    background: rgba(5, 7, 12, var(--mt-info-opacity, .78));
+    box-shadow: 0 0 var(--mt-info-edge, 0px) calc(var(--mt-info-edge, 0px) * .36) rgba(5, 7, 12, var(--mt-info-opacity, .78));
 }
 .minitigerHome .minitigerHeroInfoReadability::before {
     content: none;
