@@ -44,6 +44,7 @@ import MinitigerAdminMessagesSettings from './MinitigerAdminMessagesSettings';
 import MinitigerContentRequestsSettings from './MinitigerContentRequestsSettings';
 import MinitigerSeasonFixSettings from './MinitigerSeasonFixSettings';
 import MinitigerSeasonalSettings from './MinitigerSeasonalSettings';
+import MinitigerHeroTextBoxSettings from './MinitigerHeroTextBoxSettings';
 import MinitigerImageFixSettings from './MinitigerImageFixSettings';
 import MinitigerLibraryPrefixScanSettings from './MinitigerLibraryPrefixScanSettings';
 
@@ -1602,6 +1603,8 @@ const onUpdate = (
                                         />
                                         <small>Steuert die Transparenz am unteren Rand. 0% = keine Transparenz, 100% = der Banner wird unten vollständig transparent.</small>
                                     </label>
+
+                                    <MinitigerHeroTextBoxSettings />
 
                                     <div className='minitigerSettingsCard'>
                                         <h4>Banner-Pfeile, Zähler und Tonknopf gemeinsam verschieben</h4>
