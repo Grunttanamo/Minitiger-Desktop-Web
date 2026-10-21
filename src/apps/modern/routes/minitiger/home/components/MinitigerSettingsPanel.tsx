@@ -43,6 +43,7 @@ import MinitigerAvatarGallerySettings from './MinitigerAvatarGallerySettings';
 import MinitigerAdminMessagesSettings from './MinitigerAdminMessagesSettings';
 import MinitigerContentRequestsSettings from './MinitigerContentRequestsSettings';
 import MinitigerSeasonFixSettings from './MinitigerSeasonFixSettings';
+import MinitigerSeasonalSettings from './MinitigerSeasonalSettings';
 import MinitigerImageFixSettings from './MinitigerImageFixSettings';
 import MinitigerLibraryPrefixScanSettings from './MinitigerLibraryPrefixScanSettings';
 
@@ -1004,6 +1005,7 @@ const onUpdate = (
 
                         {activeTab === 'general' && (
                             <>
+                                {isAdmin && <MinitigerSeasonalSettings />}
                                 <h3>General</h3>
                                 <p className='minitigerSettingsIntro'>
                                     {isAdmin
