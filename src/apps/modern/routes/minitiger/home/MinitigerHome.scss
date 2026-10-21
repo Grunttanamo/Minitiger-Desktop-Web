@@ -6292,26 +6292,25 @@ iframe.minitigerInlineTrailer {
     color: var(--mt-accent-text, #101010) !important;
 }
 
-/* Only the text underneath the logo gains contrast; trailer and right half remain untouched. */
+/* A uniform, self-contained contrast panel for hero metadata and overview.
+   No side fade, backdrop blur or full-width trailer shading. */
 .minitigerHome .minitigerHeroInfoReadability {
     position: relative;
-    isolation: isolate;
+    display: block;
+    box-sizing: border-box;
+    width: max-content;
     max-width: min(100%, 560px);
-    padding: 7px 9px;
-    margin: 0 -9px 4px;
+    padding: 10px 12px;
+    margin: 0 0 8px -12px;
+    border-radius: 10px;
+    background: rgba(5, 7, 12, .78);
+    box-shadow: 0 3px 14px rgba(0, 0, 0, .28);
 }
 .minitigerHome .minitigerHeroInfoReadability::before {
-    content: '';
-    position: absolute;
-    inset: -5px -18px;
-    z-index: -1;
-    pointer-events: none;
-    border-radius: 14px;
-    background: linear-gradient(90deg, rgba(4,6,10,.65), rgba(4,6,10,.38) 66%, transparent 100%);
-    filter: blur(5px);
+    content: none;
 }
 .minitigerHome .minitigerHeroInfoReadability .minitigerHeroMetaRow,
 .minitigerHome .minitigerHeroInfoReadability .minitigerHeroLanguageLine,
 .minitigerHome .minitigerHeroInfoReadability .minitigerHeroOverview {
-    text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 2px 7px rgba(0,0,0,.75);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .85);
 }
