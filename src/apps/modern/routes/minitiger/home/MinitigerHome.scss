@@ -6242,3 +6242,39 @@ iframe.minitigerInlineTrailer {
         calc(-1 * var(--mt-banner-nav-shift) + var(--mt-banner-overlay-offset) + var(--mt-banner-control-y, 0px))
     ) scale(1.07) !important;
 }
+
+/* Optional global seasonal decorations: visual only, never intercept navigation. */
+.minitigerSeasonalDecor {
+    position: fixed;
+    z-index: 18;
+    top: 82px;
+    left: 0;
+    right: 0;
+    height: 0;
+    pointer-events: none;
+}
+.minitigerSeasonalDecor span {
+    position: absolute;
+    opacity: .82;
+    font-size: 25px;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,.55));
+}
+.minitigerSeason-halloween .minitigerSeasonalDecor span:nth-child(1) { left: 4%; top: 7px; }
+.minitigerSeason-halloween .minitigerSeasonalDecor span:nth-child(2) { right: 8%; top: 16px; }
+.minitigerSeason-halloween .minitigerSeasonalDecor span:nth-child(3) { left: 52%; top: 21px; font-size: 19px; }
+.minitigerSeason-christmas .minitigerSeasonalDecor span {
+    color: #e5f7ff;
+    animation: minitigerGentleSnow 9s linear infinite;
+}
+.minitigerSeason-christmas .minitigerSeasonalDecor span:nth-child(1) { left: 9%; animation-delay: -3s; }
+.minitigerSeason-christmas .minitigerSeasonalDecor span:nth-child(2) { left: 33%; animation-delay: -7s; }
+.minitigerSeason-christmas .minitigerSeasonalDecor span:nth-child(3) { left: 66%; animation-delay: -2s; }
+.minitigerSeason-christmas .minitigerSeasonalDecor span:nth-child(4) { left: 89%; animation-delay: -5s; }
+@keyframes minitigerGentleSnow {
+    from { transform: translateY(-45px) rotate(0); opacity: .15; }
+    15% { opacity: .8; }
+    to { transform: translateY(73vh) rotate(80deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .minitigerSeason-christmas .minitigerSeasonalDecor span { animation: none; }
+}
