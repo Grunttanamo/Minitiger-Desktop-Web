@@ -25,10 +25,31 @@ const spotHash = (text: string) => {
     for (let i = 0; i < text.length; i++) n = Math.imul(n ^ text.charCodeAt(i), 16777619);
     return n >>> 0;
 };
+type BatSpot = { x: number; y: number; duration: number; delay: number; dx: number; dy: number };
+const newBatSpots = (): BatSpot[] => {
+    const spots: BatSpot[] = [];
+    const zones = [[8, 36, 9, 35], [55, 90, 8, 32], [10, 42, 51, 83], [59, 90, 49, 84]];
+    for (let i = zones.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [zones[i], zones[j]] = [zones[j], zones[i]];
+    }
+    for (const [xmin, xmax, ymin, ymax] of zones) {
+        spots.push({
+            x: xmin + Math.random() * (xmax - xmin),
+            y: ymin + Math.random() * (ymax - ymin),
+            duration: 11 + Math.random() * 5,
+            delay: -Math.random() * 10,
+            dx: 16 + Math.random() * 17,
+            dy: 9 + Math.random() * 12
+        });
+    }
+    return spots;
+};
 const MinitigerSeasonalHost = () => {
     const { __legacyApiClient__: apiClient, user } = useApi();
     const location = useLocation();
     const [season,setSeason] = useState<MinitigerSeason>(getCachedMinitigerSeason);
+    const [bats,setBats] = useState<BatSpot[]>([]);
     useEffect(() => {
         const handler = (e: Event) => setSeason((e as CustomEvent<MinitigerSeason>).detail);
         window.addEventListener(SEASON_EVENT,handler);
@@ -50,6 +71,10 @@ const MinitigerSeasonalHost = () => {
     },[season]);
     const path = location.pathname.toLowerCase();
     const inPlayer = path.includes('/video') || path.includes('/playback') || path.includes('/player');
+
+    useEffect(() => {
+        setBats(season === 'halloween' && user && !inPlayer ? newBatSpots() : []);
+    }, [season, location.pathname, location.search, user?.Id, inPlayer]);
 
     useEffect(() => {
         if (season !== 'halloween' || !user || inPlayer) return;
@@ -113,7 +138,11 @@ const MinitigerSeasonalHost = () => {
     if (season === 'off' || !user || inPlayer) return null;
     return <div className={'minitigerGlobalSeason minitigerGlobalSeason-'+season} aria-hidden='true'>
         {season === 'halloween'
-            ? seeds.slice(0,3).map(([x,y],i) => <span key={i} className='seasonBat' style={{left:x+'%',top:y+'%','--seed':i} as React.CSSProperties}>🦇</span>)
+            ? bats.map((bat,i) => <span key={i} className='seasonBat' style={{
+                left: bat.x+'%', top: bat.y+'%',
+                animationDelay: bat.delay+'s', animationDuration: bat.duration+'s',
+                '--bat-dx': bat.dx+'px', '--bat-dy': bat.dy+'px'
+            } as React.CSSProperties}>🦇</span>)
             : seeds.map(([x,y],i) => <span key={i} className='seasonFlake' style={{left:x+'%',top:y+'%','--seed':i} as React.CSSProperties}>{i%3===0?'❄':'❅'}</span>)}
     </div>;
 };
