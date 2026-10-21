@@ -142,8 +142,47 @@ const MinitigerHero = ({
     const [ trailerDebugOpen, setTrailerDebugOpen ] = useState(false);
     const [ trailerLoading, setTrailerLoading ] = useState(false);
     const [ trailerReady, setTrailerReady ] = useState(false);
-    const [ trailerMuted, setTrailerMuted ] = useState(false);
-    const [ trailerVolume, setTrailerVolume ] = useState(1);
+    const soundPreferenceKey = `minitiger.bannerAudio.v1:${apiClient?.getCurrentUserId?.() ?? 'guest'}`;
+    const [ trailerSound, setTrailerSound ] = useState(() => {
+        try {
+            const stored = window.localStorage.getItem(soundPreferenceKey);
+            const value = stored ? JSON.parse(stored) as { muted?: boolean; volume?: number } : {};
+            return {
+                muted: Boolean(value.muted ?? false),
+                volume: Math.min(1, Math.max(0, Number(value.volume ?? 1)))
+            };
+        } catch {
+            return { muted: false, volume: 1 };
+        }
+    });
+    const trailerMuted = trailerSound.muted;
+    const trailerVolume = trailerSound.volume;
+    const setTrailerMuted = (update: boolean | ((current: boolean) => boolean)) => {
+        setTrailerSound(current => ({
+            ...current,
+            muted: typeof update === 'function' ? update(current.muted) : update
+        }));
+    };
+    const setTrailerVolume = (volume: number) => {
+        setTrailerSound(current => ({ ...current, volume }));
+    };
+    useEffect(() => {
+        try {
+            const stored = window.localStorage.getItem(soundPreferenceKey);
+            if (stored) {
+                const value = JSON.parse(stored) as { muted?: boolean; volume?: number };
+                setTrailerSound({
+                    muted: Boolean(value.muted ?? false),
+                    volume: Math.min(1, Math.max(0, Number(value.volume ?? 1)))
+                });
+            }
+        } catch { /* retain safe defaults */ }
+    }, [soundPreferenceKey]);
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(soundPreferenceKey, JSON.stringify(trailerSound));
+        } catch { /* unavailable storage should not break playback */ }
+    }, [soundPreferenceKey, trailerSound]);
     const [ bannerHovered, setBannerHovered ] = useState(false);
     const paused = trailerDebugOpen || (trailerLoading && autoRotateMs !== -1000);
     const [ backdropFailed, setBackdropFailed ] = useState(false);
