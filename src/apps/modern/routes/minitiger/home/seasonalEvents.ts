@@ -4,6 +4,13 @@ import { readMinitigerBrandingConfiguration, updateMinitigerBrandingConfiguratio
 export type MinitigerSeason = 'off' | 'halloween' | 'christmas';
 const MARKER = /<!--\s*MINITIGER_SEASON:([a-z]+)\s*-->/;
 export const SEASON_EVENT = 'minitiger:season-changed';
+let cachedSeason: MinitigerSeason = 'off';
+export const getCachedMinitigerSeason = () => cachedSeason;
+export const applyMinitigerSeason = (season: MinitigerSeason) => {
+    if (cachedSeason === season) return;
+    cachedSeason = season;
+    window.dispatchEvent(new CustomEvent(SEASON_EVENT, { detail: season }));
+};
 export const readMinitigerSeason = async (apiClient: ApiClient): Promise<MinitigerSeason> => {
     const data = await readMinitigerBrandingConfiguration(apiClient);
     const match = MARKER.exec(data.LoginDisclaimer ?? '');
@@ -14,5 +21,5 @@ export const writeMinitigerSeason = async (apiClient: ApiClient, season: Minitig
         const existing = (current.LoginDisclaimer ?? '').replace(MARKER, '').trimEnd();
         return { ...current, LoginDisclaimer: `${existing}\n<!--MINITIGER_SEASON:${season}-->` };
     });
-    window.dispatchEvent(new CustomEvent(SEASON_EVENT, { detail: season }));
+    applyMinitigerSeason(season);
 };
