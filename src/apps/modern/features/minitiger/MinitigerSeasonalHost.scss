@@ -1,13 +1,6 @@
 .minitigerGlobalSeason { position: fixed; inset: 60px 0 0; pointer-events: none; z-index: 35; overflow: hidden; }
 .minitigerGlobalSeason > span { position: absolute; display: block; user-select: none; filter: drop-shadow(0 3px 4px #0009); }
 
-.minitigerGlobalSeason-halloween .seasonBat { font-size: 25px; opacity: 1; filter: drop-shadow(0 3px 5px rgba(0,0,0,.9)); animation: mtBatInfinity 12s ease-in-out infinite; }
-@keyframes mtBatInfinity {
-  0%,100% { transform: translate(0,0) rotate(-7deg); }
-  25% { transform: translate(var(--bat-dx,25px),calc(-1 * var(--bat-dy,15px))) rotate(9deg); }
-  50% { transform: translate(0,0) rotate(-7deg); }
-  75% { transform: translate(calc(-1 * var(--bat-dx,25px)),var(--bat-dy,15px)) rotate(9deg); }
-}
 .minitigerGlobalSeason-christmas .seasonFlake {
   color: #fff; font-size: 26px; opacity: .95; text-shadow: 0 0 10px #b9ebff, 0 0 4px white;
   animation: mtSnowDrift 11s linear infinite;
@@ -19,18 +12,122 @@
   100% { transform: translate(38px,95vh) rotate(95deg); opacity: .75; }
 }
 @media (prefers-reduced-motion: reduce) {
- .minitigerGlobalSeason .seasonBat,.minitigerGlobalSeason .seasonFlake { animation: none; }
+ .minitigerGlobalSeason .seasonFlake { animation: none; }
 }
-/* Pumpkins are children of actual scrollable cards/headings, never fixed to viewport. */
-.minitigerAnchoredPumpkin {
+/* Bats: spawned by halloweenDecor.ts and moved with the Web Animations API. */
+.minitigerGlobalSeason .mtBat {
     position: absolute;
-    z-index: 5;
+    top: 0;
+    left: 0;
+    will-change: transform;
+    /* Moonlit rim so the dark silhouette stays readable on the dark UI. */
+    filter: drop-shadow(0 0 1px rgba(255, 196, 123, .55)) drop-shadow(0 0 8px rgba(150, 90, 220, .45));
+}
+.mtBat svg { display: block; width: 100%; height: auto; overflow: visible; }
+.mtBat .mtBatWing path,
+.mtBat .mtBatBody { fill: #33233f; stroke: rgba(255, 196, 130, .65); stroke-width: .75; }
+.mtBat .mtBatEye { fill: #ffb347; filter: drop-shadow(0 0 1.5px #ff8c21); }
+.mtBat .mtBatWing {
+    transform-box: fill-box;
+    animation: mtBatFlap var(--mt-bat-flap, .24s) ease-in-out infinite alternate;
+}
+.mtBat .mtBatWingLeft { transform-origin: 100% 35%; }
+.mtBat .mtBatWingRight { transform-origin: 0% 35%; --mt-flap-dir: -1; }
+@keyframes mtBatFlap {
+    from { transform: rotate(calc(var(--mt-flap-dir, 1) * 18deg)) scaleY(1); }
+    to { transform: rotate(calc(var(--mt-flap-dir, 1) * -32deg)) scaleY(.55); }
+}
+
+/* Poster decorations live inside the poster, so they scroll and clip with it. */
+.mtHalloweenDecor {
+    position: absolute;
+    z-index: 1;
     pointer-events: none;
     user-select: none;
-    font-size: 21px;
-    line-height: 1;
-    filter: drop-shadow(0 3px 4px #0009);
-    transform: translateY(-20%);
+}
+.mtHalloweenDecor svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* A carved pumpkin peeking up from the bottom edge, between the badges. */
+.mtHalloweenDecor-pumpkin {
+    left: 50%;
+    bottom: 0;
+    width: 30%;
+    max-width: 58px;
+    transform: translate(-50%, 34%);
+    filter: drop-shadow(0 0 10px rgba(255, 140, 33, .45)) drop-shadow(0 4px 6px rgba(0, 0, 0, .6));
+    animation: mtPumpkinPeek 9s ease-in-out var(--mt-decor-delay, 0s) infinite;
+}
+.mtHalloweenDecor-pumpkin .mtPumpkinStem { fill: #5b6b2a; }
+.mtHalloweenDecor-pumpkin .mtPumpkinRib { fill: none; stroke: rgba(110, 40, 5, .45); stroke-width: 1.4; }
+.mtHalloweenDecor-pumpkin .mtPumpkinFace {
+    fill: #ffd45e;
+    filter: drop-shadow(0 0 3px #ffb02e);
+    animation: mtCandleFlicker 2.6s steps(1, end) var(--mt-decor-delay, 0s) infinite;
+}
+@keyframes mtPumpkinPeek {
+    0%, 62%, 100% { transform: translate(-50%, 34%) rotate(0deg); }
+    70% { transform: translate(-50%, 14%) rotate(-4deg); }
+    78% { transform: translate(-50%, 18%) rotate(3deg); }
+    86% { transform: translate(-50%, 30%) rotate(0deg); }
+}
+@keyframes mtCandleFlicker {
+    0%, 100% { opacity: 1; }
+    12% { opacity: .82; }
+    16% { opacity: .96; }
+    41% { opacity: .78; }
+    44% { opacity: 1; }
+    73% { opacity: .88; }
+}
+
+/* A cobweb in the free top-left corner, with a spider slowly going up and down. */
+.mtHalloweenDecor-web {
+    top: 0;
+    left: 0;
+    width: 46%;
+    max-width: 96px;
+    aspect-ratio: 1;
+}
+.mtHalloweenDecor-web .mtCobweb path {
+    fill: none;
+    stroke: rgba(235, 235, 245, .62);
+    stroke-width: .9;
+    vector-effect: non-scaling-stroke;
+}
+.mtHalloweenDecor-web .mtCobweb { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .75)); }
+.mtHalloweenDecor-web .mtSpider {
+    position: absolute;
+    left: 52%;
+    bottom: 100%;
+    width: 17%;
+    min-width: 13px;
+    transform: translateY(var(--mt-spider-drop, 30%));
+    animation: mtSpiderBob 7s ease-in-out var(--mt-decor-delay, 0s) infinite;
+}
+.mtHalloweenDecor-web .mtSpiderThread {
+    fill: none;
+    stroke: rgba(235, 235, 245, .55);
+    stroke-width: .7;
+    vector-effect: non-scaling-stroke;
+}
+.mtHalloweenDecor-web .mtSpider svg { filter: drop-shadow(0 0 2px rgba(0, 0, 0, .9)); }
+.mtHalloweenDecor-web .mtSpiderBody { fill: #2c2333; stroke: rgba(240, 232, 250, .85); stroke-width: .8; }
+.mtHalloweenDecor-web .mtSpiderLegs path {
+    fill: none;
+    stroke: rgba(230, 222, 240, .9);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+@keyframes mtSpiderBob {
+    0%, 100% { transform: translateY(var(--mt-spider-drop, 30%)); }
+    45% { transform: translateY(calc(var(--mt-spider-drop, 30%) + 22%)); }
+    55% { transform: translateY(calc(var(--mt-spider-drop, 30%) + 20%)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mtHalloweenDecor,
+    .mtHalloweenDecor *,
+    .mtBat .mtBatWing { animation: none !important; }
 }
 
 /* Temporary event palette. The user settings are never changed:
