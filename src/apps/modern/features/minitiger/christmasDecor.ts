@@ -201,17 +201,20 @@ const SLEIGH_SVG = `
   </g>
   <g class="mtSleighShape">
     <path class="mtSleighReins" d="M70 40C110 46 150 50 196 52"/>
-    <g class="mtReindeer">
+    <!-- Inner groups mirror each reindeer to face the flight direction; the
+         outer group carries the CSS gallop, which would replace a transform
+         attribute on the same element. -->
+    <g class="mtReindeer"><g transform="translate(78 0) scale(-1 1)">
       <path d="M22 38c6-4 18-5 26-2 3-4 6-9 8-12l3 1-4 9 6-1 1 3-8 3c0 4-2 7-6 8l4 10-3 1-6-9h-10l-6 10-3-1 4-11c-4-2-7-5-6-9z"/>
       <path d="M58 25l2-8m-2 8 5-6m-3 6 6-2" class="mtAntler"/>
-    </g>
-    <g class="mtReindeer">
+      <circle class="mtRudolphNose" cx="64" cy="33" r="2.4"/>
+    </g></g>
+    <g class="mtReindeer"><g transform="translate(206 0) scale(-1 1)">
       <path d="M86 44c6-4 18-5 26-2 3-4 6-9 8-12l3 1-4 9 6-1 1 3-8 3c0 4-2 7-6 8l4 10-3 1-6-9h-10l-6 10-3-1 4-11c-4-2-7-5-6-9z"/>
       <path d="M122 31l2-8m-2 8 5-6m-3 6 6-2" class="mtAntler"/>
-      <circle class="mtRudolphNose" cx="128" cy="39" r="2.4"/>
-    </g>
+    </g></g>
     <path d="M178 46h60c10 0 16-8 16-16h6c0 14-9 26-24 27h-50c-8 0-13-5-14-11z"/>
-    <path d="M170 64h82c8 0 12-4 14-9l4 2c-3 7-9 12-18 12h-84z"/>
+    <path d="M262 64h-80c-8 0-12-4-14-9l-4 2c3 7 9 12 18 12h80z"/>
     <path d="M186 58v6M236 58v6" class="mtSleighStrut"/>
     <circle cx="214" cy="26" r="7"/>
     <path d="M207 22c2-9 12-13 20-8l6-2-3 6c-6-3-15-2-23 4z"/>
