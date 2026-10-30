@@ -77,7 +77,10 @@ const POSTER_SELECTOR = [
     '.minitigerSeasonEpisodeImage',
     '.minitigerSeriesEpisodeImage',
     '.minitigerMangaVolumeImage',
-    '.minitigerVirtualHomeImage'
+    '.minitigerVirtualHomeImage',
+    // Season and episode rails on series and episode detail pages.
+    '.minitigerDetailsEpisodeCard > div',
+    '.minitigerDetailsSeasonCard > div'
 ].join(', ');
 // Single, prominent artwork: detail page posters and preview card heroes.
 const FEATURED_SELECTOR = [
@@ -94,7 +97,9 @@ const CARD_SELECTOR = [
     '.card',
     '.minitigerSeasonEpisodeItem',
     '.minitigerSeriesEpisodeCard',
-    '.minitigerMangaVolumeCard'
+    '.minitigerMangaVolumeCard',
+    '.minitigerDetailsEpisodeCard',
+    '.minitigerDetailsSeasonCard'
 ].join(', ');
 // Roughly every third or fourth poster, never on neighbouring cards.
 const DECOR_PROBABILITY = 0.35;
