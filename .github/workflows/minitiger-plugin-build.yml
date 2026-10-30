@@ -5,7 +5,7 @@ on:
     branches:
       - minitiger-desktop-v12.1
       - test/watchparty-same-server-20261014
-      - test/banner-stable-111-20261016
+      - stable
     paths:
       - 'tools/MinitigerVirtualSync/**'
       - '.github/workflows/minitiger-plugin-build.yml'
@@ -44,7 +44,7 @@ jobs:
         run: dotnet build tools/MinitigerVirtualSync/Jellyfin.Plugin.MinitigerVirtualSync.csproj --configuration Release --no-restore
 
       - name: Package WatchTogether TEST companion
-        if: github.ref == 'refs/heads/test/watchparty-same-server-20261014' || github.ref == 'refs/heads/test/banner-stable-111-20261016'
+        if: github.ref == 'refs/heads/test/watchparty-same-server-20261014' || github.ref == 'refs/heads/stable'
         shell: bash
         run: |
           set -euo pipefail
@@ -65,7 +65,7 @@ jobs:
           )
 
       - name: Upload installable WatchTogether TEST ZIP
-        if: github.ref == 'refs/heads/test/watchparty-same-server-20261014' || github.ref == 'refs/heads/test/banner-stable-111-20261016'
+        if: github.ref == 'refs/heads/test/watchparty-same-server-20261014' || github.ref == 'refs/heads/stable'
         uses: actions/upload-artifact@v4
         with:
           name: Minitiger-VirtualSync-1.6.25.0-WatchTogether-TEST
