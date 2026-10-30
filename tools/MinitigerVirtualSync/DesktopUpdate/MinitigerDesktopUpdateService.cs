@@ -19,7 +19,10 @@ public sealed record MinitigerDesktopUpdateStatus(
     long Size,
     string Sha256,
     string DownloadPath,
-    DateTimeOffset? DownloadExpiresAt);
+    DateTimeOffset? DownloadExpiresAt,
+    // ECDSA P-256 signature from the release workflow; the Desktop client
+    // verifies it with its built-in public key. Passed through unchanged.
+    string Signature = "");
 
 internal sealed record MinitigerDesktopUpdateDownloadGrant(
     string AssetApiUrl,
@@ -33,7 +36,9 @@ internal sealed record MinitigerDesktopUpdateAsset(
     [property: JsonPropertyName("sha256")]
     string Sha256,
     [property: JsonPropertyName("size")]
-    long Size);
+    long Size,
+    [property: JsonPropertyName("signature")]
+    string? Signature = null);
 
 internal sealed record MinitigerDesktopUpdateManifest(
     [property: JsonPropertyName("version")]
@@ -176,7 +181,8 @@ public sealed class MinitigerDesktopUpdateService
                     Size: asset.Size,
                     Sha256: asset.Sha256,
                     DownloadPath: string.Empty,
-                    DownloadExpiresAt: null);
+                    DownloadExpiresAt: null,
+                    Signature: asset.Signature ?? string.Empty);
             }
 
             if (
@@ -231,7 +237,8 @@ public sealed class MinitigerDesktopUpdateService
                 Sha256: asset.Sha256,
                 DownloadPath:
                     $"Minitiger/DesktopUpdate/Download/{grantToken}",
-                DownloadExpiresAt: expiresAt);
+                DownloadExpiresAt: expiresAt,
+                Signature: asset.Signature ?? string.Empty);
         }
         catch (Exception ex)
         {
