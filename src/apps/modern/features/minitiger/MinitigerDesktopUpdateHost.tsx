@@ -18,6 +18,7 @@ interface MinitigerDesktopUpdateStatus {
     fileName: string;
     size: number;
     sha256: string;
+    signature: string;
     downloadPath: string;
     downloadExpiresAt?: string | null;
 }
@@ -28,7 +29,8 @@ type MinitigerNativeUpdateSystem = {
         sha256: string,
         packageType: string,
         targetBuild: number,
-        targetVersion: string
+        targetVersion: string,
+        signature: string
     ) => boolean | void;
 };
 
@@ -96,6 +98,10 @@ const normalizeStatus = (
         ),
         sha256: String(
             pick('sha256', 'Sha256')
+            ?? ''
+        ),
+        signature: String(
+            pick('signature', 'Signature')
             ?? ''
         ),
         downloadPath: String(
@@ -394,7 +400,10 @@ const MinitigerDesktopUpdateHost = () => {
                         status.sha256,
                         status.packageType,
                         status.latestBuild,
-                        status.version
+                        status.version,
+                        // Verified by the native client against its
+                        // built-in release key before anything runs.
+                        status.signature
                     );
 
                 if (accepted === false) {
