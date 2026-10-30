@@ -1009,6 +1009,47 @@ const LargePreview = ({
         setTrailerReady(false);
     }, [heroItem.Id]);
 
+    const backdropRef = useRef<HTMLDivElement>(null);
+
+    // The page behind the dialog must never scroll while it is open: neither
+    // beside the card, over the trailer, nor once the dialog itself has
+    // reached its top or bottom.
+    useEffect(() => {
+        const backdrop = backdropRef.current;
+        if (!backdrop) return;
+
+        const root = document.documentElement;
+        const previousRootOverflow = root.style.overflow;
+        const previousBodyOverflow = document.body.style.overflow;
+        root.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+
+        const canScroll = (element: HTMLElement, deltaY: number) => {
+            const style = getComputedStyle(element);
+            if (!/(auto|scroll)/.test(style.overflowY)) return false;
+            return deltaY < 0
+                ? element.scrollTop > 0
+                : element.scrollTop + element.clientHeight < element.scrollHeight - 1;
+        };
+
+        const onWheel = (event: WheelEvent) => {
+            let node = event.target instanceof HTMLElement ? event.target : null;
+            while (node) {
+                if (canScroll(node, event.deltaY)) return;
+                if (node === backdrop) break;
+                node = node.parentElement;
+            }
+            event.preventDefault();
+        };
+
+        backdrop.addEventListener('wheel', onWheel, { passive: false });
+        return () => {
+            backdrop.removeEventListener('wheel', onWheel);
+            root.style.overflow = previousRootOverflow;
+            document.body.style.overflow = previousBodyOverflow;
+        };
+    }, []);
+
     const backdropUrl = target.kind === 'manga'
         ? getPrimaryImageUrl(apiClient, target.item)
         : target.kind === 'season'
@@ -1059,6 +1100,7 @@ const LargePreview = ({
 
     return (
         <div
+            ref={backdropRef}
             className='minitigerLargePreviewBackdrop'
             style={style}
             role='presentation'

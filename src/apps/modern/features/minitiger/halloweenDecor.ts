@@ -70,12 +70,39 @@ const COBWEB_SVG = (() => {
 })();
 
 const DECOR_CLASS = 'mtHalloweenDecor';
-const POSTER_SELECTOR = '.minitigerPoster, .cardImageContainer';
-const CARD_SELECTOR = '.minitigerMediaCard, .card';
-// Roughly one decoration per seven posters, never on neighbouring cards.
-const DECOR_PROBABILITY = 0.15;
-const MIN_ROW_DISTANCE = 3;
-const MAX_DECORATIONS = 12;
+// Artwork in rows, grids and lists (home, libraries, seasons, previews).
+const POSTER_SELECTOR = [
+    '.minitigerPoster',
+    '.cardImageContainer',
+    '.minitigerSeasonEpisodeImage',
+    '.minitigerSeriesEpisodeImage',
+    '.minitigerMangaVolumeImage',
+    '.minitigerVirtualHomeImage'
+].join(', ');
+// Single, prominent artwork: detail page posters and preview card heroes.
+const FEATURED_SELECTOR = [
+    '.minitigerDetailsPoster',
+    '.minitigerMusicSquarePoster',
+    '.minitigerEpisodeHeroImage',
+    '.minitigerHoverPreviewHero',
+    '.minitigerLargePreviewHero'
+].join(', ');
+// Wide heroes carry a logo and buttons at the bottom; keep them to the corner web.
+const WEB_ONLY_SELECTOR = '.minitigerHoverPreviewHero, .minitigerLargePreviewHero, .minitigerEpisodeHeroImage';
+const CARD_SELECTOR = [
+    '.minitigerMediaCard',
+    '.card',
+    '.minitigerSeasonEpisodeItem',
+    '.minitigerSeriesEpisodeCard',
+    '.minitigerMangaVolumeCard'
+].join(', ');
+// Roughly every third or fourth poster, never on neighbouring cards.
+const DECOR_PROBABILITY = 0.35;
+const FEATURED_PROBABILITY = 0.6;
+const MIN_ROW_DISTANCE = 2;
+// The same decoration repeats in a row only with some distance.
+const MIN_SAME_KIND_DISTANCE = 4;
+const MAX_DECORATIONS = 30;
 
 type DecorKind = 'pumpkin' | 'web';
 
@@ -199,8 +226,7 @@ const createDecoration = (kind: DecorKind) => {
 export const startPosterDecorations = (root: HTMLElement) => {
     const decisions = new Map<string, DecorKind | null>();
     const decidedElements = new WeakSet<HTMLElement>();
-    const rowSlots = new Map<string, number[]>();
-    const rowKinds = new Map<string, Set<DecorKind>>();
+    const rowSlots = new Map<string, { index: number; kind: DecorKind }[]>();
     const containerIds = new WeakMap<Element, number>();
     let nextContainerId = 0;
     const restorePosition = new Map<HTMLElement, string>();
@@ -208,8 +234,8 @@ export const startPosterDecorations = (root: HTMLElement) => {
     let nextKind: DecorKind = Math.random() < 0.5 ? 'pumpkin' : 'web';
     let timer: number | undefined;
 
-    // Horizontal carousels are one row. Wrapping grids (library pages) hold
-    // many visual rows in one container, so split them by vertical position.
+    // Horizontal carousels are one row. Grids (library pages) and vertical
+    // lists (episodes) hold many visual rows, so split them by position.
     const rowKeyFor = (card: HTMLElement, row: Element | null) => {
         if (!row) return 'none';
         let id = containerIds.get(row);
@@ -218,8 +244,10 @@ export const startPosterDecorations = (root: HTMLElement) => {
             containerIds.set(row, id);
         }
         const style = getComputedStyle(row);
-        const wraps = style.display.includes('grid') || style.flexWrap === 'wrap';
-        if (!wraps) return String(id);
+        const carousel = style.display.includes('flex')
+            && !style.flexDirection.startsWith('column')
+            && style.flexWrap === 'nowrap';
+        if (carousel) return String(id);
         const top = card.getBoundingClientRect().top + window.scrollY;
         return `${id}:${Math.round(top / Math.max(1, card.offsetHeight))}`;
     };
@@ -237,44 +265,52 @@ export const startPosterDecorations = (root: HTMLElement) => {
         if (
             decorated < MAX_DECORATIONS
             && Math.random() < DECOR_PROBABILITY
-            && !used.some(slot => Math.abs(slot - index) < MIN_ROW_DISTANCE)
+            && !used.some(slot => Math.abs(slot.index - index) < MIN_ROW_DISTANCE)
         ) {
-            const kinds = rowKinds.get(rowKey) ?? new Set<DecorKind>();
+            const tooClose = (candidate: DecorKind) => used.some(slot =>
+                slot.kind === candidate && Math.abs(slot.index - index) < MIN_SAME_KIND_DISTANCE
+            );
             kind = nextKind;
-            // Never the same decoration twice in one row.
-            if (kinds.has(kind)) kind = kind === 'pumpkin' ? 'web' : 'pumpkin';
-            if (!kinds.has(kind)) {
+            if (tooClose(kind)) kind = kind === 'pumpkin' ? 'web' : 'pumpkin';
+            if (tooClose(kind)) {
+                kind = null;
+            } else {
                 // Mostly alternate, but keep it from becoming a strict pattern.
                 if (Math.random() < 0.75) nextKind = kind === 'pumpkin' ? 'web' : 'pumpkin';
-                kinds.add(kind);
-                used.push(index);
+                used.push({ index, kind });
                 rowSlots.set(rowKey, used);
-                rowKinds.set(rowKey, kinds);
                 decorated++;
-            } else {
-                kind = null;
             }
         }
         if (itemId) decisions.set(itemId, kind);
         return kind;
     };
 
+    const decideFeatured = (poster: HTMLElement): DecorKind | null => {
+        if (Math.random() >= FEATURED_PROBABILITY) return null;
+        if (poster.matches(WEB_ONLY_SELECTOR)) return 'web';
+        return Math.random() < 0.5 ? 'pumpkin' : 'web';
+    };
+
     const visit = () => {
-        root.querySelectorAll<HTMLElement>(POSTER_SELECTOR).forEach(poster => {
-            if (decidedElements.has(poster) || poster.closest('[aria-hidden="true"]')) return;
+        root.querySelectorAll<HTMLElement>(`${POSTER_SELECTOR}, ${FEATURED_SELECTOR}`).forEach(poster => {
+            if (
+                decidedElements.has(poster)
+                || poster.closest('[aria-hidden="true"], .minitigerGlobalSeason')
+            ) return;
             const rect = poster.getBoundingClientRect();
             // Not laid out yet (or a tiny thumbnail): try again on the next pass.
-            if (rect.width < 90 || rect.height < 60) return;
+            if (rect.width < 70 || rect.height < 45) return;
             decidedElements.add(poster);
 
-            const kind = decide(poster);
+            const kind = poster.matches(FEATURED_SELECTOR) ? decideFeatured(poster) : decide(poster);
             if (!kind || poster.querySelector(`:scope > .${DECOR_CLASS}`)) return;
 
             if (getComputedStyle(poster).position === 'static') {
                 restorePosition.set(poster, poster.style.position);
                 poster.style.position = 'relative';
             }
-            // Below the progress bar, above the poster artwork and its shade.
+            // Below the progress bar (if any), above the artwork and its shade.
             poster.insertBefore(
                 createDecoration(kind),
                 poster.querySelector(':scope > .minitigerProgressTrack')
@@ -290,7 +326,9 @@ export const startPosterDecorations = (root: HTMLElement) => {
     const observer = new MutationObserver(mutations => {
         const relevant = mutations.some(mutation =>
             Array.from(mutation.addedNodes).some(node =>
-                node instanceof HTMLElement && !node.classList.contains(DECOR_CLASS)
+                node instanceof HTMLElement
+                && !node.classList.contains(DECOR_CLASS)
+                && !node.classList.contains('mtBat')
             )
         );
         if (relevant) schedule();

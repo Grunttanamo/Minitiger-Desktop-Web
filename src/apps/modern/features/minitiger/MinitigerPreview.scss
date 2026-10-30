@@ -175,6 +175,7 @@
     box-sizing: border-box;
     padding: 5vh 1rem;
     overflow: auto;
+    overscroll-behavior: contain;
     background: rgba(0, 0, 0, 0.74);
     animation: minitigerPreviewFadeIn 170ms ease-out;
 }

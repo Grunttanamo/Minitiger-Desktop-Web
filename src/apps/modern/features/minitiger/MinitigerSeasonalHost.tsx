@@ -45,11 +45,11 @@ const MinitigerSeasonalHost = () => {
 
     useEffect(() => {
         if (!halloween) return;
-        const root = document.querySelector<HTMLElement>('main');
-        if (!root) return;
-        // Restarted per route, so every page visit gets a fresh random layout.
-        return startPosterDecorations(root);
-    }, [halloween, location.pathname, user?.Id]);
+        // The whole body: preview cards are portals outside <main>.
+        // Restarted per page (detail pages and virtual libraries only differ
+        // in the query string), so every visit gets a fresh random layout.
+        return startPosterDecorations(document.body);
+    }, [halloween, location.pathname, location.search, user?.Id]);
 
     if (season === 'off' || !user || inPlayer) return null;
     return <div ref={layerRef} className={'minitigerGlobalSeason minitigerGlobalSeason-'+season} aria-hidden='true'>
