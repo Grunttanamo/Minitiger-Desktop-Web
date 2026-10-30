@@ -2,13 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useApi } from 'hooks/useApi';
 import { applyMinitigerSeason, getCachedMinitigerSeason, readMinitigerSeason, SEASON_EVENT, type MinitigerSeason } from '../../routes/minitiger/home/seasonalEvents';
-import { startBatFlights, startPosterDecorations } from './halloweenDecor';
+import { christmasDecorations, startSleighFlights, startSnowfall } from './christmasDecor';
+import { halloweenDecorations, startBatFlights } from './halloweenDecor';
+import { startPosterDecorations } from './seasonDecor';
 import './MinitigerSeasonalHost.scss';
 
-const seeds = [
-    [8,13],[24,35],[44,65],[68,24],[85,78],[16,81],[38,19],[57,88],[77,46],[92,16],
-    [12,52],[33,74],[52,28],[73,92],[88,53],[29,14],[63,57],[96,72]
-];
 const MinitigerSeasonalHost = () => {
     const { __legacyApiClient__: apiClient, user } = useApi();
     const location = useLocation();
@@ -36,7 +34,9 @@ const MinitigerSeasonalHost = () => {
     const path = location.pathname.toLowerCase();
     const inPlayer = path.includes('/video') || path.includes('/playback') || path.includes('/player');
 
-    const halloween = season === 'halloween' && Boolean(user) && !inPlayer;
+    const active = Boolean(user) && !inPlayer;
+    const halloween = season === 'halloween' && active;
+    const christmas = season === 'christmas' && active;
 
     useEffect(() => {
         if (!halloween || !layerRef.current) return;
@@ -44,16 +44,28 @@ const MinitigerSeasonalHost = () => {
     }, [halloween]);
 
     useEffect(() => {
-        if (!halloween) return;
+        const layer = layerRef.current;
+        if (!christmas || !layer) return;
+        const stopSnow = startSnowfall(layer);
+        const stopSleigh = startSleighFlights(layer);
+        return () => {
+            stopSleigh();
+            stopSnow();
+        };
+    }, [christmas]);
+
+    useEffect(() => {
+        if (!halloween && !christmas) return;
         // The whole body: preview cards are portals outside <main>.
         // Restarted per page (detail pages and virtual libraries only differ
         // in the query string), so every visit gets a fresh random layout.
-        return startPosterDecorations(document.body);
-    }, [halloween, location.pathname, location.search, user?.Id]);
+        return startPosterDecorations(
+            document.body,
+            halloween ? halloweenDecorations : christmasDecorations
+        );
+    }, [halloween, christmas, location.pathname, location.search, user?.Id]);
 
     if (season === 'off' || !user || inPlayer) return null;
-    return <div ref={layerRef} className={'minitigerGlobalSeason minitigerGlobalSeason-'+season} aria-hidden='true'>
-        {season === 'christmas' && seeds.map(([x,y],i) => <span key={i} className='seasonFlake' style={{left:x+'%',top:y+'%','--seed':i} as React.CSSProperties}>{i%3===0?'❄':'❅'}</span>)}
-    </div>;
+    return <div ref={layerRef} className={'minitigerGlobalSeason minitigerGlobalSeason-'+season} aria-hidden='true' />;
 };
 export default MinitigerSeasonalHost;
