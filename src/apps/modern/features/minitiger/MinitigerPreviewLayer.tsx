@@ -1013,16 +1013,11 @@ const LargePreview = ({
 
     // The page behind the dialog must never scroll while it is open: neither
     // beside the card, over the trailer, nor once the dialog itself has
-    // reached its top or bottom.
+    // reached its top or bottom. The page's overflow is left untouched:
+    // toggling it made the library jump to the top and back.
     useEffect(() => {
         const backdrop = backdropRef.current;
         if (!backdrop) return;
-
-        const root = document.documentElement;
-        const previousRootOverflow = root.style.overflow;
-        const previousBodyOverflow = document.body.style.overflow;
-        root.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
 
         const canScroll = (element: HTMLElement, deltaY: number) => {
             const style = getComputedStyle(element);
@@ -1032,21 +1027,52 @@ const LargePreview = ({
                 : element.scrollTop + element.clientHeight < element.scrollHeight - 1;
         };
 
-        const onWheel = (event: WheelEvent) => {
-            let node = event.target instanceof HTMLElement ? event.target : null;
+        // True when something inside the dialog, from target up to the
+        // backdrop, can still scroll in that direction.
+        const dialogCanScroll = (target: EventTarget | null, deltaY: number) => {
+            let node = target instanceof HTMLElement && backdrop.contains(target) ? target : null;
             while (node) {
-                if (canScroll(node, event.deltaY)) return;
+                if (canScroll(node, deltaY)) return true;
                 if (node === backdrop) break;
                 node = node.parentElement;
             }
+            return false;
+        };
+
+        const onWheel = (event: WheelEvent) => {
+            if (!dialogCanScroll(event.target, event.deltaY)) event.preventDefault();
+        };
+
+        const scrollKeys: Record<string, number> = {
+            ArrowUp: -1, ArrowDown: 1, PageUp: -1, PageDown: 1, Home: -1, End: 1, ' ': 1
+        };
+        const onKeyDown = (event: KeyboardEvent) => {
+            const direction = scrollKeys[event.key];
+            if (!direction || event.altKey || event.ctrlKey || event.metaKey) return;
+            const target = event.target;
+            if (
+                target instanceof HTMLElement
+                && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(target.tagName))
+            ) return;
+            const deltaY = event.key === ' ' && event.shiftKey ? -1 : direction;
+            if (dialogCanScroll(target, deltaY)) return;
+            // Focus is outside the dialog (or nothing in it can scroll):
+            // keep the page still and scroll the dialog itself instead.
             event.preventDefault();
+            if (!canScroll(backdrop, deltaY)) return;
+            if (event.key === 'Home' || event.key === 'End') {
+                backdrop.scrollTo({ top: deltaY < 0 ? 0 : backdrop.scrollHeight });
+            } else {
+                const step = event.key.startsWith('Arrow') ? 60 : backdrop.clientHeight * 0.9;
+                backdrop.scrollBy({ top: step * deltaY });
+            }
         };
 
         backdrop.addEventListener('wheel', onWheel, { passive: false });
+        document.addEventListener('keydown', onKeyDown, true);
         return () => {
             backdrop.removeEventListener('wheel', onWheel);
-            root.style.overflow = previousRootOverflow;
-            document.body.style.overflow = previousBodyOverflow;
+            document.removeEventListener('keydown', onKeyDown, true);
         };
     }, []);
 
