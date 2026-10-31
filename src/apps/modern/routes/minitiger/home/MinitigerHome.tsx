@@ -2,6 +2,7 @@ import { BaseItemKind } from '@jellyfin/sdk/lib/generated-client/models/base-ite
 import { ImageType } from '@jellyfin/sdk/lib/generated-client/models/image-type';
 import { ItemFields } from '@jellyfin/sdk/lib/generated-client/models/item-fields';
 import { ItemSortBy } from '@jellyfin/sdk/lib/generated-client/models/item-sort-by';
+import { MediaType } from '@jellyfin/sdk/lib/generated-client/models/media-type';
 import { SortOrder } from '@jellyfin/sdk/lib/generated-client/models/sort-order';
 import type { ApiClient } from 'jellyfin-apiclient';
 import { useQueryClient } from '@tanstack/react-query';
@@ -542,6 +543,26 @@ const MinitigerHome = () => {
         enableTotalRecordCount: false
     });
 
+    // Books, manga and comics that were left in the middle ("Weiterlesen").
+    const {
+        data: readingData,
+        isPending: readingPending,
+        isError: readingError,
+        isFetched: readingFetched,
+        error: readingQueryError
+    } = useResumeItems({
+        limit: 18,
+        mediaTypes: [ MediaType.Book ],
+        fields: [
+            ItemFields.PrimaryImageAspectRatio
+        ],
+        imageTypeLimit: 1,
+        enableImageTypes: [
+            ImageType.Primary
+        ],
+        enableTotalRecordCount: false
+    });
+
     const {
         data: nextUpData,
         isPending: nextUpPending,
@@ -708,6 +729,13 @@ const MinitigerHome = () => {
                 'musicvideo'
             ].includes(type);
     });
+
+    const readingItems = useMemo(
+        () => (
+            (readingData?.Items ?? []) as ItemDto[]
+        ).filter(item => !item.IsFolder),
+        [ readingData ]
+    );
 
     const liveNextUpItems =
         (nextUpData?.Items ?? []) as ItemDto[];
@@ -903,6 +931,7 @@ const MinitigerHome = () => {
             virtualLibraries: virtualConfig.libraries.length,
             queries: {
                 libraries: summarizeQuery({ pending: librariesPending, fetched: librariesFetched, error: librariesError ? librariesQueryError ?? true : null, live: liveLibraries.length, cached: cachedLibraries.length }),
+                reading: summarizeQuery({ pending: readingPending, fetched: readingFetched, error: readingError ? readingQueryError ?? true : null, live: readingItems.length, cached: 0 }),
                 resume: summarizeQuery({ pending: resumePending, fetched: resumeFetched, error: resumeError ? resumeQueryError ?? true : null, live: liveResumeItems.length, cached: cachedResumeItems.length }),
                 nextUp: summarizeQuery({ pending: nextUpPending, fetched: nextUpFetched, error: nextUpError ? nextUpQueryError ?? true : null, live: liveNextUpItems.length, cached: cachedNextUpItems.length }),
                 watchlist: summarizeQuery({ pending: watchlistPending, fetched: watchlistFetched, error: watchlistError ? watchlistQueryError ?? true : null, live: liveWatchlistItems.length, cached: cachedWatchlistItems.length }),
@@ -1118,7 +1147,7 @@ const MinitigerHome = () => {
         React.ReactNode
     >>(() => ({
         libraries: librarySection,
-        resume: (
+        resume: (<>
             <MinitigerMediaRow
                 title='Weiterschauen'
                 items={resumeItems}
@@ -1137,7 +1166,23 @@ const MinitigerHome = () => {
                 isVirtuallyAssigned={isVirtuallyAssigned}
                 onVirtualAssign={setAssignTarget}
             />
-        ),
+            {/* Only while something is actually being read. */}
+            {readingItems.length > 0 && (
+                <MinitigerMediaRow
+                    title='Weiterlesen'
+                    items={readingItems}
+                    apiClient={apiClient}
+                    variant='poster'
+                    cardScale={settings.systemRowCardScale.watchlist}
+                    cardGap={settings.systemRowGap.watchlist}
+                    showFskBadges={settings.showFskBadges}
+                    showPlayedIndicators={settings.showPlayedIndicators}
+                    showVirtualAssign={isAdmin && virtualConfig.libraries.length > 0}
+                    isVirtuallyAssigned={isVirtuallyAssigned}
+                    onVirtualAssign={setAssignTarget}
+                />
+            )}
+        </>),
         nextUp: (
             <MinitigerMediaRow
                 title='Als Nächstes'
@@ -1207,6 +1252,7 @@ const MinitigerHome = () => {
         resumeDisplayError,
         resumeItems,
         resumeDisplayPending,
+        readingItems,
         watchlistDisplayError,
         watchlistItems,
         watchlistDisplayPending,
