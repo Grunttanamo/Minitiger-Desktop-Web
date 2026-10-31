@@ -340,11 +340,23 @@ const MinitigerMediaRow = ({
         event.preventDefault();
         event.stopPropagation();
 
-        playbackManager.play({
-            items: [ item ],
-            startPositionTicks:
-                item.UserData?.PlaybackPositionTicks ?? 0
-        }).catch(playbackError => {
+        void (async () => {
+            let playable = item;
+
+            // The readers pick their format from item.Path, which Home rows
+            // do not load. Fetch the full item first, like the details page,
+            // which also brings the latest reading position.
+            const userId = apiClient?.getCurrentUserId();
+            if (isResumableBook(item) && apiClient && userId && item.Id) {
+                playable = await apiClient.getItem(userId, item.Id) as ItemDto;
+            }
+
+            await playbackManager.play({
+                items: [ playable ],
+                startPositionTicks:
+                    playable.UserData?.PlaybackPositionTicks ?? 0
+            });
+        })().catch(playbackError => {
             console.error(
                 '[Minitiger Card] Wiedergabe fehlgeschlagen',
                 playbackError
