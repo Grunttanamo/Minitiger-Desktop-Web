@@ -174,8 +174,14 @@ export class ComicsPlayer {
 
         this.swiperInstance.params.slidesPerView = view;
         this.swiperInstance.params.slidesPerGroup = view;
+        this.updateDoublePageClass(view);
 
         this.reload(currentPage);
+    }
+
+    // Double-page mode pulls both pages to the middle (see style.scss).
+    updateDoublePageClass(view) {
+        this.swiperInstance?.el?.classList.toggle('isDoublePage', view === 2);
     }
 
     reload(currentPage) {
@@ -337,6 +343,8 @@ export class ComicsPlayer {
                         addSlidesAfter: 1
                     }
                 });
+
+                this.updateDoublePageClass(this.comicsPlayerSettings.pagesPerView);
 
                 // save current page ( a page is an image file inside the archive )
                 this.swiperInstance.on('slideChange', () => {

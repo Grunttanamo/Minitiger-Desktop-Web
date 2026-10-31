@@ -22,6 +22,37 @@
         object-fit: contain;
     }
 
+    /* Double-page mode: each page is centred in its half by default, which
+       leaves a wide gap between two portrait pages. Pull the visible pair
+       together with a 5px seam. Swiper marks the first visible page
+       "active" and the second "next"; in right-to-left reading the first
+       page is on the right. */
+    .isDoublePage .swiper-slide-img {
+        box-sizing: border-box;
+    }
+
+    .isDoublePage .swiper-slide-active .swiper-slide-img {
+        object-position: right center;
+        padding-right: 2.5px;
+    }
+
+    .isDoublePage .swiper-slide-next .swiper-slide-img {
+        object-position: left center;
+        padding-left: 2.5px;
+    }
+
+    .isDoublePage.swiper-rtl .swiper-slide-active .swiper-slide-img {
+        object-position: left center;
+        padding-right: 0;
+        padding-left: 2.5px;
+    }
+
+    .isDoublePage.swiper-rtl .swiper-slide-next .swiper-slide-img {
+        object-position: right center;
+        padding-left: 0;
+        padding-right: 2.5px;
+    }
+
     .swiper-pagination {
         width: max-content;
         background: #fff;

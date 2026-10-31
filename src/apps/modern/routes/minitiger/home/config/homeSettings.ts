@@ -6,6 +6,7 @@ import {
 export const HOME_SECTION_IDS = [
     'libraries',
     'resume',
+    'reading',
     'nextUp',
     'watchlist',
     'recent'
@@ -15,6 +16,7 @@ export type HomeSectionId = typeof HOME_SECTION_IDS[number];
 
 export const SYSTEM_HOME_ROW_IDS = [
     'resume',
+    'reading',
     'nextUp',
     'watchlist',
     'recent'
@@ -141,6 +143,7 @@ export interface MinitigerHomeSettings {
 export const HOME_SECTION_LABELS: Record<HomeSectionId, string> = {
     libraries: 'Medien-Bibliotheken',
     resume: 'Weiterschauen',
+    reading: 'Weiterlesen',
     nextUp: 'Als Nächstes',
     watchlist: 'Watchlist',
     recent: 'Erneut ansehen'
@@ -148,6 +151,7 @@ export const HOME_SECTION_LABELS: Record<HomeSectionId, string> = {
 
 export const HOME_ROW_LABELS: Record<SystemHomeRowId, string> = {
     resume: 'Weiterschauen',
+    reading: 'Weiterlesen',
     nextUp: 'Als Nächstes',
     watchlist: 'Watchlist',
     recent: 'Erneut ansehen'
@@ -806,12 +810,14 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     rowGap: 12,
     systemRowCardScale: {
         resume: 100,
+        reading: 100,
         nextUp: 100,
         watchlist: 100,
         recent: 100
     },
     systemRowGap: {
         resume: 16,
+        reading: 16,
         nextUp: 16,
         watchlist: 16,
         recent: 16
@@ -844,6 +850,7 @@ export const DEFAULT_HOME_SETTINGS: MinitigerHomeSettings = {
     visibleSections: {
         libraries: true,
         resume: true,
+        reading: true,
         nextUp: true,
         watchlist: true,
         recent: true
@@ -1005,6 +1012,19 @@ export const normalizeHomeSettings = (
     const incomingRowOrder = Array.isArray(source.homeRowOrder)
         ? source.homeRowOrder.filter(isHomeRowId)
         : fallbackRowOrder;
+
+    // Rows added in later versions ('reading') belong right below
+    // 'Weiterschauen' in an existing order, not at the very end.
+    if (
+        !incomingRowOrder.includes('reading')
+        && incomingRowOrder.includes('resume')
+    ) {
+        incomingRowOrder.splice(
+            incomingRowOrder.indexOf('resume') + 1,
+            0,
+            'reading'
+        );
+    }
 
     const homeRowOrder = Array.from(new Set([
         ...incomingRowOrder,

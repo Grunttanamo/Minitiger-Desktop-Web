@@ -14,8 +14,10 @@
     align-items: center;
     height: 5vh;
     padding: 0 0.8vw;
-    background-color: var(--jf-palette-AppBar-defaultBg);
-    pointer-events: auto;
+    /* No bar background: only the controls float over the page, so the
+       page stays fully visible while they are shown. */
+    background: transparent;
+    pointer-events: none;
     transition: all 200ms linear;
     // force WebKit to promote the element onto its own compositor layer for opacity on iOS
     transform: translateZ(0);
@@ -39,4 +41,29 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Floating controls: a small translucent disc keeps them readable on both
+   white and dark pages. Only the controls themselves take clicks. */
+.bookOsdRow > .paper-icon-button-light,
+.bookOsdRow > button {
+    pointer-events: auto;
+    background: rgba(16, 16, 20, 0.55);
+    border-radius: 50%;
+    color: #fff;
+    margin: 0 0.15rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.bookOsdRow > .paper-icon-button-light:hover,
+.bookOsdRow > button:hover {
+    background: rgba(16, 16, 20, 0.8);
+}
+
+.bookOsdTitle {
+    pointer-events: auto;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(16, 16, 20, 0.55);
+    color: #fff;
 }

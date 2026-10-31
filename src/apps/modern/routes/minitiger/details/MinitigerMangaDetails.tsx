@@ -943,9 +943,14 @@ export const MinitigerMangaVolumeDetails = ({
         .map(studio => studio.Name)
         .filter((name): name is string => Boolean(name));
 
+    // Pages (comics/manga) or percent (EPUB), as stored by the reader.
+    const resumePositionTicks =
+        item.UserData?.PlaybackPositionTicks ?? 0;
+
     const read = () => {
         playbackManager.play({
-            items: [ item ]
+            items: [ item ],
+            startPositionTicks: resumePositionTicks
         }).catch(error => {
             console.error(
                 '[Minitiger Manga] Lesen konnte nicht gestartet werden',
@@ -1069,7 +1074,7 @@ export const MinitigerMangaVolumeDetails = ({
                             className='isPrimary'
                             onClick={read}
                         >
-                            ▶ Lesen
+                            {resumePositionTicks > 0 ? '▶ Weiterlesen' : '▶ Lesen'}
                         </button>
 
                         <button

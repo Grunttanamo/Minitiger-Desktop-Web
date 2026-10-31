@@ -1147,7 +1147,7 @@ const MinitigerHome = () => {
         React.ReactNode
     >>(() => ({
         libraries: librarySection,
-        resume: (<>
+        resume: (
             <MinitigerMediaRow
                 title='Weiterschauen'
                 items={resumeItems}
@@ -1166,23 +1166,23 @@ const MinitigerHome = () => {
                 isVirtuallyAssigned={isVirtuallyAssigned}
                 onVirtualAssign={setAssignTarget}
             />
-            {/* Only while something is actually being read. */}
-            {readingItems.length > 0 && (
-                <MinitigerMediaRow
-                    title='Weiterlesen'
-                    items={readingItems}
-                    apiClient={apiClient}
-                    variant='poster'
-                    cardScale={settings.systemRowCardScale.watchlist}
-                    cardGap={settings.systemRowGap.watchlist}
-                    showFskBadges={settings.showFskBadges}
-                    showPlayedIndicators={settings.showPlayedIndicators}
-                    showVirtualAssign={isAdmin && virtualConfig.libraries.length > 0}
-                    isVirtuallyAssigned={isVirtuallyAssigned}
-                    onVirtualAssign={setAssignTarget}
-                />
-            )}
-        </>),
+        ),
+        // Only while something is actually being read.
+        reading: readingItems.length > 0 ? (
+            <MinitigerMediaRow
+                title='Weiterlesen'
+                items={readingItems}
+                apiClient={apiClient}
+                variant='poster'
+                cardScale={settings.systemRowCardScale.reading}
+                cardGap={settings.systemRowGap.reading}
+                showFskBadges={settings.showFskBadges}
+                showPlayedIndicators={settings.showPlayedIndicators}
+                showVirtualAssign={isAdmin && virtualConfig.libraries.length > 0}
+                isVirtuallyAssigned={isVirtuallyAssigned}
+                onVirtualAssign={setAssignTarget}
+            />
+        ) : null,
         nextUp: (
             <MinitigerMediaRow
                 title='Als Nächstes'

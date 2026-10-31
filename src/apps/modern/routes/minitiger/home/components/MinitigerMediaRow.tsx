@@ -64,12 +64,19 @@ interface MinitigerMediaRowProps {
     ) => string | null | undefined;
 }
 
+// Books, manga and comics only once they were started: the button then
+// resumes at the stored page (comics) or position (EPUB).
+const isResumableBook = (item: ItemDto) =>
+    String(item.MediaType ?? '').toLowerCase() === 'book'
+    && (item.UserData?.PlaybackPositionTicks ?? 0) > 0;
+
 const isQuickPlayable = (item: ItemDto) => {
     const mediaType = String(item.MediaType ?? '').toLowerCase();
     const type = String(item.Type ?? '').toLowerCase();
 
     return (
-        mediaType === 'video'
+        isResumableBook(item)
+        || mediaType === 'video'
         || mediaType === 'audio'
         || type === 'movie'
         || type === 'series'
@@ -797,9 +804,15 @@ const MinitigerMediaRow = ({
                                                         )
                                                     }
                                                     aria-label={
-                                                        `${getCardTitle(item)} abspielen`
+                                                        isResumableBook(item)
+                                                            ? `${getCardTitle(item)} weiterlesen`
+                                                            : `${getCardTitle(item)} abspielen`
                                                     }
-                                                    title='Abspielen'
+                                                    title={
+                                                        isResumableBook(item)
+                                                            ? 'Weiterlesen'
+                                                            : 'Abspielen'
+                                                    }
                                                 >
                                                     ▶
                                                 </button>
