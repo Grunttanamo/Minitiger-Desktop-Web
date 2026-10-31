@@ -38,7 +38,7 @@ import {
     type VirtualHomeRowId
 } from './config/homeSettings';
 import useMinitigerCustomRows from './hooks/useMinitigerCustomRows';
-import { logHomeDiagnostics, repairMinitigerHome, summarizeQuery } from './homeDiagnostics';
+import { logHomeDiagnostics, summarizeQuery } from './homeDiagnostics';
 import useMinitigerDetailSettings from './hooks/useMinitigerDetailSettings';
 import useMinitigerHomeSettings from './hooks/useMinitigerHomeSettings';
 import useMinitigerLibrarySettings from './hooks/useMinitigerLibrarySettings';
@@ -1549,16 +1549,6 @@ const MinitigerHome = () => {
                         {renderHomeRow(rowId)}
                     </React.Fragment>
                 ))}
-
-                <div className='minitigerHomeRepair'>
-                    <button
-                        type='button'
-                        title='Leert die lokalen Zwischenspeicher der Startseite und lädt alles frisch vom Server.'
-                        onClick={() => repairMinitigerHome(queryClient)}
-                    >
-                        Startseite neu laden
-                    </button>
-                </div>
 
                 <footer className='minitigerDevFooter'>
                     🐯 Minitiger Native · Phase 18.17.1 TEST

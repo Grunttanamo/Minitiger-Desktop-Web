@@ -6333,29 +6333,3 @@ iframe.minitigerInlineTrailer {
 .minitigerHome .minitigerHeroInfoReadability .minitigerHeroOverview {
     text-shadow: 0 1px 2px rgba(0, 0, 0, .85);
 }
-
-/* Repair action at the end of Home: drops local caches and reloads. */
-.minitigerHomeRepair {
-    display: flex;
-    justify-content: center;
-    margin: 2.5rem 0 1.5rem;
-
-    button {
-        padding: 0.45rem 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 999px;
-        background: transparent;
-        color: inherit;
-        font: inherit;
-        font-size: 0.8rem;
-        opacity: 0.55;
-        cursor: pointer;
-        transition: opacity 0.15s ease, border-color 0.15s ease;
-
-        &:hover,
-        &:focus-visible {
-            opacity: 1;
-            border-color: var(--mt-accent, #ffbf00);
-        }
-    }
-}
