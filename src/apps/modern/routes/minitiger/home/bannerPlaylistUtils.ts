@@ -5,6 +5,7 @@ import type { ItemDto } from 'types/base/models/item-dto';
 import { getMinitigerAccessToken } from './apiAuth';
 import {
     broadcastMinitigerServerPreference,
+    resyncMinitigerServerPreferenceOnce,
     readMinitigerServerPreference
 } from './serverPreferences';
 
@@ -706,6 +707,26 @@ export const getMinitigerBannerSample = async (
         globalIds !== null
         || Boolean(playlist?.Id)
         || storedSeriesIds.length > 0;
+
+    if (globalIds !== null) {
+        try {
+            const currentUser =
+                await apiClient.getCurrentUser();
+
+            if (currentUser?.Policy?.IsAdministrator) {
+                resyncMinitigerServerPreferenceOnce(
+                    apiClient,
+                    MINITIGER_BANNER_GLOBAL_IDS_PREF_KEY,
+                    globalIds
+                );
+            }
+        } catch (error) {
+            console.debug(
+                '[Minitiger Banner] Abgleich der Banner-Liste wird später erneut versucht.',
+                error
+            );
+        }
+    }
 
     if (
         globalIds === null

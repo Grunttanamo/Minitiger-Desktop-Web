@@ -17,6 +17,7 @@ import {
 import {
     broadcastMinitigerServerPreference,
     readMinitigerServerPreferenceDetailed,
+    resyncMinitigerServerPreferenceOnce,
     writeMinitigerServerPreference
 } from '../serverPreferences';
 
@@ -105,6 +106,14 @@ const useMinitigerCustomRows = () => {
             if (serverValue) {
                 const normalized = normalizeCustomRows(serverValue);
                 setConfig(normalized);
+
+                if (isAdmin) {
+                    resyncMinitigerServerPreferenceOnce(
+                        apiClient,
+                        SERVER_PREF_KEY,
+                        normalized
+                    );
+                }
 
                 try {
                     window.localStorage.setItem(

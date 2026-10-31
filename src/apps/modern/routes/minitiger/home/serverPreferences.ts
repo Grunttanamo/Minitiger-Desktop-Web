@@ -522,3 +522,31 @@ export const broadcastMinitigerServerPreference = async (
 };
 
 // MINITIGER_PATCH_MARKER: PHASE_18_13_0_TEST_STABILITY_TRANSLATOR_BACKGROUND
+
+const resyncedThisSession = new Set<string>();
+
+/**
+ * Admin-owned settings (custom rows, banner list) live as a copy in every
+ * user's preferences. Writes only happen when the admin edits them, so users
+ * created later - or whose copy got lost - never received them. Re-sync the
+ * admin's current value to everyone once per session; users whose copy is
+ * already identical are not written to.
+ */
+export const resyncMinitigerServerPreferenceOnce = (
+    apiClient: ApiClient,
+    key: string,
+    value: unknown
+) => {
+    const sessionKey = `${apiClient.serverId?.() ?? 'server'}:${key}`;
+
+    if (resyncedThisSession.has(sessionKey)) {
+        return;
+    }
+
+    resyncedThisSession.add(sessionKey);
+
+    void broadcastMinitigerServerPreference(apiClient, key, value).catch(error => {
+        resyncedThisSession.delete(sessionKey);
+        console.warn(`[Minitiger ServerPrefs] ${key} konnte nicht an alle Benutzer verteilt werden`, error);
+    });
+};
