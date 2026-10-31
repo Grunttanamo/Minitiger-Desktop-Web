@@ -668,6 +668,14 @@ export const getMinitigerBannerSample = async (
         )
     ]);
 
+    console.info(
+        `[Minitiger Diagnose] Banner ${JSON.stringify({
+            playlist: playlist?.Id ? `${playlist.Name ?? ''} (${playlist.Id})` : null,
+            globalIds: globalIds === null ? null : globalIds.length,
+            legacySeriesIds: storedSeriesIds.length
+        })}`
+    );
+
     let playlistIds: string[] = [];
 
     if (playlist?.Id) {

@@ -242,11 +242,18 @@ const mutateMinitigerServerPreference = async (
         }
     );
 
-export const readMinitigerServerPreference = async <T>(
+export interface MinitigerServerPreferenceRead<T> {
+    value: T | null;
+    // True when the server could not be read (offline, aborted, HTTP
+    // error). Unlike a missing value this must never trigger writes.
+    failed: boolean;
+}
+
+export const readMinitigerServerPreferenceDetailed = async <T>(
     apiClient: ApiClient,
     userId: string,
     key: string
-): Promise<T | null> => {
+): Promise<MinitigerServerPreferenceRead<T>> => {
     try {
         /*
          * A queued write for this user must finish first, otherwise a read
@@ -270,18 +277,25 @@ export const readMinitigerServerPreference = async <T>(
         const raw = preferences?.CustomPrefs?.[key];
 
         if (!raw) {
-            return null;
+            return { value: null, failed: false };
         }
 
-        return JSON.parse(raw) as T;
+        return { value: JSON.parse(raw) as T, failed: false };
     } catch (error) {
         console.warn(
             `[Minitiger ServerPrefs] ${key} konnte nicht gelesen werden`,
             error
         );
-        return null;
+        return { value: null, failed: true };
     }
 };
+
+export const readMinitigerServerPreference = async <T>(
+    apiClient: ApiClient,
+    userId: string,
+    key: string
+): Promise<T | null> =>
+    (await readMinitigerServerPreferenceDetailed<T>(apiClient, userId, key)).value;
 
 export const writeMinitigerServerPreference = async (
     apiClient: ApiClient,

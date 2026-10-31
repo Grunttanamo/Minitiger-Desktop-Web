@@ -38,6 +38,7 @@ import {
     type VirtualHomeRowId
 } from './config/homeSettings';
 import useMinitigerCustomRows from './hooks/useMinitigerCustomRows';
+import { logHomeDiagnostics, repairMinitigerHome, summarizeQuery } from './homeDiagnostics';
 import useMinitigerDetailSettings from './hooks/useMinitigerDetailSettings';
 import useMinitigerHomeSettings from './hooks/useMinitigerHomeSettings';
 import useMinitigerLibrarySettings from './hooks/useMinitigerLibrarySettings';
@@ -186,6 +187,7 @@ const sortLibrariesByMinitigerOrder = (
 
 const MinitigerHome = () => {
     const {
+        api,
         user,
         __legacyApiClient__: apiClient
     } = useApi();
@@ -514,7 +516,8 @@ const MinitigerHome = () => {
         data: userViewsData,
         isPending: librariesPending,
         isError: librariesError,
-        isFetched: librariesFetched
+        isFetched: librariesFetched,
+        error: librariesQueryError
     } = useUserViews({
         userId: user?.Id
     });
@@ -523,7 +526,8 @@ const MinitigerHome = () => {
         data: resumeData,
         isPending: resumePending,
         isError: resumeError,
-        isFetched: resumeFetched
+        isFetched: resumeFetched,
+        error: resumeQueryError
     } = useResumeItems({
         limit: 18,
         fields: [
@@ -542,7 +546,8 @@ const MinitigerHome = () => {
         data: nextUpData,
         isPending: nextUpPending,
         isError: nextUpError,
-        isFetched: nextUpFetched
+        isFetched: nextUpFetched,
+        error: nextUpQueryError
     } = useNextUp({
         limit: 18,
         fields: [
@@ -563,7 +568,8 @@ const MinitigerHome = () => {
         data: watchlistData,
         isPending: watchlistPending,
         isError: watchlistError,
-        isFetched: watchlistFetched
+        isFetched: watchlistFetched,
+        error: watchlistQueryError
     } = useGetItems({
         recursive: true,
         limit: 1000,
@@ -593,7 +599,8 @@ const MinitigerHome = () => {
         data: rewatchData,
         isPending: rewatchPending,
         isError: rewatchError,
-        isFetched: rewatchFetched
+        isFetched: rewatchFetched,
+        error: rewatchQueryError
     } = useGetItems({
         recursive: true,
         limit: 18,
@@ -873,6 +880,36 @@ const MinitigerHome = () => {
     const rewatchDisplayError =
         rewatchError
         && rewatchItems.length === 0;
+
+    // One compact line per change in the client log, so an empty Home can
+    // be explained from the log alone (settings, sources, every query).
+    useEffect(() => {
+        if (!user?.Id) {
+            return;
+        }
+
+        logHomeDiagnostics({
+            user: user.Id,
+            admin: isAdmin,
+            server: apiClient?.serverAddress?.() ?? null,
+            sdk: api?.basePath ?? null,
+            customHome: settings.customHomeRowsEnabled,
+            banner: settings.bannerEnabled,
+            visible: settings.visibleSections,
+            rowOrder: settings.homeRowOrder,
+            customRows: customConfig.rows
+                .filter(row => row.enabled)
+                .map(row => row.key),
+            virtualLibraries: virtualConfig.libraries.length,
+            queries: {
+                libraries: summarizeQuery({ pending: librariesPending, fetched: librariesFetched, error: librariesError ? librariesQueryError ?? true : null, live: liveLibraries.length, cached: cachedLibraries.length }),
+                resume: summarizeQuery({ pending: resumePending, fetched: resumeFetched, error: resumeError ? resumeQueryError ?? true : null, live: liveResumeItems.length, cached: cachedResumeItems.length }),
+                nextUp: summarizeQuery({ pending: nextUpPending, fetched: nextUpFetched, error: nextUpError ? nextUpQueryError ?? true : null, live: liveNextUpItems.length, cached: cachedNextUpItems.length }),
+                watchlist: summarizeQuery({ pending: watchlistPending, fetched: watchlistFetched, error: watchlistError ? watchlistQueryError ?? true : null, live: liveWatchlistItems.length, cached: cachedWatchlistItems.length }),
+                rewatch: summarizeQuery({ pending: rewatchPending, fetched: rewatchFetched, error: rewatchError ? rewatchQueryError ?? true : null, live: liveRewatchItems.length, cached: cachedRewatchItems.length })
+            }
+        });
+    });
 
     const virtualLibraryId = searchParams.get('minitigerVirtualLibrary');
     const activeVirtualLibrary = virtualConfig.libraries.find(
@@ -1512,6 +1549,16 @@ const MinitigerHome = () => {
                         {renderHomeRow(rowId)}
                     </React.Fragment>
                 ))}
+
+                <div className='minitigerHomeRepair'>
+                    <button
+                        type='button'
+                        title='Leert die lokalen Zwischenspeicher der Startseite und lädt alles frisch vom Server.'
+                        onClick={() => repairMinitigerHome(queryClient)}
+                    >
+                        Startseite neu laden
+                    </button>
+                </div>
 
                 <footer className='minitigerDevFooter'>
                     🐯 Minitiger Native · Phase 18.17.1 TEST

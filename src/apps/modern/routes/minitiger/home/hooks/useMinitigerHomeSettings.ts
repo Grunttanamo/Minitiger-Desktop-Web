@@ -19,6 +19,7 @@ import {
     addMinitigerServerPreferenceOverrides,
     broadcastMinitigerServerPreference,
     readMinitigerServerPreference,
+    readMinitigerServerPreferenceDetailed,
     writeMinitigerServerPreference
 } from '../serverPreferences';
 import {
@@ -127,12 +128,18 @@ const useMinitigerHomeSettings = () => {
 
         let cancelled = false;
 
-        void readMinitigerServerPreference<MinitigerHomeSettings>(
+        void readMinitigerServerPreferenceDetailed<MinitigerHomeSettings>(
             apiClient,
             userId,
             SERVER_PREF_KEY
-        ).then(serverValue => {
+        ).then(({ value: serverValue, failed }) => {
             if (cancelled) {
+                return;
+            }
+
+            // A failed read (e.g. aborted while navigating quickly) is not
+            // "nothing stored": never seed or broadcast defaults from it.
+            if (failed) {
                 return;
             }
 
